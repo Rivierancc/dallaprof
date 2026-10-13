@@ -231,6 +231,7 @@ function Kiosk() {
               )}
               <div className="p-5">
                 <p className="text-3xl font-extrabold">{p.name}</p>
+                {p.description && <p className="mt-2 line-clamp-3 text-xl text-muted-foreground">{p.description}</p>}
                 <div className="mt-3 flex items-center justify-between">
                   <span className="font-display text-5xl text-accent">{euro(p.price)}</span>
                   <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-6xl font-bold text-primary-foreground">+</span>
@@ -282,6 +283,7 @@ function Customize({
           {p.image && <img src={p.image} alt={p.name} width={160} height={160} className="h-40 w-40 rounded-2xl object-cover" />}
           <div className="flex-1">
             <h2 className="font-display text-7xl leading-none">{p.name}</h2>
+            {p.description && <p className="mt-2 text-2xl text-muted-foreground">{p.description}</p>}
             <p className="mt-2 font-display text-5xl text-accent">{euro(p.price)}</p>
           </div>
         </div>

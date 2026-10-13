@@ -14,6 +14,7 @@ import {
   saveProduct,
   setSoldOut as soldOut,
   setProductOptions,
+  setDescription,
   uploadMenuPhoto,
   type MenuCategory,
   type MenuProduct,
@@ -276,6 +277,15 @@ function MenuEditor() {
                 onPhoto={(file) => productPhoto(p, file)}
                 onDelete={() => removeProduct(p)}
                 onMove={(dir) => move(p, dir)}
+                onDescription={async (description) => {
+                  try {
+                    await setDescription({ data: { id: p.id, description } });
+                    refresh();
+                    toast.success("Descrizione salvata");
+                  } catch (e) {
+                    err(e);
+                  }
+                }}
                 onOptions={async (ingredients, extras) => {
                   try {
                     await setProductOptions({ data: { id: p.id, ingredients, extras } });
@@ -424,8 +434,10 @@ function ProductRow({
   onMove,
   onSoldOut,
   onOptions,
+  onDescription,
 }: {
   p: MenuProduct;
+  onDescription: (d: string) => Promise<unknown>;
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
@@ -434,6 +446,7 @@ function ProductRow({
   onMove: (dir: -1 | 1) => void;
 }) {
   const [name, setName] = useState(p.name);
+  const [desc, setDesc] = useState(p.description);
   const [price, setPrice] = useState(fmt(p.price));
   const [open, setOpen] = useState(false);
   const run = useSerial();
@@ -507,6 +520,15 @@ function ProductRow({
         Opzioni ({p.extras.length + p.ingredients.length}) {open ? "▲" : "▼"}
       </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
+      <textarea
+        value={desc}
+        onChange={(e) => setDesc(e.target.value)}
+        onBlur={() => desc.trim() !== p.description && run(() => onDescription(desc.trim()))}
+        rows={2}
+        maxLength={300}
+        placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
+        className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
+      />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
     </li>
   );
