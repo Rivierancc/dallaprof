@@ -117,6 +117,9 @@ function Kitchen() {
         >
           {sound ? "🔔 Suono attivo" : "🔇 Attiva suono"}
         </button>
+        <button onClick={logout} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+          Esci
+        </button>
       </header>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
