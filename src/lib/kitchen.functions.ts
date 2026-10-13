@@ -8,7 +8,7 @@ const sessionConfig = () => ({
   password: process.env["SESSION_SECRET"]!,
   name: "kitchen-gate",
   maxAge: 60 * 60 * 14,
-  cookie: { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" },
+  cookie: { httpOnly: true, secure: true, sameSite: "none" as const, partitioned: true, path: "/" },
 });
 
 const matches = (a: string, b: string) =>
