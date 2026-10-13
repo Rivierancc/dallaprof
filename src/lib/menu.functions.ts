@@ -71,7 +71,23 @@ export type MenuProduct = {
   image_path: string;
   position: number;
   sold_out: boolean;
+  ingredients: string[];
+  extras: MenuExtra[];
 };
+
+export type MenuExtra = { name: string; price: number };
+
+const cleanIngredients = (v: unknown): string[] =>
+  (Array.isArray(v) ? v : []).map((x) => String(x ?? "").trim().slice(0, 40)).filter(Boolean).slice(0, 20);
+const cleanExtras = (v: unknown): MenuExtra[] =>
+  (Array.isArray(v) ? v : [])
+    .map((x) => {
+      const o = (x ?? {}) as { name?: unknown; price?: unknown };
+      const price = Number(String(o.price ?? "").replace(",", "."));
+      return { name: String(o.name ?? "").trim().slice(0, 40), price: Number.isFinite(price) && price >= 0 ? Math.round(price * 100) / 100 : 0 };
+    })
+    .filter((x) => x.name)
+    .slice(0, 20);
 
 export type MenuData = { categories: MenuCategory[]; products: MenuProduct[] };
 
@@ -83,7 +99,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out")
+      .select("id, category_id, name, price, image_path, position, sold_out, ingredients, extras")
       .eq("active", true)
       .order("position", { ascending: true }),
   ]);
@@ -108,9 +124,28 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       image: urls[r.image_path] ?? "",
       position: r.position,
       sold_out: !!r.sold_out,
+      ingredients: cleanIngredients(r.ingredients),
+      extras: cleanExtras(r.extras),
     })),
   };
 });
+
+export const setProductOptions = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; ingredients: string[]; extras: MenuExtra[] }) => ({
+    id: String(d.id),
+    ingredients: cleanIngredients(d.ingredients),
+    extras: cleanExtras(d.extras),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase
+      .from("menu_products")
+      .update({ ingredients: data.ingredients, extras: data.extras })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
 
 export const setSoldOut = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; soldOut: boolean }) => ({ id: String(d.id), soldOut: !!d.soldOut }))

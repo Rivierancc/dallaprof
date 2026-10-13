@@ -13,6 +13,7 @@ import {
   saveCategory,
   saveProduct,
   setSoldOut as soldOut,
+  setProductOptions,
   uploadMenuPhoto,
   type MenuCategory,
   type MenuProduct,
@@ -275,6 +276,14 @@ function MenuEditor() {
                 onPhoto={(file) => productPhoto(p, file)}
                 onDelete={() => removeProduct(p)}
                 onMove={(dir) => move(p, dir)}
+                onOptions={async (ingredients, extras) => {
+                  try {
+                    await setProductOptions({ data: { id: p.id, ingredients, extras } });
+                    refresh();
+                  } catch (e) {
+                    err(e);
+                  }
+                }}
                 onSoldOut={async (v) => {
                   try {
                     await soldOut({ data: { id: p.id, soldOut: v } });
@@ -414,8 +423,10 @@ function ProductRow({
   onDelete,
   onMove,
   onSoldOut,
+  onOptions,
 }: {
   p: MenuProduct;
+  onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
   onPhoto: (f: File) => Promise<unknown>;
@@ -424,6 +435,7 @@ function ProductRow({
 }) {
   const [name, setName] = useState(p.name);
   const [price, setPrice] = useState(fmt(p.price));
+  const [open, setOpen] = useState(false);
   const run = useSerial();
   const n = Number(price.replace(",", "."));
   const valid = !!name.trim() && Number.isFinite(n) && n >= 0;
@@ -487,7 +499,102 @@ function ProductRow({
         </span>
         {p.sold_out ? "Esaurito" : "Disponibile"}
       </button>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold"
+      >
+        Opzioni ({p.extras.length + p.ingredients.length}) {open ? "▲" : "▼"}
+      </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
+      {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
     </li>
+  );
+}
+
+function OptionsEditor({
+  p,
+  onSave,
+}: {
+  p: MenuProduct;
+  onSave: (ingredients: string[], extras: { name: string; price: number }[]) => void;
+}) {
+  const [ing, setIng] = useState("");
+  const [exName, setExName] = useState("");
+  const [exPrice, setExPrice] = useState("");
+  const addIng = () => {
+    const v = ing.trim();
+    if (!v || p.ingredients.includes(v)) return;
+    onSave([...p.ingredients, v], p.extras);
+    setIng("");
+  };
+  const addExtra = () => {
+    const n = exName.trim();
+    const pr = Number(exPrice.replace(",", "."));
+    if (!n || !Number.isFinite(pr) || pr < 0) {
+      toast.error("Scrivi nome e prezzo dell'extra");
+      return;
+    }
+    onSave(p.ingredients, [...p.extras.filter((e) => e.name !== n), { name: n, price: Math.round(pr * 100) / 100 }]);
+    setExName("");
+    setExPrice("");
+  };
+  const chip = "flex items-center gap-2 rounded-full bg-muted py-2 pl-4 pr-2 text-xl font-bold";
+  const x = "tap h-8 w-8 rounded-full bg-secondary text-lg";
+
+  return (
+    <div className="grid w-full gap-6 rounded-2xl bg-background/40 p-4 md:grid-cols-2">
+      <div>
+        <h3 className="mb-1 text-2xl font-bold">Ingredienti che il cliente può togliere</h3>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {p.ingredients.map((g) => (
+            <span key={g} className={chip}>
+              {g}
+              <button className={x} title="Rimuovi" onClick={() => onSave(p.ingredients.filter((v) => v !== g), p.extras)}>✕</button>
+            </span>
+          ))}
+          {!p.ingredients.length && <span className="text-lg text-muted-foreground">Nessuno</span>}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={ing}
+            onChange={(e) => setIng(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addIng()}
+            placeholder="es. Cipolla"
+            className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
+          />
+          <button onClick={addIng} className="tap rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground">+ Aggiungi</button>
+        </div>
+      </div>
+      <div>
+        <h3 className="mb-1 text-2xl font-bold">Extra a pagamento</h3>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {p.extras.map((e) => (
+            <span key={e.name} className={chip}>
+              {e.name} · € {fmt(e.price)}
+              <button className={x} title="Rimuovi" onClick={() => onSave(p.ingredients, p.extras.filter((v) => v.name !== e.name))}>✕</button>
+            </span>
+          ))}
+          {!p.extras.length && <span className="text-lg text-muted-foreground">Nessuno</span>}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={exName}
+            onChange={(e) => setExName(e.target.value)}
+            placeholder="es. Bacon"
+            className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
+          />
+          <input
+            value={exPrice}
+            inputMode="decimal"
+            onChange={(e) => setExPrice(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addExtra()}
+            placeholder="€ 1,00"
+            className="w-24 rounded-xl bg-muted px-3 py-3 text-center text-xl outline-none"
+          />
+          <button onClick={addExtra} className="tap rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground">+ Aggiungi</button>
+        </div>
+      </div>
+    </div>
   );
 }

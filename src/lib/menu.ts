@@ -1,7 +1,21 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getMenu } from "@/lib/menu.functions";
 
-export type CartItem = { id: string; name: string; price: number; qty: number };
+// id = riga del carrello (piatto + scelte); price = prezzo unitario già con gli extra.
+export type CartItem = {
+  id: string;
+  productId?: string;
+  name: string;
+  price: number;
+  qty: number;
+  extras?: string[];
+  removed?: string[];
+};
+
+export const itemNotes = (i: CartItem) => [
+  ...(i.extras ?? []).map((e) => `+ ${e}`),
+  ...(i.removed ?? []).map((r) => `senza ${r}`),
+];
 
 export type Product = {
   id: string;
@@ -12,6 +26,8 @@ export type Product = {
   category_id: string;
   position: number;
   sold_out: boolean;
+  ingredients: string[];
+  extras: { name: string; price: number }[];
 };
 
 export type Category = {

@@ -1,0 +1,2 @@
+ALTER TABLE public.menu_products ADD COLUMN IF NOT EXISTS ingredients jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.menu_products ADD COLUMN IF NOT EXISTS extras jsonb NOT NULL DEFAULT '[]'::jsonb;

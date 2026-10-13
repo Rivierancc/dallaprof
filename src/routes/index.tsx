@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { euro, menuQueryOptions, type CartItem } from "@/lib/menu";
+import { euro, itemNotes, menuQueryOptions, type CartItem, type Product } from "@/lib/menu";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(menuQueryOptions),
@@ -27,17 +27,24 @@ function Kiosk() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [orderNo, setOrderNo] = useState<number | null>(null);
+  const [custom, setCustom] = useState<Product | null>(null);
 
   const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
   const shown = menu.products.filter((p) => p.category_id === activeCat?.id && !p.sold_out);
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const count = cart.reduce((s, i) => s + i.qty, 0);
 
-  const add = (p: { id: string; name: string; price: number }) =>
+  const add = (p: Product, extras: string[] = [], removed: string[] = []) => {
+    const unit = p.price + p.extras.filter((e) => extras.includes(e.name)).reduce((s, e) => s + e.price, 0);
+    const key = [p.id, ...[...extras].sort(), "|", ...[...removed].sort()].join("~");
     setCart((c) => {
-      const f = c.find((i) => i.id === p.id);
-      return f ? c.map((i) => (i.id === p.id ? { ...i, qty: i.qty + 1 } : i)) : [...c, { ...p, qty: 1 }];
+      const f = c.find((i) => i.id === key);
+      return f
+        ? c.map((i) => (i.id === key ? { ...i, qty: i.qty + 1 } : i))
+        : [...c, { id: key, productId: p.id, name: p.name, price: Math.round(unit * 100) / 100, qty: 1, extras, removed }];
     });
+  };
+  const pick = (p: Product) => (p.extras.length || p.ingredients.length ? setCustom(p) : add(p));
   const change = (id: string, d: number) =>
     setCart((c) => c.map((i) => (i.id === id ? { ...i, qty: i.qty + d } : i)).filter((i) => i.qty > 0));
 
@@ -45,6 +52,7 @@ function Kiosk() {
     setCart([]);
     setOrderNo(null);
     setCatId("");
+    setCustom(null);
     setStep("where");
   };
 
@@ -115,6 +123,9 @@ function Kiosk() {
             <div className="flex justify-between text-2xl font-bold">
               <span>{i.name}</span>
             </div>
+            {itemNotes(i).length > 0 && (
+              <p className="mt-1 text-lg font-semibold text-accent">{itemNotes(i).join(" · ")}</p>
+            )}
             <div className="mt-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button onClick={() => change(i.id, -1)} className="tap h-16 w-16 rounded-full bg-secondary text-4xl font-bold">−</button>
@@ -157,7 +168,12 @@ function Kiosk() {
           <ul className="space-y-3 text-3xl">
             {cart.map((i) => (
               <li key={i.id} className="flex justify-between border-b pb-3">
-                <span>{i.qty} × {i.name}</span>
+                <span>
+                  {i.qty} × {i.name}
+                  {itemNotes(i).length > 0 && (
+                    <span className="block text-2xl text-accent">{itemNotes(i).join(" · ")}</span>
+                  )}
+                </span>
                 <span className="font-bold">{euro(i.qty * i.price)}</span>
               </li>
             ))}
@@ -209,7 +225,7 @@ function Kiosk() {
         </nav>
         <div className="grid flex-1 grid-cols-2 content-start gap-5 overflow-y-auto p-4 pb-10">
           {shown.map((p) => (
-            <button key={p.id} onClick={() => add(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
+            <button key={p.id} onClick={() => pick(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
               {p.image && (
                 <img src={p.image} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover" />
               )}
@@ -225,6 +241,100 @@ function Kiosk() {
         </div>
       </section>
       {cartPanel}
+      {custom && (
+        <Customize
+          p={custom}
+          onClose={() => setCustom(null)}
+          onAdd={(extras, removed) => {
+            add(custom, extras, removed);
+            setCustom(null);
+          }}
+        />
+      )}
     </main>
+  );
+}
+
+function Customize({
+  p,
+  onClose,
+  onAdd,
+}: {
+  p: Product;
+  onClose: () => void;
+  onAdd: (extras: string[], removed: string[]) => void;
+}) {
+  const [extras, setExtras] = useState<string[]>([]);
+  const [removed, setRemoved] = useState<string[]>([]);
+  const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
+    set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const unit = p.price + p.extras.filter((e) => extras.includes(e.name)).reduce((s, e) => s + e.price, 0);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-6 backdrop-blur-sm" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-label={`Personalizza ${p.name}`}
+        onClick={(e) => e.stopPropagation()}
+        className="animate-pop flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-card"
+      >
+        <div className="flex items-center gap-6 border-b p-6">
+          {p.image && <img src={p.image} alt={p.name} width={160} height={160} className="h-40 w-40 rounded-2xl object-cover" />}
+          <div className="flex-1">
+            <h2 className="font-display text-7xl leading-none">{p.name}</h2>
+            <p className="mt-2 font-display text-5xl text-accent">{euro(p.price)}</p>
+          </div>
+        </div>
+        <div className="flex-1 space-y-8 overflow-y-auto p-6">
+          {p.extras.length > 0 && (
+            <section>
+              <h3 className="mb-4 font-display text-5xl">Aggiungi extra</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {p.extras.map((e) => {
+                  const on = extras.includes(e.name);
+                  return (
+                    <button
+                      key={e.name}
+                      aria-pressed={on}
+                      onClick={() => toggle(extras, setExtras, e.name)}
+                      className={`tap flex h-24 items-center justify-between rounded-2xl border-4 px-5 text-3xl font-bold ${on ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-muted"}`}
+                    >
+                      <span>{on ? "✓ " : "+ "}{e.name}</span>
+                      <span>{euro(e.price)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+          {p.ingredients.length > 0 && (
+            <section>
+              <h3 className="mb-4 font-display text-5xl">Togli ingredienti</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {p.ingredients.map((g) => {
+                  const off = removed.includes(g);
+                  return (
+                    <button
+                      key={g}
+                      aria-pressed={off}
+                      onClick={() => toggle(removed, setRemoved, g)}
+                      className={`tap h-24 rounded-2xl border-4 px-5 text-left text-3xl font-bold ${off ? "border-destructive bg-destructive/20 text-muted-foreground line-through" : "border-transparent bg-muted"}`}
+                    >
+                      {off ? "✕ " : "✓ "}{g}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+        <div className="grid grid-cols-[1fr_2fr] gap-4 border-t p-6">
+          <button onClick={onClose} className="tap h-28 rounded-3xl bg-secondary font-display text-5xl">Annulla</button>
+          <button onClick={() => onAdd(extras, removed)} className="tap glow h-28 rounded-3xl bg-primary font-display text-5xl text-primary-foreground">
+            Aggiungi · {euro(unit)}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

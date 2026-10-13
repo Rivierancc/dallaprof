@@ -5,6 +5,7 @@ import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
+import { itemNotes } from "@/lib/menu";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -95,7 +96,12 @@ function Kitchen() {
             </p>
             <ul className="my-4 flex-1 space-y-1 text-2xl font-bold">
               {o.items.map((i) => (
-                <li key={i.id}>{i.qty} × {i.name}</li>
+                <li key={i.id}>
+                  {i.qty} × {i.name}
+                  {itemNotes(i).length > 0 && (
+                    <span className="block pl-8 text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
+                  )}
+                </li>
               ))}
             </ul>
             {o.status === "preparing" ? (
