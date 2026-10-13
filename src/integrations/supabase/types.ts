@@ -45,8 +45,10 @@ export type Database = {
         Row: {
           active: boolean
           category_id: string
+          extras: Json
           id: string
           image_path: string
+          ingredients: Json
           name: string
           position: number
           price: number
@@ -55,8 +57,10 @@ export type Database = {
         Insert: {
           active?: boolean
           category_id: string
+          extras?: Json
           id?: string
           image_path?: string
+          ingredients?: Json
           name: string
           position?: number
           price?: number
@@ -65,8 +69,10 @@ export type Database = {
         Update: {
           active?: boolean
           category_id?: string
+          extras?: Json
           id?: string
           image_path?: string
+          ingredients?: Json
           name?: string
           position?: number
           price?: number
