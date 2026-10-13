@@ -26,6 +26,7 @@ export type Product = {
   category_id: string;
   position: number;
   sold_out: boolean;
+  description: string;
   ingredients: string[];
   extras: { name: string; price: number }[];
 };

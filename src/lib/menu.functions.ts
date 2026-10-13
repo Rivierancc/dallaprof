@@ -71,6 +71,7 @@ export type MenuProduct = {
   image_path: string;
   position: number;
   sold_out: boolean;
+  description: string;
   ingredients: string[];
   extras: MenuExtra[];
 };
@@ -99,7 +100,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, ingredients, extras")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, ingredients, extras")
       .eq("active", true)
       .order("position", { ascending: true }),
   ]);
@@ -124,11 +125,25 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       image: urls[r.image_path] ?? "",
       position: r.position,
       sold_out: !!r.sold_out,
+      description: r.description ?? "",
       ingredients: cleanIngredients(r.ingredients),
       extras: cleanExtras(r.extras),
     })),
   };
 });
+
+export const setDescription = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; description: string }) => ({
+    id: String(d.id),
+    description: String(d.description ?? "").trim().slice(0, 300),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase.from("menu_products").update({ description: data.description }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
 
 export const setProductOptions = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; ingredients: string[]; extras: MenuExtra[] }) => ({
