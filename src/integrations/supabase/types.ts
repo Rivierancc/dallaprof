@@ -50,6 +50,7 @@ export type Database = {
           name: string
           position: number
           price: number
+          sold_out: boolean
         }
         Insert: {
           active?: boolean
@@ -59,6 +60,7 @@ export type Database = {
           name: string
           position?: number
           price?: number
+          sold_out?: boolean
         }
         Update: {
           active?: boolean
@@ -68,6 +70,7 @@ export type Database = {
           name?: string
           position?: number
           price?: number
+          sold_out?: boolean
         }
         Relationships: [
           {
