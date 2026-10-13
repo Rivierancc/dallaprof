@@ -20,7 +20,7 @@ type Step = "where" | "menu" | "checkout" | "done";
 function Kiosk() {
   const [step, setStep] = useState<Step>("where");
   const [dine, setDine] = useState<"qui" | "asporto">("qui");
-  const [cat, setCat] = useState(categories[0].id);
+  const [cat, setCat] = useState("burger");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [orderNo, setOrderNo] = useState<number | null>(null);
@@ -39,7 +39,7 @@ function Kiosk() {
   const reset = () => {
     setCart([]);
     setOrderNo(null);
-    setCat(categories[0].id);
+    setCat("burger");
     setStep("where");
   };
 
