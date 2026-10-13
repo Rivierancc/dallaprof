@@ -12,6 +12,7 @@ import {
   deleteProduct,
   saveCategory,
   saveProduct,
+  setSoldOut as soldOut,
   uploadMenuPhoto,
   type MenuCategory,
   type MenuProduct,
@@ -274,6 +275,15 @@ function MenuEditor() {
                 onPhoto={(file) => productPhoto(p, file)}
                 onDelete={() => removeProduct(p)}
                 onMove={(dir) => move(p, dir)}
+                onSoldOut={async (v) => {
+                  try {
+                    await soldOut({ data: { id: p.id, soldOut: v } });
+                    refresh();
+                    toast.success(v ? "Nascosto dal totem" : "Di nuovo visibile sul totem");
+                  } catch (e) {
+                    err(e);
+                  }
+                }}
               />
             ))}
             {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto in questa categoria.</li>}
@@ -403,8 +413,10 @@ function ProductRow({
   onPhoto,
   onDelete,
   onMove,
+  onSoldOut,
 }: {
   p: MenuProduct;
+  onSoldOut: (v: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
   onPhoto: (f: File) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
@@ -463,6 +475,18 @@ function ProductRow({
           ▼
         </button>
       </div>
+      <button
+        role="switch"
+        aria-checked={p.sold_out}
+        onClick={() => run(() => onSoldOut(!p.sold_out))}
+        className={`tap flex items-center gap-3 rounded-xl px-4 py-3 text-xl font-bold ${p.sold_out ? "bg-destructive text-destructive-foreground" : "bg-secondary"}`}
+        title="Nascondi dal totem senza eliminare"
+      >
+        <span className={`relative h-7 w-12 rounded-full ${p.sold_out ? "bg-background/40" : "bg-muted"}`}>
+          <span className={`absolute top-1 h-5 w-5 rounded-full bg-foreground transition-all ${p.sold_out ? "left-6" : "left-1"}`} />
+        </span>
+        {p.sold_out ? "Esaurito" : "Disponibile"}
+      </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
     </li>
   );

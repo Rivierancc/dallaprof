@@ -11,6 +11,7 @@ export type Product = {
   image_path: string;
   category_id: string;
   position: number;
+  sold_out: boolean;
 };
 
 export type Category = {
