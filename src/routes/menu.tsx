@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen } from "@/lib/kitchen.functions";
@@ -39,6 +39,16 @@ export const Route = createFileRoute("/menu")({
 });
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
+
+// Una modifica alla volta per riga: due salvataggi ravvicinati non si calpestano a vicenda.
+function useSerial() {
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+  return (fn: () => Promise<unknown>) => {
+    const run = chain.current.then(fn, fn);
+    chain.current = run.catch(() => undefined);
+    return run;
+  };
+}
 
 function MenuGate() {
   const { unlocked } = Route.useLoaderData();
@@ -280,7 +290,7 @@ function PhotoPicker({
   label,
   size = "h-24 w-24",
 }: {
-  onPick: (f: File) => void;
+  onPick: (f: File) => Promise<unknown> | void;
   src: string;
   label?: string;
   size?: string;
@@ -354,21 +364,24 @@ function CategoryRow({
   count: number;
   selected: boolean;
   onSelect: () => void;
-  onRename: (name: string) => void;
-  onPhoto: (f: File) => void;
-  onDelete: () => void;
+  onRename: (name: string) => Promise<unknown>;
+  onPhoto: (f: File) => Promise<unknown>;
+  onDelete: () => Promise<unknown>;
 }) {
   const [name, setName] = useState(c.name);
+  const run = useSerial();
   const dirty = name.trim() !== c.name;
 
   return (
     <li className={`rounded-2xl border-4 bg-card p-3 ${selected ? "border-accent" : "border-transparent"}`}>
       <div className="flex items-center gap-3">
-        <PhotoPicker onPick={onPhoto} src={c.image} size="h-16 w-16" />
+        <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={c.image} size="h-16 w-16" />
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onBlur={() => dirty && name.trim() && onRename(name.trim())}
+          onBlur={() => {
+            if (dirty && name.trim()) run(() => onRename(name.trim()));
+          }}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           className="w-full rounded-xl bg-muted px-3 py-2 text-2xl font-bold outline-none"
         />
@@ -378,7 +391,7 @@ function CategoryRow({
           Apri piatti
         </button>
         <span className="mr-auto text-lg text-muted-foreground">{count} piatti</span>
-        <DeleteButton small onConfirm={onDelete} />
+        <DeleteButton small onConfirm={() => void run(onDelete)} />
       </div>
     </li>
   );
@@ -392,13 +405,14 @@ function ProductRow({
   onMove,
 }: {
   p: MenuProduct;
-  onSave: (name: string, price: number) => void;
-  onPhoto: (f: File) => void;
-  onDelete: () => void;
+  onSave: (name: string, price: number) => Promise<unknown>;
+  onPhoto: (f: File) => Promise<unknown>;
+  onDelete: () => Promise<unknown>;
   onMove: (dir: -1 | 1) => void;
 }) {
   const [name, setName] = useState(p.name);
   const [price, setPrice] = useState(fmt(p.price));
+  const run = useSerial();
   const n = Number(price.replace(",", "."));
   const valid = !!name.trim() && Number.isFinite(n) && n >= 0;
   const dirty = name.trim() !== p.name || Number(price.replace(",", ".")) !== p.price;
@@ -408,12 +422,12 @@ function ProductRow({
       toast.error("Controlla nome e prezzo");
       return;
     }
-    if (dirty) onSave(name.trim(), Math.round(n * 100) / 100);
+    if (dirty) run(() => onSave(name.trim(), Math.round(n * 100) / 100));
   };
 
   return (
     <li className="flex flex-wrap items-center gap-4 rounded-2xl bg-card p-4">
-      <PhotoPicker onPick={onPhoto} src={p.image} label="Foto" />
+      <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={p.image} label="Foto" />
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -449,7 +463,7 @@ function ProductRow({
           ▼
         </button>
       </div>
-      <DeleteButton onConfirm={onDelete} />
+      <DeleteButton onConfirm={() => void run(onDelete)} />
     </li>
   );
 }
