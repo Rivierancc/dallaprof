@@ -29,12 +29,6 @@ const matches = (a: string, b: string) =>
 
 export const kitchenStatus = createServerFn({ method: "GET" }).handler(async () => {
   const s = await useSession<KitchenSession>(sessionConfig());
-  console.log(
-    "[gate] status cookie:",
-    (getRequest().headers.get("cookie") || "").includes("kitchen-gate"),
-    "unlocked:",
-    !!s.data.unlocked,
-  );
   return { unlocked: !!s.data.unlocked };
 });
 
@@ -50,7 +44,6 @@ export const unlockKitchen = createServerFn({ method: "POST" })
     if (!matches(data.pin, expected)) return { ok: false as const };
     const s = await useSession<KitchenSession>(sessionConfig(data));
     await s.update({ unlocked: true });
-    console.log("[gate] unlock wrote session, flags:", JSON.stringify(data));
     return { ok: true as const };
   });
 
