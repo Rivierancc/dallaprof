@@ -70,6 +70,7 @@ export type MenuProduct = {
   image: string;
   image_path: string;
   position: number;
+  sold_out: boolean;
 };
 
 export type MenuData = { categories: MenuCategory[]; products: MenuProduct[] };
@@ -82,7 +83,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position")
+      .select("id, category_id, name, price, image_path, position, sold_out")
       .eq("active", true)
       .order("position", { ascending: true }),
   ]);
@@ -106,9 +107,20 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       image_path: r.image_path,
       image: urls[r.image_path] ?? "",
       position: r.position,
+      sold_out: !!r.sold_out,
     })),
   };
 });
+
+export const setSoldOut = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; soldOut: boolean }) => ({ id: String(d.id), soldOut: !!d.soldOut }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase.from("menu_products").update({ sold_out: data.soldOut }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
 
 const slugify = (s: string) =>
   s

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 
 export const Route = createFileRoute("/display")({
@@ -21,7 +21,10 @@ function Display() {
   const ready = orders.filter((o) => o.status === "ready").reverse();
 
   return (
-    <main className="grid h-screen grid-cols-2">
+    <main className="relative grid h-screen grid-cols-2">
+      <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
+        ← Totem
+      </Link>
       <section className="flex flex-col p-8">
         <h2 className="mb-8 font-display text-8xl text-muted-foreground">In preparazione</h2>
         <div className="grid grid-cols-3 content-start gap-5">

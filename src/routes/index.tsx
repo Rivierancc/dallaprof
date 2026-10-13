@@ -29,7 +29,7 @@ function Kiosk() {
   const [orderNo, setOrderNo] = useState<number | null>(null);
 
   const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
-  const shown = menu.products.filter((p) => p.category_id === activeCat?.id);
+  const shown = menu.products.filter((p) => p.category_id === activeCat?.id && !p.sold_out);
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const count = cart.reduce((s, i) => s + i.qty, 0);
 

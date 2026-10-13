@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
 import { useLiveOrders } from "@/hooks/use-orders";
@@ -72,6 +72,9 @@ function Kitchen() {
         >
           {sound ? "🔔 Suono attivo" : "🔇 Attiva suono"}
         </button>
+        <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+          ← Totem
+        </Link>
         <button onClick={logout} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           Esci
         </button>
