@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_products ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
