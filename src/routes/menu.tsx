@@ -12,6 +12,7 @@ import {
   deleteProduct,
   saveCategory,
   saveProduct,
+  setSoldOut as soldOut,
   uploadMenuPhoto,
   type MenuCategory,
   type MenuProduct,
