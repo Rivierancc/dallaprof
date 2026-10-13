@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { categories, products, euro, type CartItem } from "@/lib/menu";
+import { euro, menuQueryOptions, type CartItem } from "@/lib/menu";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.ensureQueryData(menuQueryOptions),
   head: () => ({
     meta: [
       { title: "Ordina qui — Totem Burger" },
@@ -18,13 +20,16 @@ export const Route = createFileRoute("/")({
 type Step = "where" | "menu" | "checkout" | "done";
 
 function Kiosk() {
+  const { data: menu } = useSuspenseQuery(menuQueryOptions);
   const [step, setStep] = useState<Step>("where");
   const [dine, setDine] = useState<"qui" | "asporto">("qui");
-  const [cat, setCat] = useState("burger");
+  const [catId, setCatId] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [orderNo, setOrderNo] = useState<number | null>(null);
 
+  const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
+  const shown = menu.products.filter((p) => p.category_id === activeCat?.id);
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const count = cart.reduce((s, i) => s + i.qty, 0);
 
@@ -39,7 +44,7 @@ function Kiosk() {
   const reset = () => {
     setCart([]);
     setOrderNo(null);
-    setCat("burger");
+    setCatId("");
     setStep("where");
   };
 
@@ -174,25 +179,40 @@ function Kiosk() {
       </main>
     );
 
+  if (!menu.categories.length)
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-12 text-center">
+        <h1 className="font-display text-8xl text-accent">Menu in aggiornamento</h1>
+        <p className="text-3xl text-muted-foreground">Torna tra un momento.</p>
+      </main>
+    );
+
   return (
     <main className="flex h-screen">
       <section className="flex flex-1 flex-col overflow-hidden">
-        <nav className="grid grid-cols-4 gap-3 p-4">
-          {categories.map((c) => (
+        <nav
+          className="grid gap-3 p-4"
+          style={{ gridTemplateColumns: `repeat(${Math.min(menu.categories.length, 4)}, minmax(0, 1fr))` }}
+        >
+          {menu.categories.map((c) => (
             <button
               key={c.id}
-              onClick={() => setCat(c.id)}
-              className={`tap overflow-hidden rounded-2xl border-4 ${cat === c.id ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-card"}`}
+              onClick={() => setCatId(c.id)}
+              className={`tap overflow-hidden rounded-2xl border-4 ${activeCat?.id === c.id ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-card"}`}
             >
-              <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square w-full object-cover" />
+              {c.image && (
+                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square w-full object-cover" />
+              )}
               <span className="block py-2 font-display text-4xl">{c.name}</span>
             </button>
           ))}
         </nav>
         <div className="grid flex-1 grid-cols-2 content-start gap-5 overflow-y-auto p-4 pb-10">
-          {products.filter((p) => p.category === cat).map((p) => (
+          {shown.map((p) => (
             <button key={p.id} onClick={() => add(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
-              <img src={p.image} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover" />
+              {p.image && (
+                <img src={p.image} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover" />
+              )}
               <div className="p-5">
                 <p className="text-3xl font-extrabold">{p.name}</p>
                 <div className="mt-3 flex items-center justify-between">

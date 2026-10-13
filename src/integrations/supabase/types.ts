@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      menu_categories: {
+        Row: {
+          active: boolean
+          id: string
+          image_path: string
+          name: string
+          position: number
+          slug: string
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          image_path?: string
+          name: string
+          position?: number
+          slug: string
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          image_path?: string
+          name?: string
+          position?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      menu_products: {
+        Row: {
+          active: boolean
+          category_id: string
+          id: string
+          image_path: string
+          name: string
+          position: number
+          price: number
+        }
+        Insert: {
+          active?: boolean
+          category_id: string
+          id?: string
+          image_path?: string
+          name: string
+          position?: number
+          price?: number
+        }
+        Update: {
+          active?: boolean
+          category_id?: string
+          id?: string
+          image_path?: string
+          name?: string
+          position?: number
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
