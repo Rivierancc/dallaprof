@@ -1,40 +1,69 @@
 import { createServerFn } from "@tanstack/react-start";
-import { useSession } from "@tanstack/react-start/server";
+import { useSession, getRequest } from "@tanstack/react-start/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 
 type KitchenSession = { unlocked?: boolean };
+type GateFlags = { secure?: boolean; partitioned?: boolean };
 
-const sessionConfig = () => ({
-  password: process.env["SESSION_SECRET"]!,
-  name: "kitchen-gate",
-  maxAge: 60 * 60 * 14,
-  cookie: { httpOnly: true, secure: true, sameSite: "none" as const, partitioned: true, path: "/" },
-});
+// Il totem vive in un iframe (serve cookie partitioned), il tablet apre la pagina da sola
+// (serve cookie normale) e spesso in http (dove Secure non viene accettato).
+// I due flag li decide il browser, che è l'unico a conoscere il contesto reale.
+const sessionConfig = (f: GateFlags = {}) => {
+  const partitioned = !!f.secure && !!f.partitioned;
+  return {
+    password: process.env["SESSION_SECRET"]!,
+    name: "kitchen-gate",
+    maxAge: 60 * 60 * 14,
+    cookie: {
+      httpOnly: true,
+      secure: partitioned,
+      sameSite: partitioned ? ("none" as const) : ("lax" as const),
+      ...(partitioned ? { partitioned: true } : {}),
+      path: "/",
+    },
+  };
+};
 
 const matches = (a: string, b: string) =>
   timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
 
 export const kitchenStatus = createServerFn({ method: "GET" }).handler(async () => {
   const s = await useSession<KitchenSession>(sessionConfig());
+  console.log(
+    "[gate] status cookie:",
+    (getRequest().headers.get("cookie") || "").includes("kitchen-gate"),
+    "unlocked:",
+    !!s.data.unlocked,
+  );
   return { unlocked: !!s.data.unlocked };
 });
 
 export const unlockKitchen = createServerFn({ method: "POST" })
-  .inputValidator((d: { pin: string }) => ({ pin: String(d.pin).slice(0, 20) }))
+  .inputValidator((d: { pin: string; secure?: boolean; partitioned?: boolean }) => ({
+    pin: String(d.pin).slice(0, 20),
+    secure: !!d.secure,
+    partitioned: !!d.partitioned,
+  }))
   .handler(async ({ data }) => {
     const expected = process.env["KITCHEN_PIN"];
     if (!expected) throw new Error("PIN non configurato");
     if (!matches(data.pin, expected)) return { ok: false as const };
-    const s = await useSession<KitchenSession>(sessionConfig());
+    const s = await useSession<KitchenSession>(sessionConfig(data));
     await s.update({ unlocked: true });
+    console.log("[gate] unlock wrote session, flags:", JSON.stringify(data));
     return { ok: true as const };
   });
 
-export const lockKitchen = createServerFn({ method: "POST" }).handler(async () => {
-  const s = await useSession<KitchenSession>(sessionConfig());
-  await s.clear();
-  return { ok: true as const };
-});
+export const lockKitchen = createServerFn({ method: "POST" })
+  .inputValidator((d: { secure?: boolean; partitioned?: boolean }) => ({
+    secure: !!d.secure,
+    partitioned: !!d.partitioned,
+  }))
+  .handler(async ({ data }) => {
+    const s = await useSession<KitchenSession>(sessionConfig(data));
+    await s.clear();
+    return { ok: true as const };
+  });
 
 export const setOrderStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: string }) => {
