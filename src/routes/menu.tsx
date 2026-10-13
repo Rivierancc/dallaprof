@@ -531,7 +531,10 @@ function OptionsEditor({
   const addExtra = () => {
     const n = exName.trim();
     const pr = Number(exPrice.replace(",", "."));
-    if (!n || !Number.isFinite(pr) || pr < 0) return toast.error("Scrivi nome e prezzo dell'extra");
+    if (!n || !Number.isFinite(pr) || pr < 0) {
+      toast.error("Scrivi nome e prezzo dell'extra");
+      return;
+    }
     onSave(p.ingredients, [...p.extras.filter((e) => e.name !== n), { name: n, price: Math.round(pr * 100) / 100 }]);
     setExName("");
     setExPrice("");
