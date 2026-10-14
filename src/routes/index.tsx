@@ -30,7 +30,13 @@ function Kiosk() {
   const [custom, setCustom] = useState<Product | null>(null);
 
   const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
-  const shown = activeCat ? menu.products.filter((p) => p.category_id === activeCat.id) : menu.products;
+  const catOf = (p: Product) => {
+    const r = p as Product & { categoryId?: string };
+    return String(r.category_id ?? r.categoryId ?? "");
+  };
+  const shown = menu.products.filter(
+    (p) => !p.sold_out && (!activeCat || catOf(p) === String(activeCat.id)),
+  );
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const count = cart.reduce((s, i) => s + i.qty, 0);
 
