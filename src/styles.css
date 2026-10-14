@@ -64,6 +64,8 @@
 
 @layer base {
   * { border-color: var(--color-border); }
+  /* Tutto è misurato in rem: la dimensione base segue lo schermo (16px su 1080x1920). */
+  html { font-size: clamp(9px, min(100vw / 67.5, 100vh / 80), 22px); }
   html, body { touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
   body {
     background-color: var(--color-background);

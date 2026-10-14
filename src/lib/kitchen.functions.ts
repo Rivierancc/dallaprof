@@ -71,3 +71,23 @@ export const setOrderStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// Cassa: solo dopo il pagamento SumUp l'ordine passa in cucina.
+export const settleOrder = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; paid: boolean }) => ({ id: String(d.id), paid: !!d.paid }))
+  .handler(async ({ data }) => {
+    const s = await useSession<KitchenSession>(sessionConfig());
+    if (!s.data.unlocked) throw new Error("Non autorizzato");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch = data.paid
+      ? { status: "preparing", paid_at: new Date().toISOString() }
+      : { status: "cancelled" };
+    const { data: rows, error } = await supabaseAdmin
+      .from("orders")
+      .update(patch)
+      .eq("id", data.id)
+      .eq("status", "awaiting_payment")
+      .select("*");
+    if (error) throw new Error(error.message);
+    return { ok: true, order: rows?.[0] ?? null };
+  });
