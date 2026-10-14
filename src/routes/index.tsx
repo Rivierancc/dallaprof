@@ -29,8 +29,8 @@ function Kiosk() {
   const [orderNo, setOrderNo] = useState<number | null>(null);
   const [custom, setCustom] = useState<Product | null>(null);
 
-  const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
-  const shown = menu.products.filter((p) => p.category_id === activeCat?.id && !p.sold_out);
+  const activeCat = menu.categories.find((c) => String(c.id) === String(catId))?? menu.categories[0];
+const shown = menu.products.filter((p) => String(p.category_id) === String(activeCat?.id) &&!p.sold_out &&!(p as any).is_sold_out);
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const count = cart.reduce((s, i) => s + i.qty, 0);
 
