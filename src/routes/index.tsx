@@ -204,40 +204,36 @@ function Kiosk() {
     );
 
   return (
-   <main className="flex h-screen overflow-hidden">
+    <main className="flex h-screen overflow-hidden">
       <section className="flex flex-1 flex-col overflow-hidden">
-        <nav
-  className="grid gap-3 p-4 grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 overflow-y-auto"
->
+        <nav className="grid shrink-0 grid-cols-3 gap-3 overflow-y-auto p-4 sm:grid-cols-4">
+          {menu.categories.map((c) => (
             <button
               key={c.id}
               onClick={() => setCatId(c.id)}
-          className={`tap overflow-hidden rounded-2xl p-2 min-h-[70px] flex flex-col items-center justify-center text-center text-xs leading-tight break-words ${catId===c.id?'bg-yellow-400':'bg-white'}`}
+              className={`tap flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-2xl p-2 text-center leading-tight break-words ${activeCat?.id === c.id ? "bg-accent text-accent-foreground" : "bg-card"}`}
             >
               {c.image && (
-                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square landscape:aspect-[4/3] w-full object-cover" />
+                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-[4/3] w-full rounded-xl object-cover" />
               )}
-              <span className="block py-2 font-display text-4xl">{c.name}</span>
+              <span className="block py-2 font-display text-3xl">{c.name}</span>
             </button>
           ))}
         </nav>
-  <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto content-start">
-  {shown.map((p) => (
-    <button key={p.id} onClick={() => pick(p)} className="tap text-left flex flex-col min-w-0 overflow-hidden rounded-3xl bg-white shadow">
-      {p.image && (
-        <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />
-      )}
-      <div className="p-5 min-w-0 flex-1 flex flex-col">
-        <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
-        {p.description && <p className="mt-1 text-lg text-muted-foreground line-clamp-2">{p.description}</p>}
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600 text-white text-2xl">+</span>
-        </div>
-      </div>
-    </button>
-  ))}
-</div>
+        <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((p) => (
+            <button key={p.id} onClick={() => pick(p)} className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow">
+              {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />}
+              <div className="flex min-w-0 flex-1 flex-col p-5">
+                <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
+                {p.description && <p className="mt-1 line-clamp-2 text-lg text-muted-foreground">{p.description}</p>}
+                <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                  <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-2xl text-primary-foreground">+</span>
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </section>
       {cartPanel}
