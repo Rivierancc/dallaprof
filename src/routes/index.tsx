@@ -207,14 +207,12 @@ function Kiosk() {
    <main className="flex h-screen overflow-hidden">
       <section className="flex flex-1 flex-col overflow-hidden">
         <nav
-          className="grid gap-3 p-4"
-          style={{ gridTemplateColumns: `repeat(${Math.min(menu.categories.length, 6)}, minmax(0, 1fr))` }}
-        >
-          {menu.categories.map((c) => (
+  className="grid gap-3 p-4 grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 overflow-y-auto"
+>
             <button
               key={c.id}
               onClick={() => setCatId(c.id)}
-              className={`tap overflow-hidden rounded-2xl border-4 ${activeCat?.id === c.id ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-card"}`}
+          className={`tap overflow-hidden rounded-2xl p-2 min-h-[70px] flex flex-col items-center justify-center text-center text-xs leading-tight break-words ${catId===c.id?'bg-yellow-400':'bg-white'}`}
             >
               {c.image && (
                 <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square landscape:aspect-[4/3] w-full object-cover" />
