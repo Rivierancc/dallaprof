@@ -1,356 +1,121 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { euro, itemNotes, menuQueryOptions, type CartItem, type Product } from "@/lib/menu";
+import { useState, useMemo } from "react";
+import { useMenu } from "../hooks/useMenu";
 
-export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(menuQueryOptions),
-  head: () => ({
-    meta: [
-      { title: "Ordina qui — Totem Burger" },
-      { name: "description", content: "Ordina al totem: scegli, paga e ritira il tuo numero." },
-      { property: "og:title", content: "Ordina qui — Totem Burger" },
-      { property: "og:description", content: "Ordina al totem: scegli, paga e ritira il tuo numero." },
-    ],
-  }),
-  component: Kiosk,
-});
+export default function TotemHome() {
+  const { menu } = useMenu() as any;
+  const [catId, setCatId] = useState<string | null>(null);
+  const [cart, setCart] = useState<any[]>([]);
 
-type Step = "where" | "menu" | "checkout" | "done";
+  const categories = menu?.categories || [];
+  const products = menu?.products || [];
 
-function Kiosk() {
-  const { data: menu } = useSuspenseQuery(menuQueryOptions);
-  const [step, setStep] = useState<Step>("where");
-  const [dine, setDine] = useState<"qui" | "asporto">("qui");
-  const [catId, setCatId] = useState("");
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [paying, setPaying] = useState(false);
-  const [orderNo, setOrderNo] = useState<number | null>(null);
-  const [custom, setCustom] = useState<Product | null>(null);
+  const activeCat = useMemo(() => {
+    if (!catId) return null;
+    return categories.find((c: any) => String(c.id) === String(catId));
+  }, [catId, categories]);
 
-  const activeCat = menu.categories.find((c) => c.id === catId);
-  const catOf = (p: Product) => {
-    const r = p as Product & { categoryId?: string };
-    return String(r.category_id ?? r.categoryId ?? "");
-  };
-  const shown = menu.products.filter(
-    (p) => !p.sold_out && (!activeCat || catOf(p) === String(activeCat.id)),
-  );
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const count = cart.reduce((s, i) => s + i.qty, 0);
+  const shown = useMemo(() => {
+    if (!activeCat) return [];
+    return products.filter((p: any) => {
+      const pCat = String(p.category_id || p.categoryId || "");
+      return pCat === String(activeCat.id);
+    }).filter((p: any) => p.is_available!== false);
+  }, [activeCat, products]);
 
-  const add = (p: Product, extras: string[] = [], removed: string[] = []) => {
-    const unit = p.price + p.extras.filter((e) => extras.includes(e.name)).reduce((s, e) => s + e.price, 0);
-    const key = [p.id, ...[...extras].sort(), "|", ...[...removed].sort()].join("~");
-    setCart((c) => {
-      const f = c.find((i) => i.id === key);
-      return f
-        ? c.map((i) => (i.id === key ? { ...i, qty: i.qty + 1 } : i))
-        : [...c, { id: key, productId: p.id, name: p.name, price: Math.round(unit * 100) / 100, qty: 1, extras, removed }];
-    });
-  };
-  const pick = (p: Product) => (p.extras.length || p.ingredients.length ? setCustom(p) : add(p));
-  const change = (id: string, d: number) =>
-    setCart((c) => c.map((i) => (i.id === id ? { ...i, qty: i.qty + d } : i)).filter((i) => i.qty > 0));
-
-  const reset = () => {
-    setCart([]);
-    setOrderNo(null);
-    setCatId("");
-    setCustom(null);
-    setStep("where");
-  };
-
-  const pay = async () => {
-    setPaying(true);
-    const { data, error } = await supabase
-      .from("orders")
-      .insert({ dine_option: dine, items: cart, total })
-      .select("order_number")
-      .single();
-    setPaying(false);
-    if (error || !data) return alert("Errore, riprova");
-    setOrderNo(data.order_number);
-    setStep("done");
-  };
-
-  useEffect(() => {
-    if (step !== "done") return;
-    const t = setTimeout(reset, 15000);
-    return () => clearTimeout(t);
-  }, [step]);
-
-  if (step === "where")
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-16 p-12">
-        <h1 className="font-display text-[9rem] leading-none text-accent">Dove mangi?</h1>
-        <div className="grid w-full max-w-4xl gap-10 landscape:max-w-6xl landscape:grid-cols-2">
-          {(["qui", "asporto"] as const).map((d) => (
-            <button
-              key={d}
-              onClick={() => {
-                setDine(d);
-                setStep("menu");
-              }}
-              className="tap glow flex h-80 flex-col items-center justify-center rounded-3xl bg-primary text-primary-foreground"
-            >
-              <span className="text-8xl">{d === "qui" ? "🍽️" : "🛍️"}</span>
-              <span className="mt-4 font-display text-8xl">{d === "qui" ? "Mangio qui" : "Asporto"}</span>
-            </button>
-          ))}
-        </div>
-      </main>
-    );
-
-  if (step === "done")
-    return (
-      <main onClick={reset} className="flex min-h-screen flex-col items-center justify-center gap-8 p-12 text-center">
-        <p className="font-display text-7xl text-muted-foreground">Il tuo numero</p>
-        <div className="animate-pop glow flex h-[30rem] w-[30rem] items-center justify-center rounded-full bg-accent font-display text-[20rem] leading-none text-accent-foreground">
-          {String(orderNo).padStart(2, "0")}
-        </div>
-        <p className="text-4xl font-bold">Vai in cassa e paga con carta al POS SumUp.</p>
-        <p className="text-3xl text-muted-foreground">Dopo il pagamento segui il numero sul display.</p>
-        <p className="text-2xl text-muted-foreground">Tocca per un nuovo ordine</p>
-      </main>
-    );
-
-  const cartPanel = (
-    <aside className="flex w-[24rem] shrink-0 flex-col border-l bg-card">
-      <div className="border-b p-6">
-        <h2 className="font-display text-6xl">Carrello</h2>
-        <p className="text-xl text-muted-foreground">{dine === "qui" ? "Mangio qui" : "Asporto"} · {count} articoli</p>
-      </div>
-      <ul className="flex-1 space-y-4 overflow-y-auto p-6">
-        {cart.length === 0 && <li className="text-2xl text-muted-foreground">Ancora vuoto</li>}
-        {cart.map((i) => (
-          <li key={i.id} className="rounded-2xl bg-muted p-4">
-            <div className="flex justify-between text-2xl font-bold">
-              <span>{i.name}</span>
-            </div>
-            {itemNotes(i).length > 0 && (
-              <p className="mt-1 text-lg font-semibold text-accent">{itemNotes(i).join(" · ")}</p>
-            )}
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <button onClick={() => change(i.id, -1)} className="tap h-16 w-16 rounded-full bg-secondary text-4xl font-bold">−</button>
-                <span className="w-8 text-center text-3xl font-bold">{i.qty}</span>
-                <button onClick={() => change(i.id, 1)} className="tap h-16 w-16 rounded-full bg-primary text-4xl font-bold text-primary-foreground">+</button>
-              </div>
-              <span className="text-2xl font-bold">{euro(i.price * i.qty)}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <div className="space-y-4 border-t p-6">
-        <div className="flex justify-between font-display text-6xl">
-          <span>Totale</span>
-          <span className="text-accent">{euro(total)}</span>
-        </div>
-        {step === "menu" ? (
-          <button
-            disabled={!cart.length}
-            onClick={() => setStep("checkout")}
-            className="tap h-28 w-full rounded-3xl bg-accent font-display text-6xl text-accent-foreground disabled:opacity-30"
-          >
-            Ordina
-          </button>
-        ) : (
-          <button onClick={() => setStep("menu")} className="tap h-24 w-full rounded-3xl bg-secondary font-display text-5xl">
-            ← Modifica
-          </button>
-        )}
-        <button onClick={reset} className="tap h-16 w-full rounded-2xl text-2xl text-muted-foreground">Annulla ordine</button>
-      </div>
-    </aside>
-  );
-
-  if (step === "checkout")
-    return (
-      <main className="flex h-screen">
-        <section className="flex flex-1 flex-col justify-center gap-10 p-10">
-          <h1 className="font-display text-9xl text-accent">Riepilogo</h1>
-          <ul className="space-y-3 text-3xl">
-            {cart.map((i) => (
-              <li key={i.id} className="flex justify-between border-b pb-3">
-                <span>
-                  {i.qty} × {i.name}
-                  {itemNotes(i).length > 0 && (
-                    <span className="block text-2xl text-accent">{itemNotes(i).join(" · ")}</span>
-                  )}
-                </span>
-                <span className="font-bold">{euro(i.qty * i.price)}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="flex justify-between font-display text-8xl">
-            <span>Totale</span>
-            <span>{euro(total)}</span>
-          </div>
-          <button
-            onClick={pay}
-            disabled={paying}
-            className="tap glow h-48 rounded-3xl bg-primary font-display text-9xl text-primary-foreground disabled:opacity-60"
-          >
-            {paying ? "Invio..." : "💳 Paga con carta"}
-          </button>
-          <p className="text-center text-2xl text-muted-foreground">Conferma e paga al POS SumUp in cassa: poi l'ordine va in cucina</p>
-        </section>
-        {cartPanel}
-      </main>
-    );
-
-  if (!menu.categories.length)
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-12 text-center">
-        <h1 className="font-display text-8xl text-accent">Menu in aggiornamento</h1>
-        <p className="text-3xl text-muted-foreground">Torna tra un momento.</p>
-      </main>
-    );
+  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
 
   return (
-    <main className="flex h-screen overflow-hidden">
-      <section className="flex flex-1 flex-col overflow-hidden">
-        {activeCat ? (
-          <>
-            <header className="flex shrink-0 items-center gap-6 p-4">
-              <button
-                onClick={() => setCatId("")}
-                className="tap flex h-24 shrink-0 items-center gap-3 rounded-2xl bg-secondary px-8 font-display text-4xl"
-              >
-                ← Indietro
-              </button>
-              <h1 className="truncate font-display text-6xl text-accent">{activeCat.name}</h1>
-            </header>
-            <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
-              {shown.map((p) => (
-                <button key={p.id} onClick={() => pick(p)} className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow">
-                  {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />}
-                  <div className="flex min-w-0 flex-1 flex-col p-5">
-                    <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
-                    {p.description && <p className="mt-1 line-clamp-2 text-lg text-muted-foreground">{p.description}</p>}
-                    <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                      <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-2xl text-primary-foreground">+</span>
+    <div className="min-h-screen bg-white text-zinc-900 flex flex-col">
+      {/* HEADER */}
+      <div className="border-b-4 border-yellow-400 p-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-black">RB</div>
+          <div>
+            <div className="font-black text-xl leading-none">ROSSO BRUSCO</div>
+            <div className="text-xs opacity-60">BURGER & STREET FOOD ITALIANO</div>
+          </div>
+        </div>
+        <div className="text-sm">IT | EN • AIUTO • 12:34</div>
+      </div>
+
+      <div className="flex flex-1">
+        {/* LEFT */}
+        <div className="flex-1 p-6">
+          {!activeCat? (
+            <>
+              <div className="bg-yellow-100 rounded-2xl p-5 mb-6">
+                <h1 className="text-2xl font-black">Benvenuto! Scegli una categoria</h1>
+                <p className="opacity-70">Tocca ciò che desideri e aggiungilo al carrello</p>
+              </div>
+
+              <h2 className="font-bold text-lg mb-4 border-b-2 border-yellow-400 inline-block">Categorie</h2>
+
+              <div className="grid grid-cols-2 gap-4">
+                {categories.map((c: any) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setCatId(c.id)}
+                    className="relative h-44 rounded-2xl overflow-hidden shadow-lg group"
+                  >
+                    <img src={c.image_url || c.image} className="w-full h-full object-cover group-active:scale-105 transition" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                    <span className="absolute bottom-3 left-3 right-3 text-white font-black text-xl text-left">{c.name}</span>
+                    {c.name === 'BURGER' && <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[10px] font-bold px-2 py-1 rounded-full">PIÙ VENDUTO</span>}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-8">
+                <button className="border-2 border-yellow-400 rounded-xl py-4 font-bold">🍽️ MANGIA QUI</button>
+                <button className="border-2 border-yellow-400 rounded-xl py-4 font-bold">🛍️ ASPORTO</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setCatId(null)} className="mb-4 bg-zinc-100 px-4 py-2 rounded-full font-bold">← Indietro alle categorie</button>
+              <h2 className="text-2xl font-black mb-4">{activeCat.name}</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {shown.map((p: any) => (
+                  <div key={p.id} className="border rounded-2xl overflow-hidden shadow-sm">
+                    <img src={p.image_url || p.image} className="h-32 w-full object-cover" />
+                    <div className="p-3">
+                      <div className="font-bold">{p.name}</div>
+                      <div className="text-sm opacity-60 line-clamp-2">{p.description}</div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="font-black">€ {Number(p.price).toFixed(2)}</span>
+                        <button onClick={() => setCart([...cart, {...p, qty: 1 }])} className="bg-yellow-400 px-4 py-2 rounded-full font-bold">+</button>
+                      </div>
                     </div>
                   </div>
-                </button>
-              ))}
-              {shown.length === 0 && (
-                <p className="col-span-full p-6 text-3xl text-muted-foreground">Ancora nessun prodotto in questa categoria.</p>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
-            {menu.categories.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCatId(c.id)}
-                className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow"
-              >
-                {c.image && <img src={c.image} alt={c.name} loading="lazy" className="h-48 w-full object-cover" />}
-                <span className="flex flex-1 items-center justify-center p-5 text-center font-display text-4xl leading-tight break-words">{c.name}</span>
-              </button>
+                ))}
+              </div>
+              {shown.length === 0 && <div className="text-center opacity-50 mt-10">Nessun piatto in questa categoria</div>}
+            </>
+          )}
+        </div>
+
+        {/* CART */}
+        <div className="w-[340px] bg-zinc-50 border-l p-6 flex flex-col">
+          <h3 className="font-bold mb-6">🛒 Il tuo carrello - {cart.length} articoli</h3>
+          <div className="flex-1">
+            {cart.length === 0? (
+              <div className="text-center mt-20">
+                <div className="w-20 h-20 bg-yellow-100 rounded-full mx-auto flex items-center justify-center text-3xl mb-4">🛍️</div>
+                <div className="font-bold">Carrello vuoto</div>
+                <div className="text-sm opacity-60">Aggiungi un piatto per iniziare</div>
+              </div>
+            ) : cart.map((i, idx) => (
+              <div key={idx} className="flex justify-between py-2 border-b text-sm">
+                <span>{i.qty}x {i.name}</span>
+                <span>€ {(i.price * i.qty).toFixed(2)}</span>
+              </div>
             ))}
           </div>
-        )}
-      </section>
-      {cartPanel}
-      {custom && (
-        <Customize
-          p={custom}
-          onClose={() => setCustom(null)}
-          onAdd={(extras, removed) => {
-            add(custom, extras, removed);
-            setCustom(null);
-          }}
-        />
-      )}
-    </main>
-  );
-}
-
-function Customize({
-  p,
-  onClose,
-  onAdd,
-}: {
-  p: Product;
-  onClose: () => void;
-  onAdd: (extras: string[], removed: string[]) => void;
-}) {
-  const [extras, setExtras] = useState<string[]>([]);
-  const [removed, setRemoved] = useState<string[]>([]);
-  const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
-    set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const unit = p.price + p.extras.filter((e) => extras.includes(e.name)).reduce((s, e) => s + e.price, 0);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-6 backdrop-blur-sm" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-label={`Personalizza ${p.name}`}
-        onClick={(e) => e.stopPropagation()}
-        className="animate-pop flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-card"
-      >
-        <div className="flex items-center gap-6 border-b p-6">
-          {p.image && <img src={p.image} alt={p.name} width={160} height={160} className="h-40 w-40 rounded-2xl object-cover" />}
-          <div className="flex-1">
-            <h2 className="font-display text-7xl leading-none">{p.name}</h2>
-            {p.description && <p className="mt-2 text-2xl text-muted-foreground">{p.description}</p>}
-            <p className="mt-2 font-display text-5xl text-accent">{euro(p.price)}</p>
+          <div className="border-t pt-4">
+            <div className="flex justify-between font-bold text-lg"><span>Subtotale</span><span>€ {total.toFixed(2)}</span></div>
+            <button className={`w-full mt-4 py-4 rounded-xl font-black ${total > 0? 'bg-yellow-400' : 'bg-zinc-300'}`}>PROSEGUI - € {total.toFixed(2)}</button>
+            <div className="text-[10px] text-center opacity-50 mt-2">IVA inclusa • Pagamento al termine</div>
           </div>
-        </div>
-        <div className="flex-1 space-y-8 overflow-y-auto p-6">
-          {p.extras.length > 0 && (
-            <section>
-              <h3 className="mb-4 font-display text-5xl">Aggiungi extra</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {p.extras.map((e) => {
-                  const on = extras.includes(e.name);
-                  return (
-                    <button
-                      key={e.name}
-                      aria-pressed={on}
-                      onClick={() => toggle(extras, setExtras, e.name)}
-                      className={`tap flex h-24 items-center justify-between rounded-2xl border-4 px-5 text-3xl font-bold ${on ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-muted"}`}
-                    >
-                      <span>{on ? "✓ " : "+ "}{e.name}</span>
-                      <span>{euro(e.price)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-          {p.ingredients.length > 0 && (
-            <section>
-              <h3 className="mb-4 font-display text-5xl">Togli ingredienti</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {p.ingredients.map((g) => {
-                  const off = removed.includes(g);
-                  return (
-                    <button
-                      key={g}
-                      aria-pressed={off}
-                      onClick={() => toggle(removed, setRemoved, g)}
-                      className={`tap h-24 rounded-2xl border-4 px-5 text-left text-3xl font-bold ${off ? "border-destructive bg-destructive/20 text-muted-foreground line-through" : "border-transparent bg-muted"}`}
-                    >
-                      {off ? "✕ " : "✓ "}{g}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-        </div>
-        <div className="grid grid-cols-[1fr_2fr] gap-4 border-t p-6">
-          <button onClick={onClose} className="tap h-28 rounded-3xl bg-secondary font-display text-5xl">Annulla</button>
-          <button onClick={() => onAdd(extras, removed)} className="tap glow h-28 rounded-3xl bg-primary font-display text-5xl text-primary-foreground">
-            Aggiungi · {euro(unit)}
-          </button>
         </div>
       </div>
     </div>
