@@ -76,7 +76,7 @@ export async function scanPrinters(
   let idx = 0;
   const worker = async () => {
     while (idx < ips.length) {
-      const ip = ips[idx++];
+      const ip = ips[idx++]!;
       if (await probe(`${https ? "https" : "http"}://${ip}/cgi-bin/epos/service.cgi?devid=local_printer`, 2000)) found.push(ip);
       onProgress(++done, ips.length);
     }
