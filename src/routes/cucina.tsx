@@ -5,7 +5,8 @@ import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
-import { itemNotes } from "@/lib/menu";
+import { itemNotes, type Order } from "@/lib/menu";
+import { loadPrinter, printTicket } from "@/lib/epson";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -81,7 +82,7 @@ function Kitchen() {
         </button>
       </header>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-5">
         {orders.map((o) => (
           <article
             key={o.id}
@@ -104,6 +105,12 @@ function Kitchen() {
                 </li>
               ))}
             </ul>
+            <button
+              onClick={() => printTicket(loadPrinter(), o as Order).catch((e) => alert(`Stampa non riuscita: ${e.message}`))}
+              className="tap mb-3 h-12 rounded-2xl bg-secondary text-xl font-bold"
+            >
+              🖨️ Ristampa comanda
+            </button>
             {o.status === "preparing" ? (
               <button onClick={() => setStatus(o.id, "ready")} className="tap h-20 rounded-2xl bg-success font-display text-5xl text-success-foreground">
                 Pronto

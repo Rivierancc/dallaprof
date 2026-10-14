@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CassaRouteImport } from './routes/cassa'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -17,6 +18,11 @@ import { Route as MenuRouteImport } from './routes/menu'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CassaRoute = CassaRouteImport.update({
+  id: '/cassa',
+  path: '/cassa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CucinaRoute = CucinaRouteImport.update({
@@ -37,12 +43,14 @@ const MenuRoute = MenuRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cucina' | '/display' | '/menu'
+  fullPaths: '/' | '/cassa' | '/cucina' | '/display' | '/menu'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cucina' | '/display' | '/menu'
-  id: '__root__' | '/' | '/cucina' | '/display' | '/menu'
+  to: '/' | '/cassa' | '/cucina' | '/display' | '/menu'
+  id: '__root__' | '/' | '/cassa' | '/cucina' | '/display' | '/menu'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CassaRoute: typeof CassaRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
   MenuRoute: typeof MenuRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cassa': {
+      id: '/cassa'
+      path: '/cassa'
+      fullPath: '/cassa'
+      preLoaderRoute: typeof CassaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cucina': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CassaRoute: CassaRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
   MenuRoute: MenuRoute,
