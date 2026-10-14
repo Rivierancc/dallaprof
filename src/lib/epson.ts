@@ -50,3 +50,37 @@ export async function printTicket(cfg: PrinterCfg, o: Order) {
   const txt = await r.text();
   if (!/success="true"/.test(txt)) throw new Error("La stampante non ha risposto");
 }
+
+// Ricerca stampanti in rete locale: prova ogni indirizzo delle reti indicate.
+async function probe(url: string, ms: number) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  try {
+    await fetch(url, { mode: "no-cors", signal: c.signal });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+export async function scanPrinters(
+  subnets: string[],
+  https: boolean,
+  onProgress: (done: number, total: number) => void,
+) {
+  const ips = subnets.flatMap((s) => Array.from({ length: 254 }, (_, i) => `${s}.${i + 1}`));
+  const found: string[] = [];
+  let done = 0;
+  let idx = 0;
+  const worker = async () => {
+    while (idx < ips.length) {
+      const ip = ips[idx++];
+      if (await probe(`${https ? "https" : "http"}://${ip}/cgi-bin/epos/service.cgi?devid=local_printer`, 2000)) found.push(ip);
+      onProgress(++done, ips.length);
+    }
+  };
+  await Promise.all(Array.from({ length: 40 }, worker));
+  return found;
+}
