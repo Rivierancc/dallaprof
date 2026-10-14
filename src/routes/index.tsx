@@ -1,123 +1,72 @@
+iimport { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { useMenu } from "../hooks/useMenu";
 
-export default function TotemHome() {
-  const { menu } = useMenu() as any;
-  const [catId, setCatId] = useState<string | null>(null);
-  const [cart, setCart] = useState<any[]>([]);
+type Category = { id: string; name: string; color: string };
+type Product = { id: string; name: string; price: number; categoryId: string; image: string };
 
-  const categories = menu?.categories || [];
-  const products = menu?.products || [];
+const categories: Category[] = [
+  { id: "all", name: "Tutti", color: "#000" },
+  { id: "panini", name: "Panini", color: "#FF6B00" },
+  { id: "pizze", name: "Pizze", color: "#E91E63" },
+  { id: "bibite", name: "Bibite", color: "#2196F3" },
+];
 
-  const activeCat = useMemo(() => {
-    if (!catId) return null;
-    return categories.find((c: any) => String(c.id) === String(catId));
-  }, [catId, categories]);
+const products: Product[] = [
+  { id: "1", name: "Burger Classico", price: 6.5, categoryId: "panini", image: "🍔" },
+  { id: "2", name: "Cheeseburger", price: 7.0, categoryId: "panini", image: "🍔" },
+  { id: "3", name: "Doppio Burger", price: 9.0, categoryId: "panini", image: "🍔" },
+  { id: "4", name: "Margherita", price: 5.0, categoryId: "pizze", image: "🍕" },
+  { id: "5", name: "Diavola", price: 7.5, categoryId: "pizze", image: "🍕" },
+  { id: "6", name: "Coca Cola", price: 2.5, categoryId: "bibite", image: "🥤" },
+];
 
-  const shown = useMemo(() => {
-    if (!activeCat) return [];
-    return products.filter((p: any) => {
-      const pCat = String(p.category_id || p.categoryId || "");
-      return pCat === String(activeCat.id);
-    }).filter((p: any) => p.is_available!== false);
-  }, [activeCat, products]);
+export const Route = createFileRoute("/")({
+  component: TotemHome,
+});
 
-  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+function TotemHome() {
+  const [activeCategory, setActiveCategory] = useState("all");
+
+  const filteredProducts = useMemo(() => {
+    if (activeCategory === "all") return products;
+    return products.filter((p) => p.categoryId === activeCategory);
+  }, [activeCategory]);
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 flex flex-col">
-      {/* HEADER */}
-      <div className="border-b-4 border-yellow-400 p-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center font-black">RB</div>
-          <div>
-            <div className="font-black text-xl leading-none">ROSSO BRUSCO</div>
-            <div className="text-xs opacity-60">BURGER & STREET FOOD ITALIANO</div>
-          </div>
-        </div>
-        <div className="text-sm">IT | EN • AIUTO • 12:34</div>
+    <div style={{ background: "#FFFFFF", minHeight: "100vh", fontFamily: "sans-serif", padding: "20px" }}>
+      <h1 style={{ textAlign: "center", color: "#111" }}>Dalla Prof - Totem</h1>
+
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", margin: "20px 0", flexWrap: "wrap" }}>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
+            style={{
+              padding: "12px 24px",
+              borderRadius: "30px",
+              border: activeCategory === cat.id? "2px solid #000" : "1px solid #DDD",
+              background: activeCategory === cat.id? "#000" : "#FFF",
+              color: activeCategory === cat.id? "#FFF" : "#000",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: "16px"
+            }}
+          >
+            {cat.name}
+          </button>
+        ))}
       </div>
 
-      <div className="flex flex-1">
-        {/* LEFT */}
-        <div className="flex-1 p-6">
-          {!activeCat? (
-            <>
-              <div className="bg-yellow-100 rounded-2xl p-5 mb-6">
-                <h1 className="text-2xl font-black">Benvenuto! Scegli una categoria</h1>
-                <p className="opacity-70">Tocca ciò che desideri e aggiungilo al carrello</p>
-              </div>
-
-              <h2 className="font-bold text-lg mb-4 border-b-2 border-yellow-400 inline-block">Categorie</h2>
-
-              <div className="grid grid-cols-2 gap-4">
-                {categories.map((c: any) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setCatId(c.id)}
-                    className="relative h-44 rounded-2xl overflow-hidden shadow-lg group"
-                  >
-                    <img src={c.image_url || c.image} className="w-full h-full object-cover group-active:scale-105 transition" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                    <span className="absolute bottom-3 left-3 right-3 text-white font-black text-xl text-left">{c.name}</span>
-                    {c.name === 'BURGER' && <span className="absolute top-3 right-3 bg-yellow-400 text-black text-[10px] font-bold px-2 py-1 rounded-full">PIÙ VENDUTO</span>}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-8">
-                <button className="border-2 border-yellow-400 rounded-xl py-4 font-bold">🍽️ MANGIA QUI</button>
-                <button className="border-2 border-yellow-400 rounded-xl py-4 font-bold">🛍️ ASPORTO</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <button onClick={() => setCatId(null)} className="mb-4 bg-zinc-100 px-4 py-2 rounded-full font-bold">← Indietro alle categorie</button>
-              <h2 className="text-2xl font-black mb-4">{activeCat.name}</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {shown.map((p: any) => (
-                  <div key={p.id} className="border rounded-2xl overflow-hidden shadow-sm">
-                    <img src={p.image_url || p.image} className="h-32 w-full object-cover" />
-                    <div className="p-3">
-                      <div className="font-bold">{p.name}</div>
-                      <div className="text-sm opacity-60 line-clamp-2">{p.description}</div>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="font-black">€ {Number(p.price).toFixed(2)}</span>
-                        <button onClick={() => setCart([...cart, {...p, qty: 1 }])} className="bg-yellow-400 px-4 py-2 rounded-full font-bold">+</button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {shown.length === 0 && <div className="text-center opacity-50 mt-10">Nessun piatto in questa categoria</div>}
-            </>
-          )}
-        </div>
-
-        {/* CART */}
-        <div className="w-[340px] bg-zinc-50 border-l p-6 flex flex-col">
-          <h3 className="font-bold mb-6">🛒 Il tuo carrello - {cart.length} articoli</h3>
-          <div className="flex-1">
-            {cart.length === 0? (
-              <div className="text-center mt-20">
-                <div className="w-20 h-20 bg-yellow-100 rounded-full mx-auto flex items-center justify-center text-3xl mb-4">🛍️</div>
-                <div className="font-bold">Carrello vuoto</div>
-                <div className="text-sm opacity-60">Aggiungi un piatto per iniziare</div>
-              </div>
-            ) : cart.map((i, idx) => (
-              <div key={idx} className="flex justify-between py-2 border-b text-sm">
-                <span>{i.qty}x {i.name}</span>
-                <span>€ {(i.price * i.qty).toFixed(2)}</span>
-              </div>
-            ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "16px", maxWidth: "900px", margin: "0 auto" }}>
+        {filteredProducts.map((p) => (
+          <div key={p.id} style={{ background: "#FFF", border: "1px solid #EEE", borderRadius: "20px", padding: "20px", textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: "50px" }}>{p.image}</div>
+            <div style={{ fontWeight: "bold", marginTop: "10px", color: "#111" }}>{p.name}</div>
+            <div style={{ color: "#FF6B00", fontWeight: "bold", marginTop: "5px" }}>€ {p.price.toFixed(2)}</div>
           </div>
-          <div className="border-t pt-4">
-            <div className="flex justify-between font-bold text-lg"><span>Subtotale</span><span>€ {total.toFixed(2)}</span></div>
-            <button className={`w-full mt-4 py-4 rounded-xl font-black ${total > 0? 'bg-yellow-400' : 'bg-zinc-300'}`}>PROSEGUI - € {total.toFixed(2)}</button>
-            <div className="text-[10px] text-center opacity-50 mt-2">IVA inclusa • Pagamento al termine</div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
+}
 }
