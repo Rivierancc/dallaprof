@@ -130,7 +130,7 @@ function Cassa() {
       {msg && <p className="mb-4 rounded-2xl bg-muted p-4 text-2xl font-bold">{msg}</p>}
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine da incassare</p>}
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {orders.map((o) => (
           <article key={o.id} className="animate-pop flex flex-col rounded-3xl border-4 border-primary bg-card p-5">
             <div className="flex items-baseline justify-between">
