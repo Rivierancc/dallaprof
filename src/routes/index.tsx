@@ -29,7 +29,7 @@ function Kiosk() {
   const [orderNo, setOrderNo] = useState<number | null>(null);
   const [custom, setCustom] = useState<Product | null>(null);
 
-  const activeCat = menu.categories.find((c) => c.id === catId) ?? menu.categories[0];
+  const activeCat = menu.categories.find((c) => c.id === catId);
   const catOf = (p: Product) => {
     const r = p as Product & { categoryId?: string };
     return String(r.category_id ?? r.categoryId ?? "");
@@ -212,35 +212,50 @@ function Kiosk() {
   return (
     <main className="flex h-screen overflow-hidden">
       <section className="flex flex-1 flex-col overflow-hidden">
-        <nav className="grid shrink-0 grid-cols-3 gap-3 overflow-y-auto p-4 sm:grid-cols-4">
-          {menu.categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCatId(c.id)}
-              className={`tap flex min-h-[70px] flex-col items-center justify-center overflow-hidden rounded-2xl p-2 text-center leading-tight break-words ${activeCat?.id === c.id ? "bg-accent text-accent-foreground" : "bg-card"}`}
-            >
-              {c.image && (
-                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-[4/3] w-full rounded-xl object-cover" />
+        {activeCat ? (
+          <>
+            <header className="flex shrink-0 items-center gap-6 p-4">
+              <button
+                onClick={() => setCatId("")}
+                className="tap flex h-24 shrink-0 items-center gap-3 rounded-2xl bg-secondary px-8 font-display text-4xl"
+              >
+                ← Indietro
+              </button>
+              <h1 className="truncate font-display text-6xl text-accent">{activeCat.name}</h1>
+            </header>
+            <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
+              {shown.map((p) => (
+                <button key={p.id} onClick={() => pick(p)} className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow">
+                  {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />}
+                  <div className="flex min-w-0 flex-1 flex-col p-5">
+                    <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
+                    {p.description && <p className="mt-1 line-clamp-2 text-lg text-muted-foreground">{p.description}</p>}
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                      <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-2xl text-primary-foreground">+</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              {shown.length === 0 && (
+                <p className="col-span-full p-6 text-3xl text-muted-foreground">Ancora nessun prodotto in questa categoria.</p>
               )}
-              <span className="block py-2 font-display text-3xl">{c.name}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((p) => (
-            <button key={p.id} onClick={() => pick(p)} className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow">
-              {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />}
-              <div className="flex min-w-0 flex-1 flex-col p-5">
-                <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
-                {p.description && <p className="mt-1 line-clamp-2 text-lg text-muted-foreground">{p.description}</p>}
-                <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                  <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-2xl text-primary-foreground">+</span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {menu.categories.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setCatId(c.id)}
+                className="tap flex min-w-0 flex-col overflow-hidden rounded-3xl bg-card text-left shadow"
+              >
+                {c.image && <img src={c.image} alt={c.name} loading="lazy" className="h-48 w-full object-cover" />}
+                <span className="flex flex-1 items-center justify-center p-5 text-center font-display text-4xl leading-tight break-words">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
       {cartPanel}
       {custom && (
