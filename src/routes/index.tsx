@@ -204,7 +204,7 @@ function Kiosk() {
     );
 
   return (
-    <main className="flex h-screen">
+    <main className="flex min-h-screen flex-col lg:flex-row h-screen">
       <section className="flex flex-1 flex-col overflow-hidden">
         <nav
           className="grid gap-3 p-4"
@@ -223,7 +223,7 @@ function Kiosk() {
             </button>
           ))}
         </nav>
-        <div className="grid flex-1 grid-cols-2 landscape:grid-cols-3 content-start gap-5 overflow-y-auto p-4 pb-10">
+    <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 auto-rows-min overflow-y-auto content-start">
           {shown.map((p) => (
             <button key={p.id} onClick={() => pick(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
               {p.image && (
