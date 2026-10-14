@@ -58,7 +58,6 @@ function Kiosk() {
 
   const pay = async () => {
     setPaying(true);
-    await new Promise((r) => setTimeout(r, 1500));
     const { data, error } = await supabase
       .from("orders")
       .insert({ dine_option: dine, items: cart, total })
@@ -80,7 +79,7 @@ function Kiosk() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-16 p-12">
         <h1 className="font-display text-[9rem] leading-none text-accent">Dove mangi?</h1>
-        <div className="grid w-full max-w-4xl gap-10">
+        <div className="grid w-full max-w-4xl gap-10 landscape:max-w-6xl landscape:grid-cols-2">
           {(["qui", "asporto"] as const).map((d) => (
             <button
               key={d}
@@ -105,13 +104,14 @@ function Kiosk() {
         <div className="animate-pop glow flex h-[30rem] w-[30rem] items-center justify-center rounded-full bg-accent font-display text-[20rem] leading-none text-accent-foreground">
           {String(orderNo).padStart(2, "0")}
         </div>
-        <p className="text-4xl font-bold">Grazie! Segui il numero sul display.</p>
+        <p className="text-4xl font-bold">Vai in cassa e paga con carta al POS SumUp.</p>
+        <p className="text-3xl text-muted-foreground">Dopo il pagamento segui il numero sul display.</p>
         <p className="text-2xl text-muted-foreground">Tocca per un nuovo ordine</p>
       </main>
     );
 
   const cartPanel = (
-    <aside className="flex w-[380px] shrink-0 flex-col border-l bg-card">
+    <aside className="flex w-[24rem] shrink-0 flex-col border-l bg-card">
       <div className="border-b p-6">
         <h2 className="font-display text-6xl">Carrello</h2>
         <p className="text-xl text-muted-foreground">{dine === "qui" ? "Mangio qui" : "Asporto"} · {count} articoli</p>
@@ -187,9 +187,9 @@ function Kiosk() {
             disabled={paying}
             className="tap glow h-48 rounded-3xl bg-primary font-display text-9xl text-primary-foreground disabled:opacity-60"
           >
-            {paying ? "Pagamento..." : "💳 Paga"}
+            {paying ? "Invio..." : "💳 Paga con carta"}
           </button>
-          <p className="text-center text-2xl text-muted-foreground">Avvicina la carta al lettore (simulato)</p>
+          <p className="text-center text-2xl text-muted-foreground">Conferma e paga al POS SumUp in cassa: poi l'ordine va in cucina</p>
         </section>
         {cartPanel}
       </main>
@@ -208,7 +208,7 @@ function Kiosk() {
       <section className="flex flex-1 flex-col overflow-hidden">
         <nav
           className="grid gap-3 p-4"
-          style={{ gridTemplateColumns: `repeat(${Math.min(menu.categories.length, 4)}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${Math.min(menu.categories.length, 6)}, minmax(0, 1fr))` }}
         >
           {menu.categories.map((c) => (
             <button
@@ -217,13 +217,13 @@ function Kiosk() {
               className={`tap overflow-hidden rounded-2xl border-4 ${activeCat?.id === c.id ? "border-accent bg-accent text-accent-foreground" : "border-transparent bg-card"}`}
             >
               {c.image && (
-                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square w-full object-cover" />
+                <img src={c.image} alt={c.name} width={1024} height={1024} className="aspect-square landscape:aspect-[4/3] w-full object-cover" />
               )}
               <span className="block py-2 font-display text-4xl">{c.name}</span>
             </button>
           ))}
         </nav>
-        <div className="grid flex-1 grid-cols-2 content-start gap-5 overflow-y-auto p-4 pb-10">
+        <div className="grid flex-1 grid-cols-2 landscape:grid-cols-3 content-start gap-5 overflow-y-auto p-4 pb-10">
           {shown.map((p) => (
             <button key={p.id} onClick={() => pick(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
               {p.image && (

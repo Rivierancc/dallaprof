@@ -23,7 +23,11 @@ export function useLiveOrders(statuses: string[], onInsert?: (o: Order) => void)
     const channel = supabase
       .channel(`orders-${key}-${Math.random()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (p) => {
-        if (p.eventType === "INSERT") cb.current?.(p.new as Order);
+        // Avvisa quando un ordine entra nella lista (nuovo o appena pagato).
+        const n = p.new as Order | undefined;
+        const o = p.old as Partial<Order> | undefined;
+        if (n?.status && statuses.includes(n.status) && (p.eventType === "INSERT" || !o?.status || !statuses.includes(o.status)))
+          cb.current?.(n);
         load();
       })
       .subscribe();

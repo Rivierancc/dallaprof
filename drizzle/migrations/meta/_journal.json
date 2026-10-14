@@ -43,6 +43,13 @@
       "when": 1791911147872,
       "tag": "0005_product_description",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791971919291,
+      "tag": "0006_orders_await_payment",
+      "breakpoints": true
     }
   ]
 }
