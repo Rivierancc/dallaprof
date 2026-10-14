@@ -6,7 +6,7 @@ import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, settleOrder } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
 import { euro, itemNotes, type Order } from "@/lib/menu";
-import { loadPrinter, printTicket, savePrinter, type PrinterCfg } from "@/lib/epson";
+import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
 export const Route = createFileRoute("/cassa")({
   loader: () => kitchenStatus(),
@@ -33,6 +33,14 @@ function Cassa() {
   const [showCfg, setShowCfg] = useState(false);
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [nets, setNets] = useState("192.168.1, 192.168.0");
+  const [scan, setScan] = useState<{ done: number; total: number; found: string[] } | null>(null);
+  const runScan = async () => {
+    const subnets = nets.split(",").map((s) => s.trim().split(".").slice(0, 3).join(".")).filter(Boolean);
+    setScan({ done: 0, total: 1, found: [] });
+    const found = await scanPrinters(subnets, cfg.https, (done, total) => setScan((p) => ({ done, total, found: p?.found ?? [] })));
+    setScan({ done: 1, total: 1, found });
+  };
 
   useEffect(() => setCfg(loadPrinter()), []);
   const update = (c: PrinterCfg) => {
@@ -94,6 +102,19 @@ function Cassa() {
               inputMode="decimal"
             />
           </label>
+          <div className="grid gap-3 rounded-2xl bg-muted p-4">
+            <span className="font-bold">Cerca stampanti in rete</span>
+            <input value={nets} onChange={(e) => setNets(e.target.value)} className="rounded-xl bg-card px-4 py-3 select-text" />
+            <button disabled={!!scan && scan.done < scan.total} onClick={runScan} className="tap h-14 rounded-2xl bg-secondary font-bold disabled:opacity-50">
+              {scan && scan.done < scan.total ? `Ricerca… ${Math.round((scan.done / scan.total) * 100)}%` : "🔍 Cerca stampanti"}
+            </button>
+            {scan && scan.done === scan.total && (scan.found.length ? scan.found.map((ip) => (
+              <button key={ip} onClick={() => update({ ...cfg, ip })} className="tap h-14 rounded-2xl bg-primary font-bold text-primary-foreground">
+                Usa {ip} {cfg.ip === ip ? "✓" : ""}
+              </button>
+            )) : <p className="text-xl">Nessuna stampante trovata. Prova senza "Collegamento sicuro" o stampa il foglio di stato (vedi sotto).</p>)}
+            <p className="text-lg text-muted-foreground">Per trovare l'indirizzo a mano: a stampante spenta tieni premuto il tasto FEED e accendila; il foglio stampato riporta l'indirizzo IP.</p>
+          </div>
           <label className="flex items-center gap-3">
             <input type="checkbox" className="h-8 w-8" checked={cfg.auto} onChange={(e) => update({ ...cfg, auto: e.target.checked })} />
             Stampa la comanda in automatico dopo il pagamento
