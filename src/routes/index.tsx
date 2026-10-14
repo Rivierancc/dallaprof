@@ -223,22 +223,23 @@ function Kiosk() {
             </button>
           ))}
         </nav>
-    <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto">
-          {shown.map((p) => (
-            <button key={p.id} onClick={() => pick(p)} className="tap overflow-hidden rounded-3xl bg-card text-left">
-              {p.image && (
-                <img src={p.image} alt={p.name} loading="lazy" width={1024} height={1024} className="aspect-square w-full object-cover" />
-              )}
-              <div className="p-5">
-                <p className="text-3xl font-extrabold">{p.name}</p>
-                {p.description && <p className="mt-2 line-clamp-3 text-xl text-muted-foreground">{p.description}</p>}
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="font-display text-5xl text-accent">{euro(p.price)}</span>
-                  <span className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-6xl font-bold text-primary-foreground">+</span>
-                </div>
-              </div>
-            </button>
-          ))}
+  <div className="grid flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto content-start">
+  {shown.map((p) => (
+    <button key={p.id} onClick={() => pick(p)} className="tap text-left flex flex-col min-w-0 overflow-hidden rounded-3xl bg-white shadow">
+      {p.image && (
+        <img src={p.image} alt={p.name} loading="lazy" className="h-48 w-full object-cover" />
+      )}
+      <div className="p-5 min-w-0 flex-1 flex flex-col">
+        <p className="text-2xl font-extrabold leading-tight break-words">{p.name}</p>
+        {p.description && <p className="mt-1 text-lg text-muted-foreground line-clamp-2">{p.description}</p>}
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="font-display text-2xl font-bold">{euro(p.price)}</span>
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-600 text-white text-2xl">+</span>
+        </div>
+      </div>
+    </button>
+  ))}
+</div>
         </div>
       </section>
       {cartPanel}
