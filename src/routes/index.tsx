@@ -7,8 +7,9 @@ const DEFAULT_COLORS = {
   bottoneAggiungi: "#000000",
   bottoneCarrello: "#000000",
   sfondo: "#F5F5F7",
+  categorie: {} as Record<string, string>,
 }
-const DEFAULT_PASSWORD = "1234" // CAMBIA QUI LA PASSWORD SE VUOI
+const DEFAULT_PASSWORD = "1234"
 
 function TotemPage() {
   const { data, isLoading } = useQuery(menuQueryOptions)
@@ -25,13 +26,20 @@ function TotemPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("dallaprof_colors")
-    if (saved) setColors(JSON.parse(saved))
+    if (saved) setColors({...DEFAULT_COLORS,...JSON.parse(saved), categorie: JSON.parse(saved).categorie || {} })
     const pwd = localStorage.getItem("dallaprof_pwd")
     if (pwd) setSavedPassword(pwd)
   }, [])
 
   const saveColor = (key: string, value: string) => {
     const newColors = {...colors, [key]: value }
+    setColors(newColors as any)
+    localStorage.setItem("dallaprof_colors", JSON.stringify(newColors))
+  }
+
+  const saveCategoriaColor = (catId: string, value: string) => {
+    const newCatColors = {...colors.categorie, [catId]: value }
+    const newColors = {...colors, categorie: newCatColors }
     setColors(newColors)
     localStorage.setItem("dallaprof_colors", JSON.stringify(newColors))
   }
@@ -55,7 +63,10 @@ function TotemPage() {
 
   const categories = (data as any)?.categories || []
   const products = (data as any)?.products || []
-  const getColor = (cat: any, i: number) => cat.color || ["#FFB800","#FF3B30","#007AFF","#AF52DE","#34C759","#FF9500"][i % 6]
+  const getCategoryColor = (cat: any, i: number) => {
+    if (colors.categorie[cat.id]) return colors.categorie[cat.id]
+    return cat.color || ["#FFB800","#FF3B30","#007AFF","#AF52DE","#34C759","#FF9500"][i % 6]
+  }
   const euro = (n: number) => `€ ${Number(n).toFixed(2)}`
 
   const addToCart = (p: any, removedIngredients: string[] = [], extraList: any[] = []) => {
@@ -113,10 +124,10 @@ function TotemPage() {
           <p className="text-gray-600 mb-8 text-[20px]">Scegli una categoria</p>
           <div className="grid grid-cols-3 gap-5">
             {categories.map((cat: any, i: number) => {
-              const catColor = getColor(cat, i)
+              const catColor = getCategoryColor(cat, i)
               return (
-                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ borderColor: catColor, borderWidth: 2.5, backgroundColor: "white" }} className="h-36 rounded-[24px] flex items-center justify-center shadow-sm active:scale-95">
-                  <span style={{ color: catColor }} className="font-black text-[22px] text-center px-2">{cat.name}</span>
+                <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ backgroundColor: catColor }} className="h-36 rounded-[24px] flex items-center justify-center shadow-md active:scale-95 border-0">
+                  <span className="font-black text-[24px] text-white text-center px-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{cat.name.toUpperCase()}</span>
                 </button>
               )
             })}
@@ -127,7 +138,7 @@ function TotemPage() {
           {(() => {
             const currentCat = categories.find((c: any) => c.id === selectedCategory)
             const filtered = products.filter((p: any) => p.category_id === selectedCategory).sort((a: any,b: any) => a.position - b.position)
-            const color = getColor(currentCat, 0)
+            const color = getCategoryColor(currentCat, categories.indexOf(currentCat))
             return (
               <>
                 <button onClick={() => setSelectedCategory(null)} style={{ backgroundColor: color }} className="mb-6 text-white px-6 py-3 rounded-full font-bold text-[20px]">← {currentCat?.name}</button>
@@ -155,7 +166,6 @@ function TotemPage() {
         </div>
       )}
 
-      {/* PROMPT PASSWORD */}
       {showPasswordPrompt && (
         <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-sm rounded-[24px] p-8">
@@ -171,50 +181,45 @@ function TotemPage() {
         </div>
       )}
 
-      {/* PANNELLO COLORI PROTETTO */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-md rounded-[24px] p-8 max-h-[90vh] overflow-auto">
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-[24px] p-6 max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="font-black text-[28px] text-black">🎨 Colori</h2>
-              <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-gray-100 rounded-full font-black">✕</button>
+              <h2 className="font-black text-[26px] text-black">🎨 Personalizza colori</h2>
+              <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-gray-100 rounded-full font-black text-black">✕</button>
             </div>
 
-            <div className="space-y-5">
-              <div className="flex justify-between items-center border-2 p-4 rounded-xl">
-                <div><p className="font-bold text-black text-[18px]">Bottone AGGIUNGI 🛒</p><p className="text-sm text-gray-500">{colors.bottoneAggiungi}</p></div>
-                <input type="color" value={colors.bottoneAggiungi} onChange={(e) => saveColor("bottoneAggiungi", e.target.value)} className="w-16 h-16 rounded-xl" />
+            <div className="space-y-4">
+              <p className="font-black text-[16px] text-gray-500 uppercase">Bottoni generali</p>
+              <div className="flex justify-between items-center border-2 p-3 rounded-xl">
+                <p className="font-bold text-black">AGGIUNGI 🛒</p>
+                <input type="color" value={colors.bottoneAggiungi} onChange={(e) => saveColor("bottoneAggiungi", e.target.value)} className="w-14 h-14 rounded-xl" />
               </div>
-              <div className="flex justify-between items-center border-2 p-4 rounded-xl">
-                <div><p className="font-bold text-black text-[18px]">Bottone CARRELLO</p><p className="text-sm text-gray-500">{colors.bottoneCarrello}</p></div>
-                <input type="color" value={colors.bottoneCarrello} onChange={(e) => saveColor("bottoneCarrello", e.target.value)} className="w-16 h-16 rounded-xl" />
-              </div>
-              <div className="flex justify-between items-center border-2 p-4 rounded-xl">
-                <div><p className="font-bold text-black text-[18px]">Sfondo</p><p className="text-sm text-gray-500">{colors.sfondo}</p></div>
-                <input type="color" value={colors.sfondo} onChange={(e) => saveColor("sfondo", e.target.value)} className="w-16 h-16 rounded-xl" />
+              <div className="flex justify-between items-center border-2 p-3 rounded-xl">
+                <p className="font-bold text-black">CARRELLO</p>
+                <input type="color" value={colors.bottoneCarrello} onChange={(e) => saveColor("bottoneCarrello", e.target.value)} className="w-14 h-14 rounded-xl" />
               </div>
 
-              <div className="border-t pt-6 mt-6">
-                <p className="font-black text-black mb-3">Cambia password:</p>
-                <div className="flex gap-2">
-                  <input type="text" placeholder="Nuova password" id="newPwd" className="flex-1 border-2 border-black rounded-full px-4 py-3 font-bold text-black" />
-                  <button onClick={() => {
-                    const input = document.getElementById("newPwd") as HTMLInputElement
-                    if (input.value.length >= 4) {
-                      localStorage.setItem("dallaprof_pwd", input.value)
-                      setSavedPassword(input.value)
-                      alert("Password cambiata! Nuova: " + input.value)
-                      input.value = ""
-                    } else {
-                      alert("Minimo 4 caratteri")
-                    }
-                  }} className="bg-black text-white px-6 py-3 rounded-full font-bold">Salva</button>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">Attuale: {savedPassword}</p>
+              <p className="font-black text-[16px] text-gray-500 uppercase pt-4">Colori categorie</p>
+              <div className="space-y-3">
+                {categories.map((cat: any, i: number) => {
+                  const currentColor = getCategoryColor(cat, i)
+                  return (
+                    <div key={cat.id} className="flex justify-between items-center border-2 p-3 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div style={{ backgroundColor: currentColor }} className="w-8 h-8 rounded-full border"></div>
+                        <p className="font-bold text-black text-[16px]">{cat.name}</p>
+                      </div>
+                      <input type="color" value={currentColor} onChange={(e) => saveCategoriaColor(cat.id, e.target.value)} className="w-14 h-14 rounded-xl" />
+                    </div>
+                  )
+                })}
               </div>
 
-              <button onClick={() => { setColors(DEFAULT_COLORS); localStorage.removeItem("dallaprof_colors") }} className="w-full bg-gray-100 py-3 rounded-full font-bold text-black">Ripristina colori default</button>
-              <button onClick={() => setShowSettings(false)} style={{ backgroundColor: colors.bottoneAggiungi }} className="w-full text-white py-4 rounded-full font-black text-[20px]">FATTO ✓</button>
+              <div className="grid grid-cols-2 gap-3 pt-4">
+                <button onClick={() => { localStorage.removeItem("dallaprof_colors"); setColors(DEFAULT_COLORS) }} className="bg-gray-100 py-3 rounded-full font-bold text-black">Resetta tutto</button>
+                <button onClick={() => setShowSettings(false)} style={{ backgroundColor: colors.bottoneAggiungi }} className="text-white py-3 rounded-full font-black">FATTO ✓</button>
+              </div>
             </div>
           </div>
         </div>
