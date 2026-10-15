@@ -28,7 +28,6 @@ function TotemPage() {
   const [passwordError, setPasswordError] = useState(false)
   const [colors, setColors] = useState(DEFAULT_COLORS)
   const [savedPassword, setSavedPassword] = useState(DEFAULT_PASSWORD)
-  const [orderSuccess, setOrderSuccess] = useState<any>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem("dallaprof_colors")
@@ -57,37 +56,79 @@ function TotemPage() {
     else setPasswordError(true)
   }
 
+  const printScontrino = (order: any) => {
+    const win = window.open('', '_blank', 'width=300,height=600')
+    if (!win) return
+    const itemsHtml = order.items.map((it: any) => `
+      <div style="display:flex;justify-content:space-between;margin:6px 0">
+        <span>${it.name} ${it.removedIngredients?.length? ' (SENZA '+it.removedIngredients.join(',')+')' : ''}</span>
+        <span style="font-weight:900">€${Number(it.finalPrice).toFixed(2)}</span>
+      </div>
+    `).join('')
+
+    win.document.write(`
+      <html>
+      <head><title>Scontrino</title>
+      <style>
+        body{font-family:monospace; width:280px; padding:10px; color:black}
+        h1{text-align:center; font-size:22px; margin:0}
+       .center{text-align:center}
+        hr{border:1px dashed black}
+       .big{font-size:26px; font-weight:900; text-align:center; margin:10px 0}
+       .tipo{font-size:18px; font-weight:900; text-align:center; background:black; color:white; padding:8px; border-radius:10px; margin:10px 0}
+      </style>
+      </head>
+      <body>
+        <h1>DALLA PROF</h1>
+        <div class="center">Albenga</div>
+        <hr/>
+        <div class="center">${new Date().toLocaleString()}</div>
+        <div class="big">#${order.id}</div>
+        <div class="tipo">${order.order_type==='qui'?'🍽️ MANGIA QUI':'🥡 ASPORTO'}</div>
+        <hr/>
+        ${itemsHtml}
+        <hr/>
+        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900"><span>TOTALE</span><span>€${Number(order.total).toFixed(2)}</span></div>
+        <hr/>
+        <div class="center" style="font-weight:900; font-size:16px">VAI ALLA CASSA PER PAGARE</div>
+        <div class="center" style="margin-top:8px">Conserva questo scontrino</div>
+        <script>window.onload=()=>{window.print(); setTimeout(()=>window.close(),500)}</script>
+      </body>
+      </html>
+    `)
+    win.document.close()
+  }
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
       const { data, error } = await supabase
-      .from("orders")
-      .insert([{
+     .from("orders")
+     .insert([{
           items: orderData.items,
           total: orderData.total,
           order_type: orderData.type,
-          status: "in_attesa_cassa", // CORRETTO: non va in cucina finché non paghi!
+          status: "in_attesa_cassa",
           created_at: new Date().toISOString(),
         }])
-      .select()
-      .single()
+     .select()
+     .single()
       if (error) throw error
       return data
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
-      setOrderSuccess({ id: data.id, total: data.total, type: data.order_type })
+      // STAMPA SCONTRINO SUBITO
+      printScontrino(data)
       try { navigator.vibrate([200, 100, 200]) } catch {}
-      setTimeout(() => {
-        setOrderSuccess(null)
-        setCart([])
-        setShowCart(false)
-        setSelectedCategory(null)
-        setOrderType(null)
-      }, 8000)
+      // RESET IMMEDIATO PER PROSSIMO CLIENTE - SENZA SCHERMATA NERA
+      setCart([])
+      setShowCart(false)
+      setSelectedCategory(null)
+      setOrderType(null)
     },
     onError: (err) => {
       console.error(err)
-      alert("Errore invio ordine alla cassa: " + (err as any).message)
+      alert("Errore: " + (err as any).message)
     }
   })
 
@@ -111,26 +152,6 @@ function TotemPage() {
   const confirmOrder = () => {
     if (cart.length === 0) return
     createOrderMutation.mutate({ items: cart, total: total, type: orderType })
-  }
-
-  // SCHERMATA CORRETTA - VAI ALLA CASSA, NON IN PREPARAZIONE
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen bg-[#FFB800] text-black flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center text-[50px] mb-6 text-white">🛒</div>
-        <h1 className="text-[42px] font-black leading-none">ORDINE<br/>RICEVUTO!</h1>
-        <div className="mt-6 bg-black text-white rounded-[24px] px-10 py-6">
-          <p className="text-[18px] opacity-70">NUMERO ORDINE</p>
-          <p className="font-black text-[56px] leading-none">#{orderSuccess.id}</p>
-          <p className="font-bold text-[22px] mt-2">{orderSuccess.type==='qui'?'🍽️ MANGIA QUI':'🥡 ASPORTO'} - {euro(orderSuccess.total)}</p>
-        </div>
-        <div className="mt-8 bg-white border-[3px] border-black rounded-[20px] p-6 w-full max-w-sm">
-          <p className="font-black text-[24px] text-black">👉 VAI ALLA CASSA</p>
-          <p className="text-[18px] text-gray-700 mt-2">Mostra questo numero alla cassa per pagare.<br/><span className="font-black text-black">L'ordine NON è ancora in preparazione.</span><br/>Partirà in cucina solo dopo il pagamento.</p>
-        </div>
-        <p className="mt-6 text-[16px] opacity-60">Si chiude tra 8 secondi...</p>
-      </div>
-    )
   }
 
   if (!orderType) {
@@ -164,9 +185,9 @@ function TotemPage() {
             <div className="mt-10 border-t-[4px] border-black pt-6">
               <div className="flex justify-between items-center"><p className="text-[28px] font-bold text-gray-600">TOTALE:</p><p className="text-[56px] font-black text-black">{euro(total)}</p></div>
               <button onClick={confirmOrder} disabled={createOrderMutation.isPending} style={{ backgroundColor: colors.bottoneCarrello }} className="w-full mt-8 text-white py-6 rounded-full font-black text-[30px] shadow-xl active:scale-95 disabled:opacity-50">
-                {createOrderMutation.isPending? "INVIO..." : `CONFERMA ${orderType==='qui'?'🍽️':'🥡'} 🛒`}
+                {createOrderMutation.isPending? "STAMPA IN CORSO..." : `CONFERMA E STAMPA 🖨️`}
               </button>
-              <p className="text-center text-[14px] text-gray-500 mt-3">Verrà inviato alla Cassa per il pagamento</p>
+              <p className="text-center text-[14px] text-gray-500 mt-3">Verrà stampato lo scontrino e inviato in Cassa</p>
             </div>
           </>
         )}
