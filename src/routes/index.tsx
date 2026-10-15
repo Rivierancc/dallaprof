@@ -51,6 +51,7 @@ function Totem() {
 
   const createOrder = useMutation({
     mutationFn: async () => {
+      if (!dineOption) throw new Error("Scegli prima mangia qui o asporto")
       const { data: order, error } = await supabase
         .from("orders")
         .insert({ dine_option: dineOption, items: cart, total, status: "awaiting_payment" })
