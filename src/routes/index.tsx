@@ -61,7 +61,7 @@ function Totem() {
     },
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
-      setDone(order.order_number)
+      setDone(Number(order.order_number))
     },
     onError: (e) => alert(`Ordine non inviato: ${(e as Error).message}`),
   })
