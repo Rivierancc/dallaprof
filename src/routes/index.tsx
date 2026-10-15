@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions, type Category, type CartItem, type Product, euro } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
-import { supabase } from "@/integrations/supabase/client"export const Route = createFileRoute("/")({
+import { supabase } from "@/integrations/supabase/client"
+
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Totem — Totem Burger" },
@@ -15,18 +17,22 @@ import { supabase } from "@/integrations/supabase/client"export const Route = cr
     ],
   }),
   component: Totem,
-})function Totem() {
+})
+
+function Totem() {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const queryClient = useQueryClient()
-  const = useState<null | "qui" | "asporto">(null)
-  const = useState<string | null>(null)
-  const = useState<CartItem[]>([])
-  const = useState<Product | null>(null)
-  const = useState(false)
-  const = useState<number | null>(null)
+  const [dineOption, setDineOption] = useState<null | "qui" | "asporto">(null)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [custom, setCustom] = useState<Product | null>(null)
+  const [showCart, setShowCart] = useState(false)
+  const [done, setDone] = useState<number | null>(null)
+
   const categories = data?.categories?? []
-  const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), )
-  const total = cart.reduce((s, i) => s + i.price _ i.qty, 0)
+  const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), [data])
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
+
   const reset = () => {
     setCart([])
     setShowCart(false)
@@ -34,28 +40,48 @@ import { supabase } from "@/integrations/supabase/client"export const Route = cr
     setDineOption(null)
     setCustom(null)
   }
+
   useEffect(() => {
     if (done === null) return
     const t = setTimeout(reset, 15_000)
     return () => clearTimeout(t)
-  }, )
+  }, [done])
+
   const printComanda = (orderNum: number) => {
     const w = window.open('', '_blank', 'width=320,height=600')
     if (!w) return
-    const itemsHtml = cart.map(it =>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin:3px 0"><span>${it.qty}x ${it.name.toUpperCase()}</span><span>€${(it.price_it.qty).toFixed(2)}</span></div>
-    ).join('')
-    w.document.write(      <html><head>       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>       <style>         body{font-family:monospace;width:280px;padding:10px;margin:0;color:#000}        .num{font-size:72px;font-weight:900;text-align:center;margin:0}        .tipo{text-align:center;background:#000;color:#fff;padding:8px;border-radius:8px;font-weight:900;margin:8px 0}        .center{text-align:center;font-size:12px}         hr{border:1px dashed #000;margin:8px 0}        .footer{border:2px solid #000;text-align:center;font-weight:900;padding:8px;border-radius:8px;margin-top:10px}       </style></head><body>         <div class="center"><b>DALLA PROF</b><br/>Albenga - ${new Date().toLocaleString()}</div>         <div class="num">#${orderNum}</div>         <div style="text-align:center"><svg id="bc"></svg></div>         <div class="tipo">${dineOption==='qui'?'MANGIA QUI':'ASPORTO'}</div>         <hr/>${itemsHtml}<hr/>         <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px"><span>TOTALE</span><span>€${total.toFixed(2)}</span></div>         <hr/><div class="footer">PORTA IN CASSA<br/>PAGA CON CARTA AL POS SUMUP</div>         <script>           JsBarcode("#bc", "${orderNum}", {format:"CODE128",width:2,height:60,displayValue:false,margin:0});           window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}         </script>       </body></html>    )
+    const itemsHtml = cart.map(it => `<div style="display:flex;justify-content:space-between;font-size:12px;margin:3px 0"><span>${it.qty}x ${it.name.toUpperCase()}</span><span>€${(it.price*it.qty).toFixed(2)}</span></div>`).join('')
+    w.document.write(`
+      <html><head>
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+      <style>
+        body{font-family:monospace;width:280px;padding:10px;margin:0;color:#000}
+       .num{font-size:72px;font-weight:900;text-align:center;margin:0}
+       .tipo{text-align:center;background:#000;color:#fff;padding:8px;border-radius:8px;font-weight:900;margin:8px 0}
+       .center{text-align:center;font-size:12px}
+        hr{border:1px dashed #000;margin:8px 0}
+       .footer{border:2px solid #000;text-align:center;font-weight:900;padding:8px;border-radius:8px;margin-top:10px}
+      </style></head><body>
+        <div class="center"><b>DALLA PROF</b><br/>Albenga - ${new Date().toLocaleString()}</div>
+        <div class="num">#${orderNum}</div>
+        <div style="text-align:center"><svg id="bc"></svg></div>
+        <div class="tipo">${dineOption==='qui'?'MANGIA QUI':'ASPORTO'}</div>
+        <hr/>${itemsHtml}<hr/>
+        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px"><span>TOTALE</span><span>€${total.toFixed(2)}</span></div>
+        <hr/><div class="footer">PORTA IN CASSA<br/>PAGA CON CARTA AL POS SUMUP</div>
+        <script>
+          JsBarcode("#bc", "${orderNum}", {format:"CODE128",width:2,height:60,displayValue:false,margin:0});
+          window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}
+        </script>
+      </body></html>
+    `)
     w.document.close()
   }
+
   const createOrder = useMutation({
     mutationFn: async () => {
       if (!dineOption) throw new Error("Scegli prima mangia qui o asporto")
-      const { data: order, error } = await supabase
-       .from("orders")
-       .insert({ dine_option: dineOption, items: cart, total, status: "awaiting_payment" })
-       .select("id, order_number")
-       .single()
+      const { data: order, error } = await supabase.from("orders").insert({ dine_option: dineOption, items: cart, total, status: "awaiting_payment" }).select("id, order_number").single()
       if (error) throw error
       return order
     },
@@ -64,88 +90,79 @@ import { supabase } from "@/integrations/supabase/client"export const Route = cr
       printComanda(Number(order.order_number))
       setDone(Number(order.order_number))
     },
-    onError: (e) => alert(Ordine non inviato: ${(e as Error).message}),
+    onError: (e) => alert(`Ordine non inviato: ${(e as Error).message}`),
   })
-  if (isLoading)
-    return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">Caricamento…</div>
-  if (done!== null)
-    return (
-      <main className="grid min-h-screen place-items-center p-8 text-center">
-        <div className="animate-pop">
-          <p className="font-display text-7xl text-muted-foreground">Il tuo ordine è</p>
-          <p className="my-6 font-display text- leading-none text-accent">{String(done).padStart(2, "0")}</p>
-          <p className="font-display text-6xl">Vai in cassa e paga con carta al POS SumUp</p>
-          <button onClick={reset} className="tap mt-12 h-28 rounded-3xl bg-primary px-16 font-display text-6xl text-primary-foreground">
-            Nuovo ordine
+
+  if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">Caricamento…</div>
+
+  if (done!== null) return (
+    <main className="grid min-h-screen place-items-center p-8 text-center">
+      <div className="animate-pop">
+        <p className="font-display text-7xl text-muted-foreground">Il tuo ordine è</p>
+        <p className="my-6 font-display text-[28rem] leading-none text-accent">{String(done).padStart(2, "0")}</p>
+        <p className="font-display text-6xl">Vai in cassa e paga con carta al POS SumUp</p>
+        <button onClick={reset} className="tap mt-12 h-28 rounded-3xl bg-primary px-16 font-display text-6xl text-primary-foreground">Nuovo ordine</button>
+      </div>
+    </main>
+  )
+
+  if (!dineOption) return (
+    <main className="grid min-h-screen place-items-center p-8">
+      <div className="w-full max-w-[60rem] text-center">
+        <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
+        <div className="mt-16 grid gap-8">
+          <button onClick={() => setDineOption("qui")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
+            <span className="text-8xl">🍽️</span><span className="font-display text-8xl">Mangia qui</span>
+          </button>
+          <button onClick={() => setDineOption("asporto")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
+            <span className="text-8xl">🥡</span><span className="font-display text-8xl">Asporto</span>
           </button>
         </div>
-      </main>
-    )
-  if (!dineOption)
-    return (
-      <main className="grid min-h-screen place-items-center p-8">
-        <div className="w-full max-w- text-center">
-          <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
-          <div className="mt-16 grid gap-8">
-            <button onClick={() => setDineOption("qui")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
-              <span className="text-8xl">🍽️</span>
-              <span className="font-display text-8xl">Mangia qui</span>
-            </button>
-            <button onClick={() => setDineOption("asporto")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
-              <span className="text-8xl">🥡</span>
-              <span className="font-display text-8xl">Asporto</span>
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  if (showCart)
-    return (
-      <main className="min-h-screen p-8">
-        <header className="mb-8 flex items-center justify-between">
-          <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? "🍽️ Mangia qui" : "🥡 Asporto"}</span>
-          <button onClick={() => setShowCart(false)} className="tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ Chiudi</button>
-        </header>
-        <h1 className="mb-8 font-display text-8xl">Il tuo ordine</h1>
-        <div className="grid gap-4">
-          {cart.map((i) => (
-            <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
-              <div>
-                <p className="font-display text-5xl">{i.qty} × {i.name}</p>
-                <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => + ${e}),...(i.removed?? []).map((r) => senza ${r})].join(" · ") : ""}</p>
-              </div>
-              <div className="flex items-center gap-6">
-                <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
-                <button onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</button>
-              </div>
+      </div>
+    </main>
+  )
+
+  if (showCart) return (
+    <main className="min-h-screen p-8">
+      <header className="mb-8 flex items-center justify-between">
+        <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? "🍽️ Mangia qui" : "🥡 Asporto"}</span>
+        <button onClick={() => setShowCart(false)} className="tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ Chiudi</button>
+      </header>
+      <h1 className="mb-8 font-display text-8xl">Il tuo ordine</h1>
+      <div className="grid gap-4">
+        {cart.map((i) => (
+          <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
+            <div>
+              <p className="font-display text-5xl">{i.qty} × {i.name}</p>
+              <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `senza ${r}`)].join(" · ") : ""}</p>
             </div>
-          ))}
-        </div>
-        <div className="mt-10 border-t-4 border-border pt-8">
-          <div className="flex items-baseline justify-between">
-            <p className="font-display text-6xl text-muted-foreground">Totale</p>
-            <p className="font-display text-9xl text-accent">{euro(total)}</p>
+            <div className="flex items-center gap-6">
+              <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
+              <button onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</button>
+            </div>
           </div>
-          <button
-            disabled={createOrder.isPending || cart.length === 0}
-            onClick={() => createOrder.mutate()}
-            className="tap mt-8 h-32 w-full rounded-3xl bg-primary font-display text-7xl text-primary-foreground disabled:opacity-50"
-          >
-            {createOrder.isPending? "Invio…" : "Conferma ordine"}
-          </button>
+        ))}
+      </div>
+      <div className="mt-10 border-t-4 border-border pt-8">
+        <div className="flex items-baseline justify-between">
+          <p className="font-display text-6xl text-muted-foreground">Totale</p>
+          <p className="font-display text-9xl text-accent">{euro(total)}</p>
         </div>
-      </main>
-    )
+        <button disabled={createOrder.isPending || cart.length === 0} onClick={() => createOrder.mutate()} className="tap mt-8 h-32 w-full rounded-3xl bg-primary font-display text-7xl text-primary-foreground disabled:opacity-50">{createOrder.isPending? "Invio…" : "Conferma ordine"}</button>
+      </div>
+    </main>
+  )
+
   const cat = categories.find((c) => c.id === activeCat)
   const shown = activeCat? products.filter((p) => p.category_id === activeCat) : []
+
   return (
     <main className="min-h-screen p-8 pb-36">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
-        <button onClick={() => setDineOption(null)} className="tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">
-          {dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"} ▼
-        </button>
+        <button onClick={() => setDineOption(null)} className="tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"} ▼</button>
       </header>
+
       {activeCat === null? (
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
           {categories.map((c: Category) => (
@@ -157,14 +174,12 @@ import { supabase } from "@/integrations/supabase/client"export const Route = cr
         </div>
       ) : (
         <>
-          <button onClick={() => setActiveCat(null)} className="tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">
-            ← Indietro · {cat?.name}
-          </button>
+          <button onClick={() => setActiveCat(null)} className="tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← Indietro · {cat?.name}</button>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {shown.map((p: Product) => (
               <button key={p.id} onClick={() => setCustom(p)} className="tap flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
-                  {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <span className="font-display text-7xl text-muted-foreground">{p.name.slice(0, 2).toUpperCase()}</span>}
+                  {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
                   <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
@@ -177,40 +192,38 @@ import { supabase } from "@/integrations/supabase/client"export const Route = cr
           </div>
         </>
       )}
+
       {custom && (
-        <Customize
-          product={custom}
-          onClose={() => setCustom(null)}
-          onAdd={(extras, removed) => {
-            const price = p2(custom) + extras.reduce((s, e) => s + e.price, 0)
-            setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed }])
-            setCustom(null)
-          }}
-        />
+        <Customize product={custom} onClose={() => setCustom(null)} onAdd={(extras, removed) => {
+          const price = p2(custom) + extras.reduce((s, e) => s + e.price, 0)
+          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed }])
+          setCustom(null)
+        }} />
       )}
+
       {cart.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 flex items-center justify-between bg-card p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
           <div>
             <p className="text-2xl text-muted-foreground">{cart.length} prodotti · {dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"}</p>
             <p className="font-display text-6xl text-accent">{euro(total)}</p>
           </div>
-          <button onClick={() => setShowCart(true)} className="tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">
-            🛒 Carrello
-          </button>
+          <button onClick={() => setShowCart(true)} className="tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 Carrello</button>
         </div>
       )}
     </main>
   )
 }
+
 const p2 = (p: Product) => Number(p.price) || 0
+
 function Customize({ product, onClose, onAdd }: { product: Product; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
-  const = useState<string[]>([])
-  const = useState<string[]>([])
+  const [removed, setRemoved] = useState<string[]>([])
+  const [extras, setExtras] = useState<string[]>([])
   const chosen = product.extras.filter((e) => extras.includes(e.name))
   const total = p2(product) + chosen.reduce((s, e) => s + e.price, 0)
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={onClose}>
-      <div className="max-h- w-full max-w- flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
+      <div className="max-h-[92vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="overflow-auto p-8">
           <h2 className="font-display text-7xl">{product.name}</h2>
           {product.description && <p className="mt-2 text-2xl text-muted-foreground">{product.description}</p>}
@@ -221,11 +234,7 @@ function Customize({ product, onClose, onAdd }: { product: Product; onClose: () 
               <div className="mt-3 flex flex-wrap gap-3">
                 {product.ingredients.map((ing) => {
                   const on = removed.includes(ing)
-                  return (
-                    <button key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}}>
-                      {on? "senza " : ""}{ing}
-                    </button>
-                  )
+                  return <button key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? "senza " : ""}{ing}</button>
                 })}
               </div>
             </section>
@@ -236,23 +245,17 @@ function Customize({ product, onClose, onAdd }: { product: Product; onClose: () 
               <div className="mt-3 flex flex-wrap gap-3">
                 {product.extras.map((e) => {
                   const on = extras.includes(e.name)
-                  return (
-                    <button key={e.name} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : [...x, e.name]))} className={tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}}>
-                      - {e.name} · {euro(e.price)}
-                    </button>
-                  )
+                  return <button key={e.name} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : [...x, e.name]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {e.name} · {euro(e.price)}</button>
                 })}
               </div>
             </section>
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <button onClick={() => onAdd(chosen, removed)} className="tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">
-            Aggiungi · {euro(total)}
-          </button>
+          <button onClick={() => onAdd(chosen, removed)} className="tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">Aggiungi · {euro(total)}</button>
           <button onClick={onClose} className="tap mt-3 w-full py-2 text-2xl text-muted-foreground">Chiudi</button>
         </div>
       </div>
     </div>
   )
-}[dineOption][setDineOption][activeCat][setActiveCat][cart][setCart][custom][setCustom][showCart][setShowCart][done][setDone][data][28rem][60rem][removed][setRemoved][extras][setExtras][92vh][52rem]
+}
