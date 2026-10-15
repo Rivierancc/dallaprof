@@ -7,9 +7,9 @@ const DEFAULT_COLORS = {
   bottoneAggiungi: "#000000",
   bottoneCarrello: "#000000",
   sfondo: "#F5F5F7",
-  testoCategorie: "#FFFFFF", // testo sulle categorie
-  testoProdotti: "#000000", // nome prodotto
-  testoPrezzo: "#000000", // prezzo
+  testoCategorie: "#FFFFFF",
+  testoProdotti: "#000000",
+  testoPrezzo: "#000000",
   categorie: {} as Record<string, string>,
 }
 const DEFAULT_PASSWORD = "1234"
@@ -98,17 +98,17 @@ function TotemPage() {
               {cart.map((item: any) => (
                 <div key={item.cartId} className="border-[3px] border-black rounded-[20px] p-6 bg-[#F9F9F9]">
                   <div className="flex justify-between items-start">
-                    <h2 style={{ color: colors.testoProdotti }} className="font-black text-[32px] leading-tight">{item.name}</h2>
+                    <h2 className="font-black text-[32px] text-black leading-tight">{item.name}</h2>
                     <button onClick={() => removeFromCart(item.cartId)} className="bg-red-500 text-white w-12 h-12 rounded-full font-black text-[20px]">✕</button>
                   </div>
-                  <p style={{ color: colors.testoPrezzo }} className="text-[26px] font-black mt-3">{euro(item.finalPrice)}</p>
+                  <p className="text-[26px] font-black text-black mt-3 bg-yellow-200 inline-block px-3 py-1 rounded-full">{euro(item.finalPrice)}</p>
                   {item.removedIngredients?.length > 0 && <p className="text-[20px] text-red-600 font-black mt-3">SENZA: {item.removedIngredients.join(", ").toUpperCase()}</p>}
-                  {item.extras?.length > 0 && <div className="mt-3">{item.extras.map((e: any) => <p key={e.name} style={{ color: colors.testoProdotti }} className="text-[22px]">+ {e.name} <span className="font-black">{euro(e.price)}</span></p>)}</div>}
+                  {item.extras?.length > 0 && <div className="mt-3">{item.extras.map((e: any) => <p key={e.name} className="text-[22px] text-black">+ {e.name} <span className="font-black">{euro(e.price)}</span></p>)}</div>}
                 </div>
               ))}
             </div>
             <div className="mt-10 border-t-[4px] border-black pt-6">
-              <div className="flex justify-between items-center"><p className="text-[28px] font-bold text-gray-600">TOTALE:</p><p style={{ color: colors.testoPrezzo }} className="text-[56px] font-black">{euro(total)}</p></div>
+              <div className="flex justify-between items-center"><p className="text-[28px] font-bold text-gray-600">TOTALE:</p><p className="text-[56px] font-black text-black">{euro(total)}</p></div>
               <button style={{ backgroundColor: colors.bottoneCarrello }} className="w-full mt-8 text-white py-6 rounded-full font-black text-[30px]">CONFERMA ORDINE 🛒</button>
               <button onClick={() => setShowCart(false)} className="w-full mt-4 bg-white border-[3px] border-black text-black py-4 rounded-full font-bold text-[22px]">Aggiungi altri prodotti</button>
             </div>
@@ -133,7 +133,7 @@ function TotemPage() {
               const catColor = getCategoryColor(cat, i)
               return (
                 <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ backgroundColor: catColor }} className="h-36 rounded-[24px] flex items-center justify-center shadow-md active:scale-95 border-0">
-                  <span style={{ color: colors.testoCategorie }} className="font-black text-[24px] text-center px-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{cat.name.toUpperCase()}</span>
+                  <span style={{ color: colors.testoCategorie }} className="font-black text-[24px] text-center px-2">{cat.name.toUpperCase()}</span>
                 </button>
               )
             })}
@@ -147,15 +147,22 @@ function TotemPage() {
             const color = getCategoryColor(currentCat, categories.indexOf(currentCat))
             return (
               <>
-                <button onClick={() => setSelectedCategory(null)} style={{ backgroundColor: color }} className="mb-6 px-6 py-3 rounded-full font-bold text-[20px]" >
+                <button onClick={() => setSelectedCategory(null)} style={{ backgroundColor: color }} className="mb-6 px-6 py-3 rounded-full font-bold text-[20px]">
                   <span style={{ color: colors.testoCategorie }}>← {currentCat?.name}</span>
                 </button>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-5">
                   {filtered.map((p: any) => (
-                    <button key={p.id} disabled={p.sold_out} onClick={() => setSelectedProduct(p)} className="bg-white rounded-[20px] p-5 shadow-sm border-2 border-gray-100 text-left active:scale-95">
-                      <h3 style={{ color: colors.testoProdotti }} className="font-black text-[22px]">{p.name}</h3>
-                      <p className="text-gray-700 text-[16px] mt-1">{p.description}</p>
-                      <p style={{ color: colors.testoPrezzo }} className="font-black text-[24px] mt-3">{euro(p.price)}</p>
+                    <button key={p.id} disabled={p.sold_out} onClick={() => setSelectedProduct(p)} className="bg-white rounded-[24px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border-2 border-gray-100 text-left active:scale-95 flex flex-col justify-between min-h-[160px]">
+                      <div>
+                        <h3 style={{ color: colors.testoProdotti }} className="font-black text-[22px] leading-tight">{p.name}</h3>
+                        <p className="text-gray-600 text-[15px] mt-2 line-clamp-3">{p.description}</p>
+                      </div>
+                      {/* PREZZO SEMPRE VISIBILE - BADGE GIALLO/NERO */}
+                      <div className="mt-4">
+                        <span className="bg-black text-white font-black text-[22px] px-4 py-2 rounded-full inline-block">
+                          {euro(p.price)}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -196,17 +203,16 @@ function TotemPage() {
               <button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-gray-100 rounded-full font-black text-black">✕</button>
             </div>
 
-            <div className="space-y-5">
-              <p className="font-black text-[13px] text-gray-500 uppercase">Bottoni</p>
+            <div className="space-y-4">
+              <p className="font-black text-[12px] text-gray-500 uppercase">ATTENZIONE: prezzo ora è sempre visibile (badge nero)</p>
               <div className="flex justify-between items-center border-2 p-3 rounded-xl"><p className="font-bold text-black">Sfondo bottone AGGIUNGI 🛒</p><input type="color" value={colors.bottoneAggiungi} onChange={(e) => saveColor("bottoneAggiungi", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
               <div className="flex justify-between items-center border-2 p-3 rounded-xl"><p className="font-bold text-black">Sfondo CARRELLO</p><input type="color" value={colors.bottoneCarrello} onChange={(e) => saveColor("bottoneCarrello", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
 
-              <p className="font-black text-[13px] text-gray-500 uppercase pt-3">Testi</p>
-              <div className="flex justify-between items-center border-2 p-3 rounded-xl bg-yellow-50"><div><p className="font-bold text-black">Testo CATEGORIE</p><p className="text-xs text-gray-500">Colore scritta su bottone categoria</p></div><input type="color" value={colors.testoCategorie} onChange={(e) => saveColor("testoCategorie", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
-              <div className="flex justify-between items-center border-2 p-3 rounded-xl"><div><p className="font-bold text-black">Testo NOME prodotto</p></div><input type="color" value={colors.testoProdotti} onChange={(e) => saveColor("testoProdotti", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
-              <div className="flex justify-between items-center border-2 p-3 rounded-xl"><div><p className="font-bold text-black">Testo PREZZO</p></div><input type="color" value={colors.testoPrezzo} onChange={(e) => saveColor("testoPrezzo", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
+              <p className="font-black text-[12px] text-gray-500 uppercase pt-2">Testi</p>
+              <div className="flex justify-between items-center border-2 p-3 rounded-xl"><p className="font-bold text-black">Testo CATEGORIE</p><input type="color" value={colors.testoCategorie} onChange={(e) => saveColor("testoCategorie", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
+              <div className="flex justify-between items-center border-2 p-3 rounded-xl"><p className="font-bold text-black">Testo NOME prodotto</p><input type="color" value={colors.testoProdotti} onChange={(e) => saveColor("testoProdotti", e.target.value)} className="w-14 h-14 rounded-xl" /></div>
 
-              <p className="font-black text-[13px] text-gray-500 uppercase pt-3">Sfondo categorie (si aggiorna da solo)</p>
+              <p className="font-black text-[12px] text-gray-500 uppercase pt-2">Sfondo categorie</p>
               {categories.map((cat: any, i: number) => {
                 const currentColor = getCategoryColor(cat, i)
                 return (
@@ -242,9 +248,9 @@ function ProductModal({ product, onClose, onAdd, euro, colors }: any) {
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
       <div className="bg-white w-full max-w-lg rounded-t-[32px] max-h-[90vh] flex flex-col">
         <div className="p-6 overflow-auto flex-1">
-          <h2 style={{ color: colors.testoProdotti }} className="font-black text-[36px]">{product.name}</h2>
+          <h2 className="font-black text-[36px] text-black">{product.name}</h2>
           <p className="text-gray-700 mt-2 text-[20px]">{product.description}</p>
-          <p style={{ color: colors.testoPrezzo }} className="font-black text-[28px] mt-3">{euro(product.price)}</p>
+          <div className="mt-3 bg-black text-white font-black text-[28px] px-5 py-2 rounded-full inline-block">{euro(product.price)}</div>
           {ingredients.length > 0 && (
             <div className="mt-6">
               <p className="font-black text-[22px] mb-3 text-black">Togli dalla preparazione:</p>
@@ -262,7 +268,7 @@ function ProductModal({ product, onClose, onAdd, euro, colors }: any) {
               <div className="space-y-3">
                 {extras.map((e: any) => {
                   const isSelected =!!selectedExtras.find(x => x.name === e.name)
-                  return <label key={e.name} className={`flex justify-between items-center border-2 p-4 rounded-xl ${isSelected? 'border-black bg-gray-100' : 'border-gray-300 bg-white'}`}><span style={{ color: colors.testoProdotti }} className="font-bold text-[20px] flex items-center"><input type="checkbox" checked={isSelected} onChange={() => toggleExtra(e)} className="mr-3 w-7 h-7 accent-black" />{e.name}</span><span style={{ color: colors.testoPrezzo }} className="font-black text-[20px]">+ {euro(e.price)}</span></label>
+                  return <label key={e.name} className={`flex justify-between items-center border-2 p-4 rounded-xl ${isSelected? 'border-black bg-gray-100' : 'border-gray-300 bg-white'}`}><span className="text-black font-bold text-[20px] flex items-center"><input type="checkbox" checked={isSelected} onChange={() => toggleExtra(e)} className="mr-3 w-7 h-7 accent-black" />{e.name}</span><span className="font-black text-[20px] text-black">+ {euro(e.price)}</span></label>
                 })}
               </div>
             </div>
