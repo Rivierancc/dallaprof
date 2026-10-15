@@ -7,14 +7,14 @@ function TotemPage() {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold">Caricamento Dalla Prof...</div>
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold">Caricamento...</div>
 
   const categories = (data as any)?.categories || []
   const products = (data as any)?.products || []
 
+  const getProductName = (p:any) => p.name || p.title || p.nome || p.label || p.product_name || p.nome_prodotto || "Prodotto senza nome"
   const getColor = (cat: any, i: number) => cat.color || ["#FFB800","#FF3B30","#007AFF","#AF52DE","#34C759","#FF9500"][i % 6]
 
-  // === PAGINA 1: SOLO CATEGORIE ===
   if (!selectedCategory) {
     return (
       <div className="min-h-screen bg-[#F5F5F7] p-8">
@@ -26,8 +26,8 @@ function TotemPage() {
             return (
               <button key={cat.id} onClick={() => setSelectedCategory(cat.id)}
                 style={{ backgroundColor: "white", borderColor: color, borderWidth: 2.5 }}
-                className="h-36 rounded-[24px] flex flex-col items-center justify-center shadow-sm active:scale-95 transition">
-                <span style={{ color }} className="font-black text-[18px] text-center px-2">{cat.name}</span>
+                className="h-36 rounded-[24px] flex flex-col items-center justify-center shadow-sm active:scale-95">
+                <span style={{ color }} className="font-black text-[18px] text-center px-2">{cat.name || cat.title}</span>
               </button>
             )
           })}
@@ -36,7 +36,6 @@ function TotemPage() {
     )
   }
 
-  // === PAGINA 2: SOLO PRODOTTI DELLA CATEGORIA SCELTA ===
   const currentCat = categories.find((c:any) => c.id === selectedCategory)
   const filtered = products.filter((p: any) => p.category_id === selectedCategory)
   const color = getColor(currentCat, 0)
@@ -45,26 +44,20 @@ function TotemPage() {
     <div className="min-h-screen bg-[#F5F5F7] p-6">
       <button onClick={() => setSelectedCategory(null)}
         style={{ backgroundColor: color }} className="mb-6 text-white px-6 py-3 rounded-full font-bold">
-        ← {currentCat?.name}
+        ← {currentCat?.name || currentCat?.title}
       </button>
 
       <div className="grid grid-cols-2 gap-4">
         {filtered.map((p: any) => (
           <div key={p.id} className="bg-white rounded-[20px] p-5 shadow-sm border">
-            <h3 className="font-bold text-[16px]">{p.name}</h3>
-            {p.description && <p className="text-gray-500 text-[13px] mt-1 line-clamp-2">{p.description}</p>}
+            <h3 className="font-black text-[17px]">{getProductName(p)}</h3>
+            {p.description && <p className="text-gray-600 text-[14px] mt-1">{p.description}</p>}
             <p className="font-black text-lg mt-3">{euro(p.price)}</p>
           </div>
         ))}
       </div>
-
-      {filtered.length === 0 && (
-        <p className="text-center text-gray-400 mt-20">Nessun prodotto in questa categoria</p>
-      )}
     </div>
   )
 }
 
-export const Route = createFileRoute("/")({
-  component: TotemPage,
-})
+export const Route = createFileRoute("/")({ component: TotemPage })
