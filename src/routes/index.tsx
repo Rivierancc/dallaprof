@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions } from "@/lib/menu"
-import { supabase } from "@/lib/supabase" // <--- CAMBIA QUI SE IL TUO FILE SI CHIAMA DIVERSO
+import { supabase } from "@/lib/supabase"
 
 const DEFAULT_COLORS = {
   bottoneAggiungi: "#000000",
@@ -60,16 +60,16 @@ function TotemPage() {
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: any) => {
       const { data, error } = await supabase
-       .from("orders")
-       .insert([{
+      .from("orders")
+      .insert([{
           items: orderData.items,
           total: orderData.total,
-          order_type: orderData.type, // qui / asporto
-          status: "in_cassa", // <--- QUESTO È IMPORTANTE: va in Cassa in attesa pagamento
+          order_type: orderData.type,
+          status: "in_attesa_cassa", // CORRETTO: non va in cucina finché non paghi!
           created_at: new Date().toISOString(),
         }])
-       .select()
-       .single()
+      .select()
+      .single()
       if (error) throw error
       return data
     },
@@ -83,7 +83,7 @@ function TotemPage() {
         setShowCart(false)
         setSelectedCategory(null)
         setOrderType(null)
-      }, 5000)
+      }, 8000)
     },
     onError: (err) => {
       console.error(err)
@@ -108,27 +108,27 @@ function TotemPage() {
   }
   const total = cart.reduce((s, p) => s + p.finalPrice, 0)
   const removeFromCart = (id: number) => setCart(prev => prev.filter(p => p.cartId!== id))
-
   const confirmOrder = () => {
     if (cart.length === 0) return
-    createOrderMutation.mutate({
-      items: cart,
-      total: total,
-      type: orderType,
-    })
+    createOrderMutation.mutate({ items: cart, total: total, type: orderType })
   }
 
+  // SCHERMATA CORRETTA - VAI ALLA CASSA, NON IN PREPARAZIONE
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-[50px] mb-6">✓</div>
-        <h1 className="text-[48px] font-black leading-none">ORDINE<br/>INVIATO ALLA CASSA!</h1>
-        <div className="mt-6 bg-white text-black rounded-[20px] px-8 py-4">
-          <p className="font-black text-[36px]">#{orderSuccess.id}</p>
-          <p className="font-bold text-[20px] mt-1">{orderSuccess.type==='qui'?'🍽️ MANGIA QUI':'🥡 ASPORTO'} - {euro(orderSuccess.total)}</p>
+      <div className="min-h-screen bg-[#FFB800] text-black flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-24 h-24 bg-black rounded-full flex items-center justify-center text-[50px] mb-6 text-white">🛒</div>
+        <h1 className="text-[42px] font-black leading-none">ORDINE<br/>RICEVUTO!</h1>
+        <div className="mt-6 bg-black text-white rounded-[24px] px-10 py-6">
+          <p className="text-[18px] opacity-70">NUMERO ORDINE</p>
+          <p className="font-black text-[56px] leading-none">#{orderSuccess.id}</p>
+          <p className="font-bold text-[22px] mt-2">{orderSuccess.type==='qui'?'🍽️ MANGIA QUI':'🥡 ASPORTO'} - {euro(orderSuccess.total)}</p>
         </div>
-        <p className="mt-8 text-[20px] opacity-80">Vai alla cassa per il pagamento</p>
-        <p className="mt-2 text-[16px] opacity-50">Dopo il pagamento andrà in cucina e al tabellone</p>
+        <div className="mt-8 bg-white border-[3px] border-black rounded-[20px] p-6 w-full max-w-sm">
+          <p className="font-black text-[24px] text-black">👉 VAI ALLA CASSA</p>
+          <p className="text-[18px] text-gray-700 mt-2">Mostra questo numero alla cassa per pagare.<br/><span className="font-black text-black">L'ordine NON è ancora in preparazione.</span><br/>Partirà in cucina solo dopo il pagamento.</p>
+        </div>
+        <p className="mt-6 text-[16px] opacity-60">Si chiude tra 8 secondi...</p>
       </div>
     )
   }
@@ -143,7 +143,7 @@ function TotemPage() {
           <button onClick={() => setOrderType("qui")} className="w-full bg-white border-[4px] border-black rounded-[32px] p-8 flex items-center gap-6 shadow-[8px_8px_0px_black]"><div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-[40px]">🍽️</div><div className="text-left"><p className="font-black text-[28px] text-black">MANGIA QUI</p><p className="text-gray-500">Servito al tavolo</p></div></button>
           <button onClick={() => setOrderType("asporto")} className="w-full bg-black border-[4px] border-black rounded-[32px] p-8 flex items-center gap-6 shadow-[8px_8px_0px_#FFB800]"><div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[40px]">🥡</div><div className="text-left"><p className="font-black text-[28px] text-white">ASPORTO</p><p className="text-gray-300">Da portare via</p></div></button>
         </div>
-        {showPasswordPrompt && <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-6"><div className="bg-white w-full max-w-sm rounded-[24px] p-8"><input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && checkPassword()} className="w-full border-[3px] border-black rounded-full px-6 py-4 text-[24px] font-black text-center text-black" autoFocus />{passwordError && <p className="text-red-500 text-center mt-3">Password errata!</p>}<div className="flex gap-3 mt-6"><button onClick={() => setShowPasswordPrompt(false)} className="flex-1 bg-gray-100 py-4 rounded-full font-bold text-black">Annulla</button><button onClick={checkPassword} className="flex-1 bg-black text-white py-4 rounded-full font-black">ENTRA</button></div></div></div>}
+        {showPasswordPrompt && <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-6"><div className="bg-white w-full max-w-sm rounded-[24px] p-8"><h2 className="font-black text-[24px] text-black text-center mb-2">🔒 Area riservata</h2><input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && checkPassword()} className="w-full border-[3px] border-black rounded-full px-6 py-4 text-[24px] font-black text-center text-black" autoFocus />{passwordError && <p className="text-red-500 text-center mt-3">Password errata!</p>}<div className="flex gap-3 mt-6"><button onClick={() => setShowPasswordPrompt(false)} className="flex-1 bg-gray-100 py-4 rounded-full font-bold text-black">Annulla</button><button onClick={checkPassword} className="flex-1 bg-black text-white py-4 rounded-full font-black">ENTRA</button></div></div></div>}
         {showSettings && <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"><div className="bg-white w-full max-w-lg rounded-[24px] p-6 max-h-[90vh] overflow-auto"><div className="flex justify-between items-center mb-6"><h2 className="font-black text-[24px] text-black">🎨 Personalizza</h2><button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-gray-100 rounded-full font-black text-black">✕</button></div><div className="space-y-4">{categories.map((cat: any, i: number) => { const currentColor = getCategoryColor(cat, i); return <div key={cat.id} className="flex justify-between items-center border-2 p-3 rounded-xl"><div className="flex items-center gap-3"><div style={{ backgroundColor: currentColor }} className="w-8 h-8 rounded-full border"></div><p className="font-bold text-black">{cat.name}</p></div><input type="color" value={currentColor} onChange={(e) => saveCategoriaColor(cat.id, e.target.value)} className="w-14 h-14 rounded-xl" /></div> })}<button onClick={() => setShowSettings(false)} style={{ backgroundColor: colors.bottoneAggiungi }} className="w-full text-white py-3 rounded-full font-black">FATTO ✓</button></div></div></div>}
       </div>
     )
