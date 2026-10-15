@@ -2,23 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 type Cat = { id: string; name: string; position: number };
-
 function AdminOrdinePage() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const load = async () => {
     setLoading(true);
     const { data } = await supabase.from("categories").select("id,name,position").order("position");
     setCats((data as any) || []);
     setLoading(false);
   };
-
   useEffect(() => { load(); }, []);
-
   const move = (i: number, dir: -1 | 1) => {
     const n = i + dir;
     if (n < 0 || n >= cats.length) return;
@@ -26,25 +21,22 @@ function AdminOrdinePage() {
     [copy[i], copy[n]] = [copy[n], copy[i]];
     setCats(copy);
   };
-
   const save = async () => {
     setSaving(true);
     for (let i = 0; i < cats.length; i++) {
       await supabase.from("categories").update({ position: (i + 1) * 10 }).eq("id", cats[i].id);
     }
-    toast.success("Ordine salvato sul totem!");
+    toast.success("Ordine salvato!");
     setSaving(false);
   };
-
-  if (loading) return <div className="p-10">Caricamento categorie...</div>;
-
+  if (loading) return <div className="p-10">Caricamento...</div>;
   return (
     <div className="max-w-md mx-auto p-6 bg-white min-h-screen text-black">
       <h1 className="text-2xl font-bold">Ordine Categorie</h1>
-      <p className="text-sm text-gray-500 mb-6">1 = primo sul totem. Sposta e salva.</p>
+      <p className="text-sm text-gray-500 mb-6">1 = primo sul totem</p>
       <div className="space-y-2">
         {cats.map((c, idx) => (
-          <div key={c.id} className="flex justify-between items-center border rounded-xl p-3 bg-gray-50">
+          <div key={c.id} className="flex justify-between border rounded-xl p-3 bg-gray-50">
             <span><b>{idx + 1}</b> - {c.name}</span>
             <div className="flex gap-2">
               <button onClick={() => move(idx, -1)} className="border px-3 py-1 rounded">↑</button>
@@ -53,13 +45,8 @@ function AdminOrdinePage() {
           </div>
         ))}
       </div>
-      <button onClick={save} disabled={saving} className="w-full mt-8 h-14 bg-black text-white rounded-xl text-lg">
-        {saving? "Salvo..." : "SALVA ORDINE"}
-      </button>
+      <button onClick={save} disabled={saving} className="w-full mt-8 h-14 bg-black text-white rounded-xl">SALVA ORDINE</button>
     </div>
   );
 }
-
-export const Route = createFileRoute("/admin/ordine")({
-  component: AdminOrdinePage,
-});
+export const Route = createFileRoute("/admin/ordine")({ component: AdminOrdinePage });
