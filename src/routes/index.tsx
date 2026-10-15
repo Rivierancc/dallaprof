@@ -19,6 +19,25 @@ export const Route = createFileRoute("/")({
   component: Totem,
 })
 
+// OROLOGIO DIGITALE - piccolo in alto a sx
+function Clock() {
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <div className="fixed top-3 left-3 z-[100] rounded-xl bg-black/70 px-3 py-1.5 backdrop-blur border border-white/10">
+      <div className="font-mono text-[11px] leading-none text-white/60 uppercase tracking-widest">
+        {now.toLocaleDateString("it-IT", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })}
+      </div>
+      <div className="font-mono text-[15px] font-bold leading-none text-white tracking-wider mt-1">
+        {now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+      </div>
+    </div>
+  )
+}
+
 function Totem() {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const queryClient = useQueryClient()
@@ -56,11 +75,11 @@ function Totem() {
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
       <style>
         body{font-family:monospace;width:280px;padding:10px;margin:0;color:#000}
-       .num{font-size:72px;font-weight:900;text-align:center;margin:0}
-       .tipo{text-align:center;background:#000;color:#fff;padding:8px;border-radius:8px;font-weight:900;margin:8px 0}
-       .center{text-align:center;font-size:12px}
+      .num{font-size:72px;font-weight:900;text-align:center;margin:0}
+      .tipo{text-align:center;background:#000;color:#fff;padding:8px;border-radius:8px;font-weight:900;margin:8px 0}
+      .center{text-align:center;font-size:12px}
         hr{border:1px dashed #000;margin:8px 0}
-       .footer{border:2px solid #000;text-align:center;font-weight:900;padding:8px;border-radius:8px;margin-top:10px}
+      .footer{border:2px solid #000;text-align:center;font-weight:900;padding:8px;border-radius:8px;margin-top:10px}
       </style></head><body>
         <div class="center"><b>DALLA PROF</b><br/>Albenga - ${new Date().toLocaleString()}</div>
         <div class="num">#${orderNum}</div>
@@ -93,10 +112,11 @@ function Totem() {
     onError: (e) => alert(`Ordine non inviato: ${(e as Error).message}`),
   })
 
-  if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">Caricamento…</div>
+  if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground"><Clock />Caricamento…</div>
 
   if (done!== null) return (
     <main className="grid min-h-screen place-items-center p-8 text-center">
+      <Clock />
       <div className="animate-pop">
         <p className="font-display text-7xl text-muted-foreground">Il tuo ordine è</p>
         <p className="my-6 font-display text-[28rem] leading-none text-accent">{String(done).padStart(2, "0")}</p>
@@ -108,6 +128,7 @@ function Totem() {
 
   if (!dineOption) return (
     <main className="grid min-h-screen place-items-center p-8">
+      <Clock />
       <div className="w-full max-w-[60rem] text-center">
         <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
         <div className="mt-16 grid gap-8">
@@ -124,7 +145,8 @@ function Totem() {
 
   if (showCart) return (
     <main className="min-h-screen p-8">
-      <header className="mb-8 flex items-center justify-between">
+      <Clock />
+      <header className="mb-8 flex items-center justify-between pt-8">
         <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? "🍽️ Mangia qui" : "🥡 Asporto"}</span>
         <button onClick={() => setShowCart(false)} className="tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ Chiudi</button>
       </header>
@@ -158,7 +180,8 @@ function Totem() {
 
   return (
     <main className="min-h-screen p-8 pb-36">
-      <header className="mb-6 flex items-center justify-between">
+      <Clock />
+      <header className="mb-6 flex items-center justify-between pt-10">
         <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
         <button onClick={() => setDineOption(null)} className="tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"} ▼</button>
       </header>
