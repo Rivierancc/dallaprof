@@ -13,12 +13,11 @@ function AdminOrdinePage() {
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
-     .from("categories")
-     .select("id,name,position")
-     .order("position", { ascending: true });
+    .from("menu_categories")
+    .select("id,name,position")
+    .order("position", { ascending: true });
 
     if (error) {
-      console.error(error);
       toast.error("Errore: " + error.message);
       setCats([]);
     } else {
@@ -41,9 +40,9 @@ function AdminOrdinePage() {
     setSaving(true);
     for (let i = 0; i < cats.length; i++) {
       const { error } = await supabase
-       .from("categories")
-       .update({ position: (i + 1) * 10 })
-       .eq("id", cats[i].id);
+      .from("menu_categories")
+      .update({ position: (i + 1) * 10 })
+      .eq("id", cats[i].id);
       if (error) {
         toast.error("Errore salvataggio: " + error.message);
         setSaving(false);
@@ -61,9 +60,7 @@ function AdminOrdinePage() {
       <h1 className="text-2xl font-bold">Ordine Categorie</h1>
       <p className="text-sm text-gray-500 mb-6">1 = primo sul totem</p>
       {cats.length === 0? (
-        <div className="p-4 border rounded bg-yellow-50">
-          Nessuna categoria trovata in "categories". Controlla Supabase.
-        </div>
+        <div className="p-4 border rounded bg-yellow-50">Nessuna categoria trovata</div>
       ) : (
         <div className="space-y-2">
           {cats.map((c, idx) => (
