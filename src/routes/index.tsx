@@ -1,190 +1,275 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { useState, useEffect } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { menuQueryOptions } from "@/lib/menu"
-import { supabase } from "@/lib/supabase"
+import { useEffect, useMemo, useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { menuQueryOptions, type Category, type CartItem, type Product, euro } from "@/lib/menu"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
 
-const DEFAULT_COLORS = {
-  bottoneAggiungi: "#000000",
-  bottoneCarrello: "#000000",
-  sfondo: "#F5F5F7",
-  testoCategorie: "#FFFFFF",
-  testoProdotti: "#000000",
-  categorie: {} as Record<string, string>,
-}
-const DEFAULT_PASSWORD = "1234"
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Totem — Totem Burger" },
+      { name: "description", content: "Ordina al totem: mangia qui o asporto, poi paga alla cassa." },
+      { property: "og:title", content: "Totem — Totem Burger" },
+      { property: "og:description", content: "Ordina al totem: mangia qui o asporto, poi paga alla cassa." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: Totem,
+})
 
-function TotemPage() {
+function Totem() {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const queryClient = useQueryClient()
-  const [orderType, setOrderType] = useState<null | "qui" | "asporto">(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [cart, setCart] = useState<any[]>([])
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
+  const [dineOption, setDineOption] = useState<null | "qui" | "asporto">(null)
+  const [activeCat, setActiveCat] = useState<string | null>(null)
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [custom, setCustom] = useState<Product | null>(null)
   const [showCart, setShowCart] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false)
-  const [passwordInput, setPasswordInput] = useState("")
-  const [passwordError, setPasswordError] = useState(false)
-  const [colors, setColors] = useState(DEFAULT_COLORS)
+  const [done, setDone] = useState<number | null>(null)
 
+  const categories = data?.categories ?? []
+  const products = useMemo(() => (data?.products ?? []).filter((p) => !p.sold_out), [data])
+
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
+
+  const reset = () => {
+    setCart([])
+    setShowCart(false)
+    setActiveCat(null)
+    setDineOption(null)
+    setCustom(null)
+  }
+
+  // Torna alla schermata iniziale dopo 15 secondi dal numero d'ordine.
   useEffect(() => {
-    const saved = localStorage.getItem("dallaprof_colors")
-    if (saved) {
-      const parsed = JSON.parse(saved)
-      setColors({...DEFAULT_COLORS,...parsed, categorie: parsed.categorie || {} })
-    }
-  }, [])
+    if (done === null) return
+    const t = setTimeout(reset, 15_000)
+    return () => clearTimeout(t)
+  }, [done])
 
-  const saveColor = (key: string, value: string) => {
-    const newColors = {...colors, [key]: value }
-    setColors(newColors as any)
-    localStorage.setItem("dallaprof_colors", JSON.stringify(newColors))
-  }
-  const saveCategoriaColor = (catId: string, value: string) => {
-    const newCatColors = {...colors.categorie, [catId]: value }
-    const newColors = {...colors, categorie: newCatColors }
-    setColors(newColors)
-    localStorage.setItem("dallaprof_colors", JSON.stringify(newColors))
-  }
-
-  const printScontrino = (order: any) => {
-    const win = window.open('', '_blank', 'width=300,height=600')
-    if (!win) return
-    const itemsHtml = order.items.map((it: any) => `
-      <div style="display:flex;justify-content:space-between;margin:6px 0"><span>${it.name}</span><span style="font-weight:900">€${Number(it.finalPrice).toFixed(2)}</span></div>
-    `).join('')
-    win.document.write(`
-      <html><head><title>Scontrino</title><style>
-        body{font-family:monospace;width:280px;padding:10px;color:black}
-        h1{text-align:center;font-size:22px;margin:0}
-       .center{text-align:center}
-        hr{border:1px dashed black}
-       .big{font-size:26px;font-weight:900;text-align:center;margin:10px 0}
-       .tipo{font-size:18px;font-weight:900;text-align:center;background:black;color:white;padding:8px;border-radius:10px;margin:10px 0}
-      </style></head>
-      <body>
-        <h1>DALLA PROF</h1><div class="center">Albenga</div><hr/>
-        <div class="center">${new Date().toLocaleString()}</div>
-        <div class="big">#${order.id}</div>
-        <div class="tipo">${order.order_type==='qui'?'🍽️ MANGIA QUI':'🥡 ASPORTO'}</div><hr/>
-        ${itemsHtml}<hr/>
-        <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900"><span>TOTALE</span><span>€${Number(order.total).toFixed(2)}</span></div><hr/>
-        <div class="center" style="font-weight:900;font-size:16px">VAI ALLA CASSA PER PAGARE</div>
-        <script>window.onload=()=>{window.print(); setTimeout(()=>window.close(),500)}</script>
-      </body></html>
-    `)
-    win.document.close()
-  }
-
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
-      const { data, error } = await supabase.from("orders").insert([{
-        items: orderData.items,
-        total: orderData.total,
-        order_type: orderData.type,
-        status: "in_attesa_cassa",
-        created_at: new Date().toISOString(),
-      }]).select().single()
+  const createOrder = useMutation({
+    mutationFn: async () => {
+      const { data: order, error } = await supabase
+        .from("orders")
+        .insert({ dine_option: dineOption, items: cart, total, status: "awaiting_payment" })
+        .select("id, order_number")
+        .single()
       if (error) throw error
-      return data
+      return order
     },
-    onSuccess: (data) => {
+    onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
-      printScontrino(data)
-      setCart([]); setShowCart(false); setSelectedCategory(null); setOrderType(null)
-      alert(`Ordine #${data.id} inviato in cassa! Scontrino in stampa...`)
+      setDone(order.order_number)
     },
+    onError: (e) => alert(`Ordine non inviato: ${(e as Error).message}`),
   })
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-bold text-xl text-black">Caricamento...</div>
+  if (isLoading)
+    return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">Caricamento…</div>
 
-  const categories = (data as any)?.categories || []
-  const products = (data as any)?.products || []
-  const getCategoryColor = (cat: any, i: number) => {
-    if (colors.categorie[cat.id]) return colors.categorie[cat.id]
-    return cat.color || ["#FFB800","#FF3B30","#007AFF","#AF52DE","#34C759","#FF9500"][i % 6]
-  }
-  const euro = (n: number) => `€ ${Number(n).toFixed(2)}`
-  const addToCart = (p: any, removed: string[] = [], extras: any[] = []) => {
-    const totalExtra = extras.reduce((s: number, e: any) => s + e.price, 0)
-    setCart(prev => [...prev, {...p, cartId: Date.now(), removedIngredients: removed, extras, finalPrice: p.price + totalExtra }])
-    setSelectedProduct(null)
-  }
-  const total = cart.reduce((s, p) => s + p.finalPrice, 0)
-
-  // SCELTA MANGIA QUI / ASPORTO
-  if (!orderType) {
+  if (done !== null)
     return (
-      <div style={{ backgroundColor: colors.sfondo }} className="min-h-screen flex flex-col items-center justify-center p-8">
-        <h1 className="text-[48px] font-black text-black text-center leading-none mb-2">Dalla Prof</h1>
-        <p className="text-[22px] text-gray-600 mb-12 text-center">Come vuoi gustarlo?</p>
-        <div className="w-full max-w-md space-y-6">
-          <button onClick={() => setOrderType("qui")} className="w-full bg-white border-[4px] border-black rounded-[32px] p-8 flex items-center gap-6 shadow-[8px_8px_0px_black]"><div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-[40px]">🍽️</div><div className="text-left"><p className="font-black text-[28px] text-black">MANGIA QUI</p></div></button>
-          <button onClick={() => setOrderType("asporto")} className="w-full bg-black border-[4px] border-black rounded-[32px] p-8 flex items-center gap-6 shadow-[8px_8px_0px_#FFB800]"><div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[40px]">🥡</div><div className="text-left"><p className="font-black text-[28px] text-white">ASPORTO</p></div></button>
+      <main className="grid min-h-screen place-items-center p-8 text-center">
+        <div className="animate-pop">
+          <p className="font-display text-7xl text-muted-foreground">Il tuo ordine è</p>
+          <p className="my-6 font-display text-[28rem] leading-none text-accent">{String(done).padStart(2, "0")}</p>
+          <p className="font-display text-6xl">Vai in cassa e paga con carta al POS SumUp</p>
+          <button onClick={reset} className="tap mt-12 h-28 rounded-3xl bg-primary px-16 font-display text-6xl text-primary-foreground">
+            Nuovo ordine
+          </button>
         </div>
-      </div>
+      </main>
     )
-  }
 
-  if (showCart) {
+  if (!dineOption)
     return (
-      <div className="min-h-screen bg-white p-8">
-        <div className="flex justify-between items-center mb-8"><span className={`px-4 py-2 rounded-full font-black ${orderType==='qui'?'bg-black text-white':'bg-yellow-400 text-black'}`}>{orderType==='qui'?'🍽️ QUI':'🥡 ASPORTO'}</span><button onClick={() => setShowCart(false)} className="bg-gray-100 px-6 py-3 rounded-full font-bold text-black">✕ Chiudi</button></div>
-        <h1 className="text-4xl font-black text-black mb-8">IL TUO ORDINE 🛒</h1>
-        <div className="space-y-4">{cart.map((item: any) => <div key={item.cartId} className="border-[3px] border-black rounded-[20px] p-5 flex justify-between"><div><h2 className="font-black text-[24px] text-black">{item.name}</h2><p className="bg-black text-white inline-block px-3 py-1 rounded-full font-black mt-2">{euro(item.finalPrice)}</p></div><button onClick={() => setCart(prev => prev.filter(p => p.cartId!== item.cartId))} className="bg-red-500 text-white w-12 h-12 rounded-full font-black">✕</button></div>)}</div>
-        <div className="mt-10 border-t-[4px] border-black pt-6">
-          <div className="flex justify-between items-center"><p className="text-[28px] font-bold text-gray-600">TOTALE:</p><p className="text-[56px] font-black text-black">{euro(total)}</p></div>
-          <button onClick={() => createOrderMutation.mutate({ items: cart, total, type: orderType })} disabled={createOrderMutation.isPending} style={{ backgroundColor: colors.bottoneCarrello }} className="w-full mt-8 text-white py-6 rounded-full font-black text-[30px]">{createOrderMutation.isPending? "STAMPA..." : "CONFERMA E STAMPA 🖨️"}</button>
+      <main className="grid min-h-screen place-items-center p-8">
+        <div className="w-full max-w-[60rem] text-center">
+          <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
+          <div className="mt-16 grid gap-8">
+            <button onClick={() => setDineOption("qui")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
+              <span className="text-8xl">🍽️</span>
+              <span className="font-display text-8xl">Mangia qui</span>
+            </button>
+            <button onClick={() => setDineOption("asporto")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
+              <span className="text-8xl">🥡</span>
+              <span className="font-display text-8xl">Asporto</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </main>
     )
-  }
+
+  if (showCart)
+    return (
+      <main className="min-h-screen p-8">
+        <header className="mb-8 flex items-center justify-between">
+          <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui" ? "🍽️ Mangia qui" : "🥡 Asporto"}</span>
+          <button onClick={() => setShowCart(false)} className="tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ Chiudi</button>
+        </header>
+        <h1 className="mb-8 font-display text-8xl">Il tuo ordine</h1>
+        <div className="grid gap-4">
+          {cart.map((i) => (
+            <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
+              <div>
+                <p className="font-display text-5xl">{i.qty} × {i.name}</p>
+                <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length ? [ ...(i.extras ?? []).map((e) => `+ ${e}`), ...(i.removed ?? []).map((r) => `senza ${r}`) ].join(" · ") : ""}</p>
+              </div>
+              <div className="flex items-center gap-6">
+                <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
+                <button onClick={() => setCart((c) => c.filter((x) => x.id !== i.id))} className="tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 border-t-4 border-border pt-8">
+          <div className="flex items-baseline justify-between">
+            <p className="font-display text-6xl text-muted-foreground">Totale</p>
+            <p className="font-display text-9xl text-accent">{euro(total)}</p>
+          </div>
+          <button
+            disabled={createOrder.isPending || cart.length === 0}
+            onClick={() => createOrder.mutate()}
+            className="tap mt-8 h-32 w-full rounded-3xl bg-primary font-display text-7xl text-primary-foreground disabled:opacity-50"
+          >
+            {createOrder.isPending ? "Invio…" : "Conferma ordine"}
+          </button>
+        </div>
+      </main>
+    )
+
+  const cat = categories.find((c) => c.id === activeCat)
+  const shown = activeCat ? products.filter((p) => p.category_id === activeCat) : []
 
   return (
-    <div style={{ backgroundColor: colors.sfondo }} className="min-h-screen p-8 pb-40">
-      <div className="flex justify-between items-center mb-2"><div className="flex items-center gap-3"><h1 className="text-3xl font-black text-black">Dalla Prof</h1><button onClick={() => setOrderType(null)} className={`px-4 py-1 rounded-full font-black text-[12px] border-2 border-black ${orderType==='qui'?'bg-black text-white':'bg-yellow-400 text-black'}`}>{orderType==='qui'?'🍽️ QUI':'🥡 ASPORTO'} ▼</button></div><button onClick={() => setShowSettings(true)} className="bg-white border-2 border-black w-12 h-12 rounded-full flex items-center justify-center">⚙️</button></div>
-      {!selectedCategory? (
-        <div className="grid grid-cols-3 gap-5 mt-8">{categories.map((cat: any, i: number) => <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ backgroundColor: getCategoryColor(cat, i) }} className="h-36 rounded-[24px] flex items-center justify-center shadow-md"><span style={{ color: colors.testoCategorie }} className="font-black text-[24px] text-center px-2">{cat.name.toUpperCase()}</span></button>)}</div>
+    <main className="min-h-screen p-8 pb-36">
+      <header className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
+        <button onClick={() => setDineOption(null)} className="tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">
+          {dineOption === "qui" ? "🍽️ Qui" : "🥡 Asporto"} ▼
+        </button>
+      </header>
+
+      {activeCat === null ? (
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+          {categories.map((c: Category) => (
+            <button key={c.id} onClick={() => setActiveCat(c.id)} className="tap relative h-56 overflow-hidden rounded-3xl bg-card">
+              {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
+              <span className="glow relative z-10 font-display text-6xl text-accent">{c.name.toUpperCase()}</span>
+            </button>
+          ))}
+        </div>
       ) : (
         <>
-          {(() => {
-            const currentCat = categories.find((c: any) => c.id === selectedCategory)
-            const filtered = products.filter((p: any) => p.category_id === selectedCategory)
-            const color = getCategoryColor(currentCat, categories.indexOf(currentCat))
-            return (
-              <>
-                <button onClick={() => setSelectedCategory(null)} style={{ backgroundColor: color }} className="mb-6 px-6 py-3 rounded-full font-bold text-[20px]"><span style={{ color: colors.testoCategorie }}>← {currentCat?.name}</span></button>
-                <div className="grid grid-cols-2 gap-5">{filtered.map((p: any) => <button key={p.id} onClick={() => setSelectedProduct(p)} className="bg-white rounded-[24px] p-5 shadow border-2 border-gray-100 text-left flex flex-col justify-between min-h-[160px]"><div><h3 style={{ color: colors.testoProdotti }} className="font-black text-[22px]">{p.name}</h3><p className="text-gray-600 text-[15px] mt-2">{p.description}</p></div><div className="mt-4"><span className="bg-black text-white font-black text-[22px] px-4 py-2 rounded-full inline-block">{euro(p.price)}</span></div></button>)}</div>
-              </>
-            )
-          })()}
+          <button onClick={() => setActiveCat(null)} className="tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">
+            ← Indietro · {cat?.name}
+          </button>
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+            {shown.map((p: Product) => (
+              <button key={p.id} onClick={() => setCustom(p)} className="tap flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+                <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
+                  {p.image
+                    ? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" />
+                    : <span className="font-display text-7xl text-muted-foreground">{p.name.slice(0, 2).toUpperCase()}</span>}
+                </div>
+                <div className="mt-4">
+                  <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
+                  {p.description && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{p.description}</p>}
+                </div>
+                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(p.price)}</span>
+              </button>
+            ))}
+            {shown.length === 0 && <p className="col-span-full text-3xl text-muted-foreground">Nessun prodotto in questa categoria</p>}
+          </div>
         </>
       )}
-      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAdd={addToCart} euro={euro} colors={colors} />}
-      {cart.length > 0 && <div style={{ backgroundColor: colors.bottoneCarrello }} className="fixed bottom-0 left-0 right-0 text-white p-6 flex justify-between items-center"><div><p className="text-[18px] opacity-90">{cart.length} prodotti • {orderType==='qui'?'🍽️ QUI':'🥡 ASPORTO'}</p><p className="font-black text-[36px]">{euro(total)}</p></div><button onClick={() => setShowCart(true)} className="bg-white text-black px-8 py-5 rounded-full font-black text-[24px]">🛒 VEDI CARRELLO</button></div>}
-      {showSettings && <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"><div className="bg-white w-full max-w-lg rounded-[24px] p-6"><div className="flex justify-between items-center mb-6"><h2 className="font-black text-[24px] text-black">🎨 Personalizza</h2><button onClick={() => setShowSettings(false)} className="w-10 h-10 bg-gray-100 rounded-full font-black text-black">✕</button></div>{categories.map((cat: any, i: number) => { const currentColor = getCategoryColor(cat, i); return <div key={cat.id} className="flex justify-between items-center border-2 p-3 rounded-xl mb-3"><div className="flex items-center gap-3"><div style={{ backgroundColor: currentColor }} className="w-8 h-8 rounded-full border"></div><p className="font-bold text-black">{cat.name}</p></div><input type="color" value={currentColor} onChange={(e) => saveCategoriaColor(cat.id, e.target.value)} className="w-14 h-14 rounded-xl" /></div> })}<button onClick={() => setShowSettings(false)} className="w-full mt-4 bg-black text-white py-3 rounded-full font-black">FATTO ✓</button></div></div>}
-    </div>
+
+      {custom && (
+        <Customize
+          product={custom}
+          onClose={() => setCustom(null)}
+          onAdd={(extras, removed) => {
+            const price = p2(custom) + extras.reduce((s, e) => s + e.price, 0)
+            setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed }])
+            setCustom(null)
+          }}
+        />
+      )}
+
+      {cart.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 flex items-center justify-between bg-card p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+          <div>
+            <p className="text-2xl text-muted-foreground">{cart.length} prodotti · {dineOption === "qui" ? "🍽️ Qui" : "🥡 Asporto"}</p>
+            <p className="font-display text-6xl text-accent">{euro(total)}</p>
+          </div>
+          <button onClick={() => setShowCart(true)} className="tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">
+            🛒 Carrello
+          </button>
+        </div>
+      )}
+    </main>
   )
 }
 
-function ProductModal({ product, onClose, onAdd, euro, colors }: any) {
+const p2 = (p: Product) => Number(p.price) || 0
+
+function Customize({ product, onClose, onAdd }: { product: Product; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
   const [removed, setRemoved] = useState<string[]>([])
+  const [extras, setExtras] = useState<string[]>([])
+  const chosen = product.extras.filter((e) => extras.includes(e.name))
+  const total = p2(product) + chosen.reduce((s, e) => s + e.price, 0)
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
-      <div className="bg-white w-full max-w-lg rounded-t-[32px] max-h-[90vh] flex flex-col">
-        <div className="p-6 overflow-auto flex-1">
-          <h2 className="font-black text-[36px] text-black">{product.name}</h2>
-          <p className="text-gray-700 mt-2 text-[20px]">{product.description}</p>
-          <div className="mt-3 bg-black text-white font-black text-[28px] px-5 py-2 rounded-full inline-block">{euro(product.price)}</div>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={onClose}>
+      <div className="max-h-[92vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
+        <div className="overflow-auto p-8">
+          <h2 className="font-display text-7xl">{product.name}</h2>
+          {product.description && <p className="mt-2 text-2xl text-muted-foreground">{product.description}</p>}
+          <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(product.price)}</p>
+
+          {product.ingredients.length > 0 && (
+            <section className="mt-6">
+              <h3 className="font-display text-4xl text-muted-foreground">Togli ingredienti</h3>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {product.ingredients.map((ing) => {
+                  const on = removed.includes(ing)
+                  return (
+                    <button key={ing} onClick={() => setRemoved((r) => (on ? r.filter((x) => x !== ing) : [...r, ing]))}
+                      className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
+                      {on ? "senza " : ""}{ing}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {product.extras.length > 0 && (
+            <section className="mt-6">
+              <h3 className="font-display text-4xl text-muted-foreground">Extra</h3>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {product.extras.map((e) => {
+                  const on = extras.includes(e.name)
+                  return (
+                    <button key={e.name} onClick={() => setExtras((x) => (on ? x.filter((n) => n !== e.name) : [...x, e.name]))}
+                      className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>
+                      + {e.name} · {euro(e.price)}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
         </div>
-        <div className="p-6 border-t-2 bg-white">
-          <button onClick={() => onAdd(product, removed, [])} style={{ backgroundColor: colors.bottoneAggiungi }} className="w-full text-white py-5 rounded-full font-black text-[26px]">AGGIUNGI 🛒 {euro(product.price)}</button>
-          <button onClick={onClose} className="w-full mt-3 text-gray-500 py-2">Chiudi</button>
+        <div className="border-t-4 border-border p-6">
+          <button onClick={() => onAdd(chosen, removed)} className="tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">
+            Aggiungi · {euro(total)}
+          </button>
+          <button onClick={onClose} className="tap mt-3 w-full py-2 text-2xl text-muted-foreground">Chiudi</button>
         </div>
       </div>
     </div>
   )
 }
-
-export const Route = createFileRoute("/")({ component: TotemPage })
