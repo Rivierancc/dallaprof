@@ -32,17 +32,23 @@ function AdminOrdinePage() {
     const n = i + dir;
     if (n < 0 || n >= cats.length) return;
     const copy = [...cats];
-    [copy[i], copy[n]] = [copy[n], copy[i]];
+    const a = copy[i];
+    const b = copy[n];
+    if (!a || !b) return;
+    copy[i] = b;
+    copy[n] = a;
     setCats(copy);
   };
 
   const save = async () => {
     setSaving(true);
     for (let i = 0; i < cats.length; i++) {
+      const c = cats[i];
+      if (!c) continue;
       const { error } = await supabase
       .from("menu_categories")
       .update({ position: (i + 1) * 10 })
-      .eq("id", cats[i].id);
+      .eq("id", c.id);
       if (error) {
         toast.error("Errore salvataggio: " + error.message);
         setSaving(false);
