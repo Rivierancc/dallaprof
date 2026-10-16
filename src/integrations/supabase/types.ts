@@ -47,9 +47,11 @@ export type Database = {
           category_id: string
           description: string
           extras: Json
+          featured_at: string | null
           id: string
           image_path: string
           ingredients: Json
+          is_featured: boolean
           name: string
           position: number
           price: number
@@ -60,9 +62,11 @@ export type Database = {
           category_id: string
           description?: string
           extras?: Json
+          featured_at?: string | null
           id?: string
           image_path?: string
           ingredients?: Json
+          is_featured?: boolean
           name: string
           position?: number
           price?: number
@@ -73,9 +77,11 @@ export type Database = {
           category_id?: string
           description?: string
           extras?: Json
+          featured_at?: string | null
           id?: string
           image_path?: string
           ingredients?: Json
+          is_featured?: boolean
           name?: string
           position?: number
           price?: number

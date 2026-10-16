@@ -50,6 +50,13 @@
       "when": 1791971919291,
       "tag": "0006_orders_await_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792172289686,
+      "tag": "0007_featured_products",
+      "breakpoints": true
     }
   ]
 }
