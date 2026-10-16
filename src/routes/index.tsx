@@ -50,6 +50,7 @@ function Totem() {
 
   const categories = data?.categories?? []
   const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), [data])
+  const featured = useMemo(() => products.filter((p) => p.is_featured).slice(0, 3), [products])
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
 
   const reset = () => {
@@ -131,6 +132,7 @@ function Totem() {
       <Clock />
       <div className="w-full max-w-[60rem] text-center">
         <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
+        {custom && <p className="mt-6 font-display text-5xl text-accent">Hai scelto {custom.name}: dove lo mangi?</p>}
         <div className="mt-16 grid gap-8">
           <button onClick={() => setDineOption("qui")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
             <span className="text-8xl">🍽️</span><span className="font-display text-8xl">Mangia qui</span>
@@ -139,6 +141,22 @@ function Totem() {
             <span className="text-8xl">🥡</span><span className="font-display text-8xl">Asporto</span>
           </button>
         </div>
+        {featured.length > 0 && (
+          <section className="mt-16 text-left">
+            <h2 className="mb-6 text-center font-display text-6xl text-accent">⭐ Consigliati dalla Prof</h2>
+            <div className="grid grid-cols-3 gap-6">
+              {featured.map((p) => (
+                <button key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="tap flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
+                  {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="aspect-square w-full bg-muted" />}
+                  <div className="p-4">
+                    <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
+                    <span className="mt-2 inline-block rounded-full bg-primary px-4 py-1 font-display text-3xl text-primary-foreground">{euro(p.price)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   )
