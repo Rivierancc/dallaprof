@@ -9,6 +9,7 @@ import { gateFlags } from "@/lib/gate";
 import { menuQueryOptions } from "@/lib/menu";
 import {
   deleteCategory,
+  reorderCategories,
   deleteProduct,
   saveCategory,
   saveProduct,
@@ -107,6 +108,43 @@ function MenuEditor() {
     } catch (e) {
       err(e);
     }
+  };
+
+  const [order, setOrder] = useState<string[] | null>(null);
+  const cats = order
+    ? order.map((id) => menu.categories.find((c) => c.id === id)).filter((c): c is MenuCategory => !!c)
+    : menu.categories;
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const saveOrder = async (ids: string[]) => {
+    setOrder(ids);
+    try {
+      await reorderCategories({ data: { ids } });
+      await qc.refetchQueries({ queryKey: ["menu"] });
+      toast.success("Ordine salvato");
+    } catch (e) {
+      console.error("Errore salvataggio ordine categorie", e);
+      err(e);
+    } finally {
+      setOrder(null);
+    }
+  };
+
+  const moveCategory = (id: string, dir: -1 | 1) => {
+    const ids = cats.map((c) => c.id);
+    const i = ids.indexOf(id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j]!, ids[i]!];
+    void saveOrder(ids);
+  };
+
+  const dropCategory = (targetId: string) => {
+    if (!dragId || dragId === targetId) return setDragId(null);
+    const ids = cats.map((c) => c.id).filter((x) => x !== dragId);
+    ids.splice(ids.indexOf(targetId), 0, dragId);
+    setDragId(null);
+    void saveOrder(ids);
   };
 
   const removeCategory = async (c: MenuCategory) => {
@@ -243,17 +281,45 @@ function MenuEditor() {
             </button>
           </div>
           <ul className="space-y-3">
-            {menu.categories.map((c) => (
-              <CategoryRow
+            {cats.map((c, i) => (
+              <div
                 key={c.id}
-                c={c}
-                count={menu.products.filter((p) => p.category_id === c.id).length}
-                selected={active?.id === c.id}
-                onSelect={() => setSel(c.id)}
-                onRename={(name) => renameCategory(c, name)}
-                onPhoto={(file) => categoryPhoto(c, file)}
-                onDelete={() => removeCategory(c)}
-              />
+                draggable
+                onDragStart={() => setDragId(c.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => dropCategory(c.id)}
+                className="flex items-stretch gap-2"
+              >
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => moveCategory(c.id, -1)}
+                    disabled={i === 0 || !!order}
+                    aria-label={`Sposta su ${c.name}`}
+                    className="tap flex-1 rounded-xl bg-primary px-3 text-3xl font-bold text-primary-foreground disabled:opacity-25"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => moveCategory(c.id, 1)}
+                    disabled={i === cats.length - 1 || !!order}
+                    aria-label={`Sposta giù ${c.name}`}
+                    className="tap flex-1 rounded-xl bg-primary px-3 text-3xl font-bold text-primary-foreground disabled:opacity-25"
+                  >
+                    ▼
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <CategoryRow
+                    c={c}
+                    count={menu.products.filter((p) => p.category_id === c.id).length}
+                    selected={active?.id === c.id}
+                    onSelect={() => setSel(c.id)}
+                    onRename={(name) => renameCategory(c, name)}
+                    onPhoto={(file) => categoryPhoto(c, file)}
+                    onDelete={() => removeCategory(c)}
+                  />
+                </div>
+              </div>
             ))}
             {!menu.categories.length && (
               <li className="text-xl text-muted-foreground">Nessuna categoria: crea la prima.</li>

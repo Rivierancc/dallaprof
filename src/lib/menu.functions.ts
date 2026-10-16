@@ -215,6 +215,26 @@ export const saveCategory = createServerFn({ method: "POST" })
     return { id: row.id };
   });
 
+// Riscrive la posizione di TUTTE le categorie (0..N) nell'ordine ricevuto.
+export const reorderCategories = createServerFn({ method: "POST" })
+  .inputValidator((d: { ids: string[] }) => {
+    if (!Array.isArray(d.ids) || d.ids.length > 500) throw new Error("Elenco non valido");
+    return { ids: d.ids.map(String) };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const results = await Promise.all(
+      data.ids.map((id, i) => supabase.from("menu_categories").update({ position: i }).eq("id", id)),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error("reorderCategories", failed.error);
+      throw new Error(failed.error.message);
+    }
+    return { ok: true as const };
+  });
+
 export const deleteCategory = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
   .handler(async ({ data }) => {
