@@ -14,6 +14,7 @@ import {
   saveCategory,
   saveProduct,
   setSoldOut as soldOut,
+  setFeatured,
   setProductOptions,
   setDescription,
   uploadMenuPhoto,
@@ -360,6 +361,15 @@ function MenuEditor() {
                     err(e);
                   }
                 }}
+                onFeatured={async (v) => {
+                  try {
+                    await setFeatured({ data: { id: p.id, featured: v } });
+                    refresh();
+                    toast.success(v ? "In evidenza sul totem (max 3)" : "Tolto dall'evidenza");
+                  } catch (e) {
+                    err(e);
+                  }
+                }}
                 onSoldOut={async (v) => {
                   try {
                     await soldOut({ data: { id: p.id, soldOut: v } });
@@ -499,6 +509,7 @@ function ProductRow({
   onDelete,
   onMove,
   onSoldOut,
+  onFeatured,
   onOptions,
   onDescription,
 }: {
@@ -506,6 +517,7 @@ function ProductRow({
   onDescription: (d: string) => Promise<unknown>;
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
+  onFeatured: (v: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
   onPhoto: (f: File) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
@@ -566,6 +578,15 @@ function ProductRow({
           ▼
         </button>
       </div>
+      <button
+        role="switch"
+        aria-checked={p.is_featured}
+        onClick={() => run(() => onFeatured(!p.is_featured))}
+        className={`tap rounded-xl px-4 py-3 text-xl font-bold ${p.is_featured ? "bg-accent text-accent-foreground" : "bg-secondary"}`}
+        title="Metti in evidenza sul totem (max 3)"
+      >
+        {p.is_featured ? "★ In evidenza" : "☆ Metti in evidenza"}
+      </button>
       <button
         role="switch"
         aria-checked={p.sold_out}

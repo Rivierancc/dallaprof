@@ -71,6 +71,7 @@ export type MenuProduct = {
   image_path: string;
   position: number;
   sold_out: boolean;
+  is_featured: boolean;
   description: string;
   ingredients: string[];
   extras: MenuExtra[];
@@ -100,7 +101,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, ingredients, extras")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, ingredients, extras, is_featured")
       .eq("active", true)
       .order("position", { ascending: true }),
   ]);
@@ -125,6 +126,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       image: urls[r.image_path] ?? "",
       position: r.position,
       sold_out: !!r.sold_out,
+      is_featured: !!r.is_featured,
       description: r.description ?? "",
       ingredients: cleanIngredients(r.ingredients),
       extras: cleanExtras(r.extras),
@@ -325,4 +327,27 @@ export const uploadMenuPhoto = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { path };
+  });
+
+// Max 3 piatti in evidenza: attivandone un quarto si toglie il più vecchio.
+export const setFeatured = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; featured: boolean }) => ({ id: String(d.id), featured: !!d.featured }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase
+      .from("menu_products")
+      .update({ is_featured: data.featured, featured_at: data.featured ? new Date().toISOString() : null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    if (data.featured) {
+      const { data: rows } = await supabase
+        .from("menu_products")
+        .select("id")
+        .eq("is_featured", true)
+        .order("featured_at", { ascending: false, nullsFirst: false });
+      const extra = (rows ?? []).slice(3).map((r) => r.id);
+      if (extra.length) await supabase.from("menu_products").update({ is_featured: false, featured_at: null }).in("id", extra);
+    }
+    return { ok: true as const };
   });
