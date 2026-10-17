@@ -57,6 +57,13 @@
       "when": 1792172289686,
       "tag": "0007_featured_products",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792265913933,
+      "tag": "0008_customer_languages_payment_method",
+      "breakpoints": true
     }
   ]
 }

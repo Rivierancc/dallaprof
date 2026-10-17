@@ -73,6 +73,9 @@ export type MenuProduct = {
   sold_out: boolean;
   is_featured: boolean;
   description: string;
+  description_en: string;
+  description_fr: string;
+  description_es: string;
   ingredients: string[];
   extras: MenuExtra[];
 };
@@ -101,7 +104,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, ingredients, extras, is_featured")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured")
       .eq("active", true)
       .order("position", { ascending: true }),
   ]);
@@ -128,6 +131,9 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       sold_out: !!r.sold_out,
       is_featured: !!r.is_featured,
       description: r.description ?? "",
+      description_en: r.description_en ?? "",
+      description_fr: r.description_fr ?? "",
+      description_es: r.description_es ?? "",
       ingredients: cleanIngredients(r.ingredients),
       extras: cleanExtras(r.extras),
     })),
@@ -350,4 +356,29 @@ export const setFeatured = createServerFn({ method: "POST" })
       if (extra.length) await supabase.from("menu_products").update({ is_featured: false, featured_at: null }).in("id", extra);
     }
     return { ok: true as const };
+  });
+
+export const setTranslation = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; language: "EN" | "FR" | "ES"; description: string }) => {
+    if (!["EN", "FR", "ES"].includes(d.language)) throw new Error("Lingua non valida");
+    const column = d.language === "EN" ? "description_en" : d.language === "FR" ? "description_fr" : "description_es";
+    return { id: String(d.id), column, description: String(d.description ?? "").trim().slice(0, 300) };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_products").update({ [data.column]: data.description }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getCustomerOrder = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.id)) throw new Error("Ordine non valido");
+    return { id: d.id };
+  })
+  .handler(async ({ data }) => {
+    const { data: order, error } = await publishable().from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(error.message);
+    return order;
   });

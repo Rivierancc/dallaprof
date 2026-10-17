@@ -46,6 +46,9 @@ export type Database = {
           active: boolean
           category_id: string
           description: string
+          description_en: string
+          description_es: string
+          description_fr: string
           extras: Json
           featured_at: string | null
           id: string
@@ -61,6 +64,9 @@ export type Database = {
           active?: boolean
           category_id: string
           description?: string
+          description_en?: string
+          description_es?: string
+          description_fr?: string
           extras?: Json
           featured_at?: string | null
           id?: string
@@ -76,6 +82,9 @@ export type Database = {
           active?: boolean
           category_id?: string
           description?: string
+          description_en?: string
+          description_es?: string
+          description_fr?: string
           extras?: Json
           featured_at?: string | null
           id?: string
@@ -105,6 +114,7 @@ export type Database = {
           items: Json
           order_number: number
           paid_at: string | null
+          payment_method: string | null
           status: string
           total: number
         }
@@ -115,6 +125,7 @@ export type Database = {
           items?: Json
           order_number?: number
           paid_at?: string | null
+          payment_method?: string | null
           status?: string
           total?: number
         }
@@ -125,6 +136,7 @@ export type Database = {
           items?: Json
           order_number?: number
           paid_at?: string | null
+          payment_method?: string | null
           status?: string
           total?: number
         }

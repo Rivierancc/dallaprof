@@ -28,6 +28,9 @@ export type Product = {
   sold_out: boolean;
   is_featured: boolean;
   description: string;
+  description_en: string;
+  description_fr: string;
+  description_es: string;
   ingredients: string[];
   extras: { name: string; price: number }[];
 };

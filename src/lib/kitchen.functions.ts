@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { useSession, getRequest } from "@tanstack/react-start/server";
+import type { PaymentMethod } from "@/lib/customer";
 import { createHash, timingSafeEqual } from "node:crypto";
 
 type KitchenSession = { unlocked?: boolean };
@@ -74,13 +75,16 @@ export const setOrderStatus = createServerFn({ method: "POST" })
 
 // Cassa: solo dopo il pagamento SumUp l'ordine passa in cucina.
 export const settleOrder = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; paid: boolean }) => ({ id: String(d.id), paid: !!d.paid }))
+  .inputValidator((d: { id: string; paid: boolean; method?: PaymentMethod }) => {
+    if (d.method && !["cash", "card"].includes(d.method)) throw new Error("Pagamento non valido");
+    return { id: String(d.id), paid: !!d.paid, method: d.method ?? "card" };
+  })
   .handler(async ({ data }) => {
     const s = await useSession<KitchenSession>(sessionConfig());
     if (!s.data.unlocked) throw new Error("Non autorizzato");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch = data.paid
-      ? { status: "preparing", paid_at: new Date().toISOString() }
+      ? { status: "preparing", paid_at: new Date().toISOString(), payment_method: data.method }
       : { status: "cancelled" };
     const { data: rows, error } = await supabaseAdmin
       .from("orders")
