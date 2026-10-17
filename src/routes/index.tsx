@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions, type Category, type CartItem, type Product, euro } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
+import { useCustomer } from "@/components/customer-session"
+import { Button } from "@/components/ui/button"
+import { copy, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,140 +22,68 @@ export const Route = createFileRoute("/")({
   component: Totem,
 })
 
-// OROLOGIO DIGITALE - piccolo in alto a sx
-function Clock() {
-  const [now, setNow] = useState(new Date())
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(t)
-  }, [])
-  return (
-    <div className="fixed top-3 left-3 z-[100] rounded-xl bg-black/70 px-3 py-1.5 backdrop-blur border border-white/10">
-      <div className="font-mono text-[11px] leading-none text-white/60 uppercase tracking-widest">
-        {now.toLocaleDateString("it-IT", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" })}
-      </div>
-      <div className="font-mono text-[15px] font-bold leading-none text-white tracking-wider mt-1">
-        {now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-      </div>
-    </div>
-  )
-}
-
 function Totem() {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const queryClient = useQueryClient()
-  const [dineOption, setDineOption] = useState<null | "qui" | "asporto">(null)
+  const { language, orderType: dineOption, setOrderType: setDineOption } = useCustomer()
+  const t = copy[language]
+  const navigate = useNavigate()
+  const [orderError, setOrderError] = useState("")
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
   const [custom, setCustom] = useState<Product | null>(null)
   const [showCart, setShowCart] = useState(false)
-  const [done, setDone] = useState<number | null>(null)
 
   const categories = data?.categories?? []
   const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), [data])
   const featured = useMemo(() => products.filter((p) => p.is_featured).slice(0, 3), [products])
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
 
-  const reset = () => {
-    setCart([])
-    setShowCart(false)
-    setActiveCat(null)
-    setDineOption(null)
-    setCustom(null)
-  }
-
-  useEffect(() => {
-    if (done === null) return
-    const t = setTimeout(reset, 15_000)
-    return () => clearTimeout(t)
-  }, [done])
-
-  const printComanda = (orderNum: number) => {
-    const w = window.open('', '_blank', 'width=320,height=600')
-    if (!w) return
-    const itemsHtml = cart.map(it => `<div style="display:flex;justify-content:space-between;font-size:12px;margin:3px 0"><span>${it.qty}x ${it.name.toUpperCase()}</span><span>€${(it.price*it.qty).toFixed(2)}</span></div>`).join('')
-    w.document.write(`
-      <html><head>
-      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-      <style>
-        body{font-family:monospace;width:280px;padding:10px;margin:0;color:#000}
-      .num{font-size:72px;font-weight:900;text-align:center;margin:0}
-      .tipo{text-align:center;background:#000;color:#fff;padding:8px;border-radius:8px;font-weight:900;margin:8px 0}
-      .center{text-align:center;font-size:12px}
-        hr{border:1px dashed #000;margin:8px 0}
-      .footer{border:2px solid #000;text-align:center;font-weight:900;padding:8px;border-radius:8px;margin-top:10px}
-      </style></head><body>
-        <div class="center"><b>DALLA PROF</b><br/>Albenga - ${new Date().toLocaleString()}</div>
-        <div class="num">#${orderNum}</div>
-        <div style="text-align:center"><svg id="bc"></svg></div>
-        <div class="tipo">${dineOption==='qui'?'MANGIA QUI':'ASPORTO'}</div>
-        <hr/>${itemsHtml}<hr/>
-        <div style="display:flex;justify-content:space-between;font-weight:900;font-size:16px"><span>TOTALE</span><span>€${total.toFixed(2)}</span></div>
-        <hr/><div class="footer">PORTA IN CASSA<br/>PAGA CON CARTA AL POS SUMUP</div>
-        <script>
-          JsBarcode("#bc", "${orderNum}", {format:"CODE128",width:2,height:60,displayValue:false,margin:0});
-          window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}
-        </script>
-      </body></html>
-    `)
-    w.document.close()
-  }
-
   const createOrder = useMutation({
-    mutationFn: async () => {
-      if (!dineOption) throw new Error("Scegli prima mangia qui o asporto")
-      const { data: order, error } = await supabase.from("orders").insert({ dine_option: dineOption, items: cart, total, status: "awaiting_payment" }).select("id, order_number").single()
+    mutationFn: async (method: PaymentMethod) => {
+      setOrderError("")
+      const payload = orderPayload(dineOption, cart, method)
+      const { data: order, error } = await supabase.from("orders").insert(payload).select("id, order_number").single()
       if (error) throw error
       return order
     },
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
-      printComanda(Number(order.order_number))
-      setDone(Number(order.order_number))
+      localStorage.setItem("last_order_id", order.id)
+      setCart([])
+      void navigate({ to: "/ordine-confermato/$id", params: { id: order.id } })
     },
-    onError: (e) => alert(`Ordine non inviato: ${(e as Error).message}`),
+    onError: () => setOrderError(t.error),
   })
 
-  if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground"><Clock />Caricamento…</div>
-
-  if (done!== null) return (
-    <main className="grid min-h-screen place-items-center p-8 text-center">
-      <Clock />
-      <div className="animate-pop">
-        <p className="font-display text-7xl text-muted-foreground">Il tuo ordine è</p>
-        <p className="my-6 font-display text-[28rem] leading-none text-accent">{String(done).padStart(2, "0")}</p>
-        <p className="font-display text-6xl">Vai in cassa e paga con carta al POS SumUp</p>
-        <button onClick={reset} className="tap mt-12 h-28 rounded-3xl bg-primary px-16 font-display text-6xl text-primary-foreground">Nuovo ordine</button>
-      </div>
-    </main>
-  )
+  if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">{t.loading}</div>
 
   if (!dineOption) return (
-    <main className="grid min-h-screen place-items-center p-8">
-      <Clock />
+    <main className="grid min-h-screen place-items-center p-8 pt-24">
+      
       <div className="w-full max-w-[60rem] text-center">
-        <h1 className="font-display text-9xl leading-none">Dove mangi?</h1>
-        {custom && <p className="mt-6 font-display text-5xl text-accent">Hai scelto {custom.name}: dove lo mangi?</p>}
+        <h1 className="font-display text-9xl leading-none">{t.where}</h1>
+        {custom && <p className="mt-6 font-display text-5xl text-accent">{t.chosen} {custom.name}: {t.where}</p>}
         <div className="mt-16 grid gap-8">
-          <button onClick={() => setDineOption("qui")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
-            <span className="text-8xl">🍽️</span><span className="font-display text-8xl">Mangia qui</span>
-          </button>
-          <button onClick={() => setDineOption("asporto")} className="tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
-            <span className="text-8xl">🥡</span><span className="font-display text-8xl">Asporto</span>
-          </button>
+          <Button variant="ghost" onClick={() => setDineOption("qui")} className="whitespace-normal tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
+            <span className="text-8xl">🍽️</span><span className="font-display text-8xl">{t.here}</span>
+          </Button>
+          <Button variant="ghost" onClick={() => setDineOption("asporto")} className="whitespace-normal tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
+            <span className="text-8xl">🥡</span><span className="font-display text-8xl">{t.takeaway}</span>
+          </Button>
         </div>
         {featured.length > 0 && (
           <section className="mt-16 text-left">
-            <h2 className="mb-6 text-center font-display text-6xl text-accent">⭐ Consigliati dalla Prof</h2>
+            <h2 className="mb-6 text-center font-display text-6xl text-accent">⭐ {t.recommended}</h2>
             <div className="grid grid-cols-3 gap-6">
               {featured.map((p) => (
-                <button key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="tap flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
+                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
                   {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="aspect-square w-full bg-muted" />}
                   <div className="p-4">
                     <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
                     <span className="mt-2 inline-block rounded-full bg-primary px-4 py-1 font-display text-3xl text-primary-foreground">{euro(p.price)}</span>
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           </section>
@@ -162,13 +93,13 @@ function Totem() {
   )
 
   if (showCart) return (
-    <main className="min-h-screen p-8">
-      <Clock />
+    <main className="min-h-screen p-8 pt-20">
+      
       <header className="mb-8 flex items-center justify-between pt-8">
-        <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? "🍽️ Mangia qui" : "🥡 Asporto"}</span>
-        <button onClick={() => setShowCart(false)} className="tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ Chiudi</button>
+        <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</span>
+        <Button variant="ghost" onClick={() => setShowCart(false)} className="whitespace-normal tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ {t.close}</Button>
       </header>
-      <h1 className="mb-8 font-display text-8xl">Il tuo ordine</h1>
+      <h1 className="mb-8 font-display text-8xl">{t.yourOrder}</h1>
       <div className="grid gap-4">
         {cart.map((i) => (
           <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
@@ -178,17 +109,21 @@ function Totem() {
             </div>
             <div className="flex items-center gap-6">
               <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
-              <button onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</button>
+              <Button variant="ghost" onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="whitespace-normal tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</Button>
             </div>
           </div>
         ))}
       </div>
       <div className="mt-10 border-t-4 border-border pt-8">
         <div className="flex items-baseline justify-between">
-          <p className="font-display text-6xl text-muted-foreground">Totale</p>
+          <p className="font-display text-6xl text-muted-foreground">{t.total}</p>
           <p className="font-display text-9xl text-accent">{euro(total)}</p>
         </div>
-        <button disabled={createOrder.isPending || cart.length === 0} onClick={() => createOrder.mutate()} className="tap mt-8 h-32 w-full rounded-3xl bg-primary font-display text-7xl text-primary-foreground disabled:opacity-50">{createOrder.isPending? "Invio…" : "Conferma ordine"}</button>
+        {orderError && <p role="alert" className="mt-4 text-2xl text-destructive">{orderError}</p>}
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Button disabled={createOrder.isPending || !dineOption || cart.length === 0} onClick={() => createOrder.mutate("cash")} className="whitespace-normal tap h-28 whitespace-normal rounded-2xl bg-accent font-display text-5xl text-accent-foreground">{createOrder.isPending ? t.sending : t.cash}</Button>
+          <Button disabled={createOrder.isPending || !dineOption || cart.length === 0} onClick={() => createOrder.mutate("card")} className="whitespace-normal tap h-28 whitespace-normal rounded-2xl font-display text-5xl">{createOrder.isPending ? t.sending : t.card}</Button>
+        </div>
       </div>
     </main>
   )
@@ -198,44 +133,45 @@ function Totem() {
 
   return (
     <main className="min-h-screen p-8 pb-36">
-      <Clock />
+      
       <header className="mb-6 flex items-center justify-between pt-10">
         <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
-        <button onClick={() => setDineOption(null)} className="tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"} ▼</button>
+        <Button variant="ghost" onClick={() => setDineOption(null)} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
       </header>
 
       {activeCat === null? (
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
           {categories.map((c: Category) => (
-            <button key={c.id} onClick={() => setActiveCat(c.id)} className="tap relative h-56 overflow-hidden rounded-3xl bg-card">
+            <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl bg-card">
               {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
               <span className="glow relative z-10 font-display text-6xl text-accent">{c.name.toUpperCase()}</span>
-            </button>
+            </Button>
           ))}
         </div>
       ) : (
         <>
-          <button onClick={() => setActiveCat(null)} className="tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← Indietro · {cat?.name}</button>
+          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {cat?.name}</Button>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {shown.map((p: Product) => (
-              <button key={p.id} onClick={() => setCustom(p)} className="tap flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
                   <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
-                  {p.description && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{p.description}</p>}
+                  {descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
                 <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(p.price)}</span>
-              </button>
+              </Button>
             ))}
-            {shown.length === 0 && <p className="col-span-full text-3xl text-muted-foreground">Nessun prodotto in questa categoria</p>}
+            {shown.length === 0 && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
           </div>
         </>
       )}
 
       {custom && (
-        <Customize product={custom} onClose={() => setCustom(null)} onAdd={(extras, removed) => {
+        <Customize key={custom.id} product={custom} onClose={() => setCustom(null)} onAdd={(extras, removed) => {
+          if (!dineOption) { setShowCart(false); return }
           const price = p2(custom) + extras.reduce((s, e) => s + e.price, 0)
           setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed }])
           setCustom(null)
@@ -243,12 +179,12 @@ function Totem() {
       )}
 
       {cart.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center justify-between bg-card p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="fixed inset-x-0 bottom-0 flex items-center justify-between bg-card p-6 shadow-lg">
           <div>
-            <p className="text-2xl text-muted-foreground">{cart.length} prodotti · {dineOption === "qui"? "🍽️ Qui" : "🥡 Asporto"}</p>
+            <p className="text-2xl text-muted-foreground">{cart.length} {t.products} · {dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</p>
             <p className="font-display text-6xl text-accent">{euro(total)}</p>
           </div>
-          <button onClick={() => setShowCart(true)} className="tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 Carrello</button>
+          <Button variant="ghost" onClick={() => setShowCart(true)} className="whitespace-normal tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 {t.cart}</Button>
         </div>
       )}
     </main>
@@ -258,24 +194,26 @@ function Totem() {
 const p2 = (p: Product) => Number(p.price) || 0
 
 function Customize({ product, onClose, onAdd }: { product: Product; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
+  const { language, orderType } = useCustomer()
+  const t = copy[language]
   const [removed, setRemoved] = useState<string[]>([])
   const [extras, setExtras] = useState<string[]>([])
   const chosen = product.extras.filter((e) => extras.includes(e.name))
   const total = p2(product) + chosen.reduce((s, e) => s + e.price, 0)
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="max-h-[92vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="overflow-auto p-8">
           <h2 className="font-display text-7xl">{product.name}</h2>
-          {product.description && <p className="mt-2 text-2xl text-muted-foreground">{product.description}</p>}
+          {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(product.price)}</p>
           {product.ingredients.length > 0 && (
             <section className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground">Togli ingredienti</h3>
+              <h3 className="font-display text-4xl text-muted-foreground">{t.remove}</h3>
               <div className="mt-3 flex flex-wrap gap-3">
                 {product.ingredients.map((ing) => {
                   const on = removed.includes(ing)
-                  return <button key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? "senza " : ""}{ing}</button>
+                  return <Button variant="ghost" key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? `${t.without} ` : ""}{ing}</Button>
                 })}
               </div>
             </section>
@@ -286,15 +224,15 @@ function Customize({ product, onClose, onAdd }: { product: Product; onClose: () 
               <div className="mt-3 flex flex-wrap gap-3">
                 {product.extras.map((e) => {
                   const on = extras.includes(e.name)
-                  return <button key={e.name} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : [...x, e.name]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {e.name} · {euro(e.price)}</button>
+                  return <Button variant="ghost" key={e.name} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : [...x, e.name]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {e.name} · {euro(e.price)}</Button>
                 })}
               </div>
             </section>
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <button onClick={() => onAdd(chosen, removed)} className="tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">Aggiungi · {euro(total)}</button>
-          <button onClick={onClose} className="tap mt-3 w-full py-2 text-2xl text-muted-foreground">Chiudi</button>
+          <Button variant="ghost" disabled={!orderType} onClick={() => { if (orderType) onAdd(chosen, removed) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
+          <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
         </div>
       </div>
     </div>

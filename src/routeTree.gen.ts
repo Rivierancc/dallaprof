@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CassaRouteImport } from './routes/cassa'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
@@ -19,6 +20,11 @@ import { Route as AdminOrdineRouteImport } from './routes/admin.ordine'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CassaRoute = CassaRouteImport.update({
@@ -42,13 +48,14 @@ const MenuRoute = MenuRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminOrdineRoute = AdminOrdineRouteImport.update({
-  id: '/admin/ordine',
-  path: '/admin/ordine',
-  getParentRoute: () => rootRouteImport,
+  id: '/ordine',
+  path: '/ordine',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -74,12 +83,27 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cassa' | '/cucina' | '/display' | '/menu' | '/admin/ordine'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/cassa'
+    | '/cucina'
+    | '/display'
+    | '/menu'
+    | '/admin/ordine'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cassa' | '/cucina' | '/display' | '/menu' | '/admin/ordine'
+  to:
+    | '/'
+    | '/admin'
+    | '/cassa'
+    | '/cucina'
+    | '/display'
+    | '/menu'
+    | '/admin/ordine'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/cassa'
     | '/cucina'
     | '/display'
@@ -89,11 +113,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   CassaRoute: typeof CassaRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
   MenuRoute: typeof MenuRoute
-  AdminOrdineRoute: typeof AdminOrdineRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,6 +127,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cassa': {
@@ -135,21 +166,31 @@ declare module '@tanstack/react-router' {
     }
     '/admin/ordine': {
       id: '/admin/ordine'
-      path: '/admin/ordine'
+      path: '/ordine'
       fullPath: '/admin/ordine'
       preLoaderRoute: typeof AdminOrdineRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
   }
 }
 
+interface AdminRouteChildren {
+  AdminOrdineRoute: typeof AdminOrdineRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminOrdineRoute: AdminOrdineRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   CassaRoute: CassaRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
   MenuRoute: MenuRoute,
-  AdminOrdineRoute: AdminOrdineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

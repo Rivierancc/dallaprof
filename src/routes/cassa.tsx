@@ -6,6 +6,8 @@ import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, settleOrder } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
 import { euro, itemNotes, type Order } from "@/lib/menu";
+import { Button } from "@/components/ui/button";
+import type { PaymentMethod } from "@/lib/customer";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
 export const Route = createFileRoute("/cassa")({
@@ -57,13 +59,14 @@ function Cassa() {
     }
   };
 
-  const act = async (o: Order, paid: boolean) => {
+  const act = async (o: Order, paid: boolean, method: PaymentMethod = "card") => {
     setBusy(o.id);
     try {
-      const r = await settle({ data: { id: o.id, paid } });
+      const r = await settle({ data: { id: o.id, paid, method } });
       if (paid && r.order && cfg.auto && cfg.ip) await print(r.order as unknown as Order);
       else if (paid) setMsg(`Ordine ${String(o.order_number).padStart(2, "0")} inviato in cucina`);
     } catch {
+      setMsg("Operazione non riuscita. Riprova: l’ordine non è stato confermato.");
       router.invalidate();
     }
     setBusy(null);
@@ -151,8 +154,11 @@ function Cassa() {
               onClick={() => act(o, true)}
               className="tap h-20 rounded-2xl bg-success font-display text-4xl text-success-foreground disabled:opacity-50"
             >
-              Pagato con SumUp → Cucina
+              Pagato carta → Cucina
             </button>
+            <Button disabled={busy === o.id} onClick={() => act(o, true, "cash")} className="tap mt-3 h-20 whitespace-normal rounded-2xl bg-accent font-display text-4xl text-accent-foreground">
+              Pagato contanti → Cucina
+            </Button>
             <button disabled={busy === o.id} onClick={() => act(o, false)} className="tap mt-3 h-14 rounded-2xl bg-secondary text-xl font-bold">
               Annulla ordine
             </button>

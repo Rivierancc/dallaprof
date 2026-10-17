@@ -17,6 +17,7 @@ import {
   setFeatured,
   setProductOptions,
   setDescription,
+  setTranslation,
   uploadMenuPhoto,
   type MenuCategory,
   type MenuProduct,
@@ -37,6 +38,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Pannello riservato al personale: aggiungi, modifica e rimuovi i piatti." },
       { property: "og:title", content: "Gestione menu — Totem Burger" },
       { property: "og:description", content: "Pannello riservato al personale: aggiungi, modifica e rimuovi i piatti." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -136,7 +139,10 @@ function MenuEditor() {
     const i = ids.indexOf(id);
     const j = i + dir;
     if (i < 0 || j < 0 || j >= ids.length) return;
-    [ids[i], ids[j]] = [ids[j]!, ids[i]!];
+    const first = ids[i];
+    const second = ids[j];
+    if (!first || !second) return;
+    [ids[i], ids[j]] = [second, first];
     void saveOrder(ids);
   };
 
@@ -258,6 +264,7 @@ function MenuEditor() {
     <main className="min-h-screen p-6">
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
+        <Link to="/admin" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">Chiosco</Link>
         <Link to="/cucina" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           Cucina
         </Link>
@@ -344,6 +351,10 @@ function MenuEditor() {
                 onPhoto={(file) => productPhoto(p, file)}
                 onDelete={() => removeProduct(p)}
                 onMove={(dir) => move(p, dir)}
+                onTranslation={async (language, description) => {
+                  await setTranslation({ data: { id: p.id, language, description } });
+                  await refresh();
+                }}
                 onDescription={async (description) => {
                   try {
                     await setDescription({ data: { id: p.id, description } });
@@ -512,8 +523,10 @@ function ProductRow({
   onFeatured,
   onOptions,
   onDescription,
+  onTranslation,
 }: {
   p: MenuProduct;
+  onTranslation: (language: "EN" | "FR" | "ES", description: string) => Promise<unknown>;
   onDescription: (d: string) => Promise<unknown>;
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
@@ -616,6 +629,9 @@ function ProductRow({
         placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
         className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
       />
+      <div className="grid w-full basis-full gap-3 md:grid-cols-3">
+        {(["EN", "FR", "ES"] as const).map((language) => <TranslationField key={language} language={language} value={language === "EN" ? p.description_en : language === "FR" ? p.description_fr : p.description_es} onSave={(text) => run(() => onTranslation(language, text))} />)}
+      </div>
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
     </li>
   );
@@ -706,4 +722,21 @@ function OptionsEditor({
       </div>
     </div>
   );
+}
+
+function TranslationField({ language, value, onSave }: { language: "EN" | "FR" | "ES"; value: string; onSave: (text: string) => Promise<unknown> }) {
+  const [text, setText] = useState(value);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return <label className="grid gap-2 text-xl">
+    <span>Descrizione {language} {busy ? "— Salvataggio…" : ""}</span>
+    <textarea aria-label={`Descrizione ${language}`} rows={3} maxLength={300} value={text} onChange={(event) => setText(event.target.value)} onBlur={async () => {
+      if (text.trim() === value) return;
+      setBusy(true); setError("");
+      try { await onSave(text.trim()); }
+      catch { setError("Salvataggio non riuscito: riprova"); }
+      finally { setBusy(false); }
+    }} className="w-full rounded-lg bg-muted px-4 py-3" />
+    {error && <span role="alert" className="text-destructive">{error}</span>}
+  </label>;
 }
