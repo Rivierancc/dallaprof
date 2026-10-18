@@ -49,7 +49,7 @@ function Totem() {
     },
     onSuccess: (order) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
-      localStorage.setItem("last_order_id", order.id)
+      try { localStorage.setItem("last_order_id", order.id) } catch { /* Navigation also carries the order ID. */ }
       setCart([])
       void navigate({ to: "/ordine-confermato/$id", params: { id: order.id } })
     },
@@ -77,7 +77,7 @@ function Totem() {
             <h2 className="mb-6 text-center font-display text-6xl text-accent">⭐ {t.recommended}</h2>
             <div className="grid grid-cols-3 gap-6">
               {featured.map((p) => (
-                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
+                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap h-auto p-0 flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
                   {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="aspect-square w-full bg-muted" />}
                   <div className="p-4">
                     <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
@@ -134,7 +134,7 @@ function Totem() {
   return (
     <main className="min-h-screen p-8 pb-36">
       
-      <header className="mb-6 flex items-center justify-between pt-10">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
         <Button variant="ghost" onClick={() => setDineOption(null)} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
       </header>
@@ -153,7 +153,7 @@ function Totem() {
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {cat?.name}</Button>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
@@ -202,8 +202,8 @@ function Customize({ product, onClose, onAdd }: { product: Product; onClose: () 
   const total = p2(product) + chosen.reduce((s, e) => s + e.price, 0)
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
-      <div className="max-h-[92vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
-        <div className="overflow-auto p-8">
+      <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
+        <div className="min-h-0 overflow-auto p-8">
           <h2 className="font-display text-7xl">{product.name}</h2>
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(product.price)}</p>

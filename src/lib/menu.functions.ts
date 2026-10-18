@@ -361,7 +361,7 @@ export const setFeatured = createServerFn({ method: "POST" })
 export const setTranslation = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; language: "EN" | "FR" | "ES"; description: string }) => {
     if (!["EN", "FR", "ES"].includes(d.language)) throw new Error("Lingua non valida");
-    const column = d.language === "EN" ? "description_en" : d.language === "FR" ? "description_fr" : "description_es";
+    const column: "description_en" | "description_fr" | "description_es" = d.language === "EN" ? "description_en" : d.language === "FR" ? "description_fr" : "description_es";
     return { id: String(d.id), column, description: String(d.description ?? "").trim().slice(0, 300) };
   })
   .handler(async ({ data }) => {
