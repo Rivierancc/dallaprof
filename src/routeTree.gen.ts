@@ -16,6 +16,8 @@ import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as AdminOrdineRouteImport } from './routes/admin.ordine'
+import { Route as OrdineConfermatoIndexRouteImport } from './routes/ordine-confermato.index'
+import { Route as OrdineConfermatoIdRouteImport } from './routes/ordine-confermato.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +54,16 @@ const AdminOrdineRoute = AdminOrdineRouteImport.update({
   path: '/ordine',
   getParentRoute: () => AdminRoute,
 } as any)
+const OrdineConfermatoIndexRoute = OrdineConfermatoIndexRouteImport.update({
+  id: '/ordine-confermato/',
+  path: '/ordine-confermato/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdineConfermatoIdRoute = OrdineConfermatoIdRouteImport.update({
+  id: '/ordine-confermato/$id',
+  path: '/ordine-confermato/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +73,8 @@ export interface FileRoutesByFullPath {
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +84,8 @@ export interface FileRoutesByTo {
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/ordine-confermato': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +96,8 @@ export interface FileRoutesById {
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +109,8 @@ export interface FileRouteTypes {
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/ordine-confermato/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +120,8 @@ export interface FileRouteTypes {
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/ordine-confermato'
   id:
     | '__root__'
     | '/'
@@ -109,6 +131,8 @@ export interface FileRouteTypes {
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/ordine-confermato/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,6 +142,8 @@ export interface RootRouteChildren {
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
   MenuRoute: typeof MenuRoute
+  OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
+  OrdineConfermatoIndexRoute: typeof OrdineConfermatoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,6 +197,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdineRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/ordine-confermato/': {
+      id: '/ordine-confermato/'
+      path: '/ordine-confermato'
+      fullPath: '/ordine-confermato/'
+      preLoaderRoute: typeof OrdineConfermatoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ordine-confermato/$id': {
+      id: '/ordine-confermato/$id'
+      path: '/ordine-confermato/$id'
+      fullPath: '/ordine-confermato/$id'
+      preLoaderRoute: typeof OrdineConfermatoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -191,6 +231,8 @@ const rootRouteChildren: RootRouteChildren = {
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
   MenuRoute: MenuRoute,
+  OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,
+  OrdineConfermatoIndexRoute: OrdineConfermatoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
