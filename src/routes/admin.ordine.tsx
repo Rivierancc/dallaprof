@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { PinPad } from "@/components/pin-pad";
+import { kitchenStatus } from "@/lib/kitchen.functions";
+import { reorderCategories } from "@/lib/menu.functions";
 
 type Cat = { id: string; name: string; position: number };
 
@@ -42,21 +45,12 @@ function AdminOrdinePage() {
 
   const save = async () => {
     setSaving(true);
-    for (let i = 0; i < cats.length; i++) {
-      const c = cats[i];
-      if (!c) continue;
-      const { error } = await supabase
-      .from("menu_categories")
-      .update({ position: (i + 1) * 10 })
-      .eq("id", c.id);
-      if (error) {
-        toast.error("Errore salvataggio: " + error.message);
-        setSaving(false);
-        return;
-      }
-    }
-    toast.success("Ordine salvato!");
-    setSaving(false);
+    try {
+      await reorderCategories({ data: { ids: cats.map((c) => c.id) } });
+      await load();
+      toast.success("Ordine salvato!");
+    } catch { toast.error("Salvataggio non riuscito"); }
+    finally { setSaving(false); }
   };
 
   if (loading) return <div className="p-10">Caricamento...</div>;
@@ -90,10 +84,13 @@ function AdminOrdinePage() {
 }
 
 export const Route = createFileRoute("/admin/ordine")({
+  loader: () => kitchenStatus(),
   head: () => ({ meta: [
     { title: "Ordine categorie — Totem Burger" }, { name: "description", content: "Riordino delle categorie del menu." },
     { property: "og:title", content: "Ordine categorie — Totem Burger" }, { property: "og:description", content: "Riordino delle categorie del menu." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
-  component: AdminOrdinePage,
+  component: AdminOrdineGate,
 });
+
+function AdminOrdineGate() { return Route.useLoaderData().unlocked ? <AdminOrdinePage /> : <PinPad title="Ordine categorie" />; }

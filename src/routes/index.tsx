@@ -105,7 +105,7 @@ function Totem() {
           <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
             <div>
               <p className="font-display text-5xl">{i.qty} × {i.name}</p>
-              <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `senza ${r}`)].join(" · ") : ""}</p>
+              <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `${t.without} ${r}`)].join(" · ") : ""}</p>
             </div>
             <div className="flex items-center gap-6">
               <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
