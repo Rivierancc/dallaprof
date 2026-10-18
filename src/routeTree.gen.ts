@@ -10,21 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CassaRouteImport } from './routes/cassa'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminOrdineRouteImport } from './routes/admin.ordine'
+import { Route as OrdineConfermatoIndexRouteImport } from './routes/ordine-confermato.index'
+import { Route as OrdineConfermatoIdRouteImport } from './routes/ordine-confermato.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CassaRoute = CassaRouteImport.update({
@@ -47,77 +44,107 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminOrdineRoute = AdminOrdineRouteImport.update({
-  id: '/ordine',
-  path: '/ordine',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/ordine',
+  path: '/admin/ordine',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdineConfermatoIndexRoute = OrdineConfermatoIndexRouteImport.update({
+  id: '/ordine-confermato/',
+  path: '/ordine-confermato/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdineConfermatoIdRoute = OrdineConfermatoIdRouteImport.update({
+  id: '/ordine-confermato/$id',
+  path: '/ordine-confermato/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/ordine-confermato': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/menu': typeof MenuRoute
   '/admin/ordine': typeof AdminOrdineRoute
+  '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/cassa'
     | '/cucina'
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/admin/'
+    | '/ordine-confermato/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/cassa'
     | '/cucina'
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/admin'
+    | '/ordine-confermato'
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/cassa'
     | '/cucina'
     | '/display'
     | '/menu'
     | '/admin/ordine'
+    | '/ordine-confermato/$id'
+    | '/admin/'
+    | '/ordine-confermato/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
   CassaRoute: typeof CassaRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
   MenuRoute: typeof MenuRoute
+  AdminOrdineRoute: typeof AdminOrdineRoute
+  OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  OrdineConfermatoIndexRoute: typeof OrdineConfermatoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -127,13 +154,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cassa': {
@@ -164,33 +184,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/ordine': {
       id: '/admin/ordine'
-      path: '/ordine'
+      path: '/admin/ordine'
       fullPath: '/admin/ordine'
       preLoaderRoute: typeof AdminOrdineRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/ordine-confermato/': {
+      id: '/ordine-confermato/'
+      path: '/ordine-confermato'
+      fullPath: '/ordine-confermato/'
+      preLoaderRoute: typeof OrdineConfermatoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ordine-confermato/$id': {
+      id: '/ordine-confermato/$id'
+      path: '/ordine-confermato/$id'
+      fullPath: '/ordine-confermato/$id'
+      preLoaderRoute: typeof OrdineConfermatoIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AdminRouteChildren {
-  AdminOrdineRoute: typeof AdminOrdineRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminOrdineRoute: AdminOrdineRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
   CassaRoute: CassaRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
   MenuRoute: MenuRoute,
+  AdminOrdineRoute: AdminOrdineRoute,
+  OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  OrdineConfermatoIndexRoute: OrdineConfermatoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

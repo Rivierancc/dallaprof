@@ -16,6 +16,8 @@ export const Route = createFileRoute("/cucina")({
       { name: "description", content: "Pannello cucina riservato al personale." },
       { property: "og:title", content: "Cucina — Totem Burger" },
       { property: "og:description", content: "Pannello cucina riservato al personale." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),

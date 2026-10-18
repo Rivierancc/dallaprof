@@ -8,6 +8,8 @@ export const Route = createFileRoute("/display")({
       { name: "description", content: "Stato degli ordini: in preparazione e pronti." },
       { property: "og:title", content: "Display ordini — Totem Burger" },
       { property: "og:description", content: "Stato degli ordini: in preparazione e pronti." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Display,

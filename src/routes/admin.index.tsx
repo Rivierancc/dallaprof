@@ -4,7 +4,7 @@ import { PinPad } from "@/components/pin-pad";
 import { useCustomer } from "@/components/customer-session";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   loader: () => kitchenStatus(),
   head: () => ({ meta: [
     { title: "Chiosco — Totem Burger" }, { name: "description", content: "Impostazioni chiosco riservate al personale." },
