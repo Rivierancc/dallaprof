@@ -89,4 +89,11 @@ function AdminOrdinePage() {
   );
 }
 
-export const Route = createFileRoute("/admin/ordine")({ component: AdminOrdinePage });
+export const Route = createFileRoute("/admin/ordine")({
+  head: () => ({ meta: [
+    { title: "Ordine categorie — Totem Burger" }, { name: "description", content: "Riordino delle categorie del menu." },
+    { property: "og:title", content: "Ordine categorie — Totem Burger" }, { property: "og:description", content: "Riordino delle categorie del menu." },
+    { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
+  ] }),
+  component: AdminOrdinePage,
+});

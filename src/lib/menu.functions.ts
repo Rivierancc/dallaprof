@@ -367,7 +367,8 @@ export const setTranslation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await staffOnly();
     const db = await admin();
-    const { error } = await db.from("menu_products").update({ [data.column]: data.description }).eq("id", data.id);
+    const patch = data.column === "description_en" ? { description_en: data.description } : data.column === "description_fr" ? { description_fr: data.description } : { description_es: data.description };
+    const { error } = await db.from("menu_products").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
