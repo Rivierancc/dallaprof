@@ -26,9 +26,9 @@ function ThemeCard({ theme, live, onDone }: { theme: KioskTheme; live: boolean; 
   const submit = async (patch: Partial<KioskTheme> = {}) => {
     const start_md = from.trim() ? parseDayMonth(from) : "";
     const end_md = to.trim() ? parseDayMonth(to) : "";
-    if ((from.trim() && !start_md) || (to.trim() && !end_md)) return toast.error("Scrivi le date come giorno/mese, per esempio 25/12");
+    if ((from.trim() && !start_md) || (to.trim() && !end_md)) { toast.error("Scrivi le date come giorno/mese, per esempio 25/12"); return; }
     const next = { ...d, start_md, end_md, ...patch };
-    if (next.mode === "auto" && (!start_md || !end_md)) return toast.error("Per l'automatico servono le date Dal e Al");
+    if (next.mode === "auto" && (!start_md || !end_md)) { toast.error("Per l'automatico servono le date Dal e Al"); return; }
     setBusy(true);
     try { await save({ data: next }); toast.success(`Tema «${next.name}» salvato`); onDone(); if (!theme.id) setD(blank); }
     catch (e) { console.error(e); toast.error(e instanceof Error ? e.message : "Salvataggio non riuscito"); }
