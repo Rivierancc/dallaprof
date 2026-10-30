@@ -398,7 +398,7 @@ function MenuEditor() {
         </section>
       </div>
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
-      <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} />)}</datalist>
+      <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
   );
 }
@@ -713,8 +713,7 @@ function OptionsEditor({
             onChange={(e) => {
               setExName(e.target.value);
               const opt = document.querySelector<HTMLOptionElement>(`#ing-lib option[value="${CSS.escape(e.target.value)}"]`);
-              const g = opt && (window as unknown as { __ingPrices?: Record<string, number> }).__ingPrices?.[e.target.value];
-              if (g !== undefined && g !== null && !exPrice) setExPrice(String(g).replace(".", ","));
+              if (opt?.dataset.price && !exPrice) setExPrice(opt.dataset.price);
             }}
             placeholder="es. Bacon"
             className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
