@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBanner, saveBanner } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
 
 export type BannerEffect = "none" | "blink" | "fade" | "scroll";
@@ -12,11 +14,26 @@ const DEFAULT: Banner = { on: false, text: "Benvenuti!", bold: true, italic: fal
 const sizes = { s: "text-4xl", m: "text-6xl", l: "text-8xl" };
 const durations: Record<BannerEffect, number> = { none: 0, blink: 1, fade: 3, scroll: 12 };
 
-export function useBanner() {
-  const [banner, setState] = useState<Banner>(DEFAULT);
-  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setState({ ...DEFAULT, ...JSON.parse(raw) }); } catch { /* defaults */ } }, []);
-  const set = (patch: Partial<Banner>) => setState((prev) => { const next = { ...prev, ...patch }; try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* ignore */ } return next; });
-  return [banner, set] as const;
+export const bannerQueryOptions = queryOptions({ queryKey: ["banner"], queryFn: () => getBanner(), staleTime: 10_000, refetchInterval: 20_000 });
+export function useBanner(): Banner {
+  const { data } = useQuery(bannerQueryOptions);
+  return { ...DEFAULT, ...(data ?? {}) } as Banner;
+}
+
+/** Sezione di Gestione menu: modifica e salva la scritta per tutti i totem. */
+export function BannerSettings() {
+  const saved = useBanner();
+  const qc = useQueryClient();
+  const [draft, setDraft] = useState<Banner | null>(null);
+  const [msg, setMsg] = useState("");
+  useEffect(() => { if (!draft) setDraft(saved); }, [saved, draft]);
+  if (!draft) return null;
+  const save = async () => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: draft } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
+  };
+  return <BannerEditor banner={draft} set={(p) => { setMsg(""); setDraft({ ...draft, ...p }); }} onSave={save} msg={msg} />;
 }
 
 export function BannerView({ banner }: { banner: Banner }) {
@@ -29,14 +46,14 @@ export function BannerView({ banner }: { banner: Banner }) {
   </div>;
 }
 
-export function BannerEditor({ banner, set, onClose }: { banner: Banner; set: (p: Partial<Banner>) => void; onClose: () => void }) {
+function BannerEditor({ banner, set, onSave, msg }: { banner: Banner; set: (p: Partial<Banner>) => void; onSave: () => void; msg: string }) {
   const toggle = (k: "bold" | "italic" | "underline", label: string, cls: string) =>
     <Button type="button" variant={banner[k] ? "default" : "secondary"} className={cls} onClick={() => set({ [k]: !banner[k] })}>{label}</Button>;
   const pick = <T extends string>(value: T, options: [T, string][], on: (v: T) => void) =>
     <div className="flex flex-wrap gap-2">{options.map(([v, l]) => <Button key={v} type="button" variant={value === v ? "default" : "secondary"} onClick={() => on(v)}>{l}</Button>)}</div>;
-  return <div className="fixed inset-0 z-[120] grid place-items-center bg-background/90 p-4">
-    <div className="max-h-full w-full max-w-2xl space-y-5 overflow-auto rounded-lg border border-border bg-card p-6">
-      <div className="flex items-center gap-3"><h2 className="mr-auto font-display text-5xl">Scritta in alto</h2>
+  return <div>
+    <div className="space-y-5">
+      <div className="flex items-center gap-3"><p className="mr-auto text-xl text-muted-foreground">Compare in alto nella schermata iniziale del totem.</p>
         <Button variant={banner.on ? "default" : "secondary"} onClick={() => set({ on: !banner.on })}>{banner.on ? "Accesa" : "Spenta"}</Button></div>
       <textarea aria-label="Testo" value={banner.text} maxLength={160} rows={2} onChange={(e) => set({ text: e.target.value })} className="w-full rounded-lg bg-muted p-3 text-2xl select-text" />
       <div className="flex flex-wrap gap-2">{toggle("bold", "G", "font-bold")}{toggle("italic", "C", "italic")}{toggle("underline", "S", "underline")}</div>
@@ -50,7 +67,7 @@ export function BannerEditor({ banner, set, onClose }: { banner: Banner; set: (p
       {banner.effect !== "none" && <label className="block"><span className="text-muted-foreground">Velocità: {banner.speed < 1.5 ? "lenta" : banner.speed > 2.5 ? "veloce" : "normale"}</span>
         <input type="range" min={0.5} max={4} step={0.5} value={banner.speed} onChange={(e) => set({ speed: Number(e.target.value) })} className="w-full" /></label>}
       <div className="rounded-lg border border-border"><BannerView banner={{ ...banner, on: true }} /></div>
-      <Button className="w-full" onClick={onClose}>Fatto</Button>
+      <div className="flex items-center gap-4"><Button onClick={onSave}>Salva scritta</Button>{msg && <span role="status" className="text-xl">{msg}</span>}</div>
     </div>
   </div>;
 }
