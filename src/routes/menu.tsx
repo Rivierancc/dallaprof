@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen } from "@/lib/kitchen.functions";
@@ -25,6 +25,7 @@ import {
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
+import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
 import { Button } from "@/components/ui/button";
 
@@ -506,8 +507,8 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
       </div>
       <ul className="space-y-3">
         {products.map((p, i) => (
-          <li key={p.id} className="list-none space-y-3">
-            {i > 0 && <DividerView divider={divider} />}
+          <Fragment key={p.id}>
+            {i > 0 && <li aria-hidden className="list-none"><DividerView divider={divider} /></li>}
             <ProductRow
               p={p}
               onSave={(name, price) => h.save(p, name, price)}
@@ -521,7 +522,7 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
               onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
               onSoldOut={(v) => h.sold(p, v)}
             />
-          </li>
+          </Fragment>
         ))}
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
       </ul>
