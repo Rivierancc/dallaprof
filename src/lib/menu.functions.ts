@@ -580,3 +580,21 @@ export const deleteTheme = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+export const getBanner = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | number | boolean>> => {
+  const { data, error } = await publishable().from("kiosk_banner").select("settings").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.settings ?? {}) as Record<string, string | number | boolean>;
+});
+
+export const saveBanner = createServerFn({ method: "POST" })
+  .inputValidator((d: { settings: Record<string, unknown> }) => {
+    if (!d || typeof d.settings !== "object" || JSON.stringify(d.settings).length > 2000) throw new Error("Dati non validi");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, settings: data.settings as never, updated_at: new Date().toISOString() });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

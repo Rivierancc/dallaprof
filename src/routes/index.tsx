@@ -1,4 +1,5 @@
 import { ThemeGreeting } from "@/components/theme-layer"
+import { BannerView, useBanner } from "@/components/display-banner"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -63,6 +64,8 @@ function Totem() {
 
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
+      <div className="-mx-6 mb-4"><HomeBanner /></div>
+      <KioskButton />
       <div className="flex-1" />
       
       <div className="mx-auto w-full max-w-[62rem] text-center">
@@ -320,4 +323,14 @@ function Badge({ p }: { p: Product }) {
       {p.badge_text}
     </span>
   )
+}
+
+function HomeBanner() { return <BannerView banner={useBanner()} /> }
+function KioskButton() {
+  const { fullscreen, enterKiosk, kioskError } = useCustomer()
+  if (fullscreen) return null
+  return <div className="fixed bottom-3 left-3 z-[100] flex items-center gap-3">
+    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap">⛶ Attiva modalità chiosco</Button>
+    {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
+  </div>
 }

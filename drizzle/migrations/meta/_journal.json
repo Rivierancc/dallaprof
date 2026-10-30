@@ -99,6 +99,13 @@
       "when": 1793388145010,
       "tag": "0013_kiosk_themes",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793393931667,
+      "tag": "0014_kiosk_banner",
+      "breakpoints": true
     }
   ]
 }
