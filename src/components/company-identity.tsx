@@ -9,8 +9,8 @@ import type { CompanyStyle } from "@/lib/company-style";
 const companyQuery = queryOptions({ queryKey: ["company"], queryFn: () => getCompany(), staleTime: 10_000, refetchInterval: 20_000 });
 type Company = Awaited<ReturnType<typeof getCompany>>;
 const logoSizes = ["w-40", "w-56", "w-80", "w-[25rem]", "w-[35rem]", "w-[45rem]"];
-const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl"];
-const textColors = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success", muted: "text-muted-foreground", destructive: "text-destructive" };
+const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl"];
+const textColors: Record<string, string> = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success", muted: "text-muted-foreground", destructive: "text-destructive" };
 const alignments = { left: "text-left", center: "text-center", right: "text-right" };
 
 function IdentityView({ company, preview = false }: { company: Company; preview?: boolean }) {
@@ -22,7 +22,7 @@ function IdentityView({ company, preview = false }: { company: Company; preview?
     {company.logo && <div className={`relative overflow-hidden ${logoSizes[s.logoSize - 1]} max-w-full shrink-0 ${shape}`} style={s.logoShape === "heart" ? { clipPath: `url(#${id})` } : undefined}>
       <img src={company.logo} alt={preview ? "Anteprima logo azienda" : "Logo azienda"} draggable={false} className={`absolute inset-0 h-full w-full ${s.logoShape === "original" ? "object-contain" : "object-cover"}`} style={{ transform: `translate(${s.logoX}%, ${s.logoY}%) scale(${s.logoZoom / 100})` }} />
     </div>}
-    {company.description && <p className={`w-full max-w-3xl whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color]} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`}>{company.description}</p>}
+    {company.description && <p className={`w-full max-w-3xl whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color] ?? ""} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`} style={s.color.startsWith("#") ? { color: s.color } : undefined}>{company.description}</p>}
   </section>;
 }
 
@@ -110,12 +110,17 @@ export function CompanySettings() {
     </label>
     <div className="space-y-3">
       <p className="text-xl">Dimensione descrizione: {sizes[draft.style.textSize - 1]}</p>
-      <Slider aria-label="Dimensione descrizione" min={1} max={4} step={1} value={[draft.style.textSize]} disabled={busy} onValueChange={([textSize]) => { if (textSize !== undefined) setStyle({ textSize }); }} className="max-w-md py-4" />
+      <Slider aria-label="Dimensione descrizione" min={1} max={6} step={1} value={[draft.style.textSize]} disabled={busy} onValueChange={([textSize]) => { if (textSize !== undefined) setStyle({ textSize }); }} className="max-w-md py-4" />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Formato descrizione">
         {([["bold", "Grassetto", Bold], ["italic", "Corsivo", Italic], ["underline", "Sottolineato", Underline]] as const).map(([key, label, Icon]) => <Button key={key} size="icon" title={label} aria-label={label} aria-pressed={draft.style[key]} disabled={busy} variant={draft.style[key] ? "default" : "secondary"} onClick={() => setStyle({ [key]: !draft.style[key] })}><Icon /></Button>)}
         {([["left", "Allinea a sinistra", AlignLeft], ["center", "Allinea al centro", AlignCenter], ["right", "Allinea a destra", AlignRight]] as const).map(([align, label, Icon]) => <Button key={align} size="icon" title={label} aria-label={label} aria-pressed={draft.style.align === align} disabled={busy} variant={draft.style.align === align ? "default" : "secondary"} onClick={() => setStyle({ align })}><Icon /></Button>)}
       </div>
-      <div className="flex flex-wrap items-center gap-2"><span className="mr-2 text-xl">Colore testo</span>{([["foreground", "Chiaro"], ["accent", "Giallo"], ["primary", "Rosso"], ["success", "Verde"], ["muted", "Grigio"], ["destructive", "Rosso scuro"]] as const).map(([color, label]) => <Button key={color} size="icon" title={label} aria-label={`Testo ${label.toLowerCase()}`} aria-pressed={draft.style.color === color} disabled={busy} variant={draft.style.color === color ? "default" : "outline"} onClick={() => setStyle({ color })}><Circle className={`fill-current ${textColors[color]}`} /></Button>)}</div>
+      <div className="flex flex-wrap items-center gap-2"><span className="mr-2 text-xl">Colore testo</span>{([["foreground", "Chiaro"], ["accent", "Giallo"], ["primary", "Rosso"], ["success", "Verde"], ["muted", "Grigio"], ["destructive", "Rosso scuro"]] as const).map(([color, label]) => <Button key={color} size="icon" title={label} aria-label={`Testo ${label.toLowerCase()}`} aria-pressed={draft.style.color === color} disabled={busy} variant={draft.style.color === color ? "default" : "outline"} onClick={() => setStyle({ color })}><Circle className={`fill-current ${textColors[color]}`} /></Button>)}
+        <label className={`relative inline-flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 ${draft.style.color.startsWith("#") ? "border-accent" : "border-border"}`} title="Scegli qualsiasi tonalità" aria-label="Scegli qualsiasi tonalità di colore" style={{ background: "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)" }}>
+          <input type="color" disabled={busy} value={draft.style.color.startsWith("#") ? draft.style.color : "#f5e9d0"} onChange={(e) => setStyle({ color: e.target.value })} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        </label>
+        {draft.style.color.startsWith("#") && <span className="text-lg text-muted-foreground">{draft.style.color}</span>}
+      </div>
     </div>
     {(draft.logo || draft.description) && <div className="border-t border-border pt-4"><p className="mb-4 text-xl text-muted-foreground">Anteprima</p><IdentityView company={draft} preview /></div>}
     <div className="flex flex-wrap items-center gap-4"><Button disabled={busy} onClick={() => void save()}><Save />{busy ? "Salvo…" : "Salva logo e descrizione"}</Button>{message && <span role="status" className="text-xl">{message}</span>}</div>

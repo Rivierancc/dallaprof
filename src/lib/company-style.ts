@@ -9,8 +9,11 @@ export type CompanyStyle = {
   italic: boolean;
   underline: boolean;
   align: "left" | "center" | "right";
-  color: "foreground" | "accent" | "primary" | "success" | "muted" | "destructive";
+  color: string;
 };
+
+const themeColors = ["foreground", "accent", "primary", "success", "muted", "destructive"];
+const hexColor = /^#[0-9a-fA-F]{6}$/;
 
 export function cleanCompanyStyle(input: unknown): CompanyStyle {
   const d = input && typeof input === "object" ? input as Record<string, unknown> : {};
@@ -22,9 +25,9 @@ export function cleanCompanyStyle(input: unknown): CompanyStyle {
     logoZoom: adjustment(d['logoZoom'], 100, 50, 250),
     logoX: adjustment(d['logoX'], 0, -50, 50),
     logoY: adjustment(d['logoY'], 0, -50, 50),
-    textSize: size(d['textSize'], 2),
+    textSize: size(d['textSize'], 2, 6),
     bold: d['bold'] === true, italic: d['italic'] === true, underline: d['underline'] === true,
     align: d['align'] === "left" || d['align'] === "right" ? d['align'] : "center",
-    color: d['color'] === "accent" || d['color'] === "primary" || d['color'] === "success" || d['color'] === "muted" || d['color'] === "destructive" ? d['color'] : "foreground",
+    color: typeof d['color'] === "string" && (themeColors.includes(d['color']) || hexColor.test(d['color'])) ? d['color'] : "foreground",
   };
 }
