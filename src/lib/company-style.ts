@@ -14,10 +14,10 @@ export type CompanyStyle = {
 
 export function cleanCompanyStyle(input: unknown): CompanyStyle {
   const d = input && typeof input === "object" ? input as Record<string, unknown> : {};
-  const size = (value: unknown, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(6, Math.max(1, Math.round(value))) : fallback;
+  const size = (value: unknown, fallback: number, max = 4) => typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(1, Math.round(value))) : fallback;
   const adjustment = (value: unknown, fallback: number, min: number, max: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   return {
-    logoSize: size(d['logoSize'], 1),
+    logoSize: size(d['logoSize'], 1, 6),
     logoShape: d['logoShape'] === "round" || d['logoShape'] === "oval" || d['logoShape'] === "heart" ? d['logoShape'] : "original",
     logoZoom: adjustment(d['logoZoom'], 100, 50, 250),
     logoX: adjustment(d['logoX'], 0, -50, 50),
