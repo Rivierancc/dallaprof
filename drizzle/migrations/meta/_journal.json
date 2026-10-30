@@ -85,6 +85,13 @@
       "when": 1793372557341,
       "tag": "0011_category_custom_titles",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793386375018,
+      "tag": "0012_product_badge",
+      "breakpoints": true
     }
   ]
 }

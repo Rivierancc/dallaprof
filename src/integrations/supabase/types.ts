@@ -104,6 +104,9 @@ export type Database = {
       menu_products: {
         Row: {
           active: boolean
+          badge_blink: boolean
+          badge_on: boolean
+          badge_text: string
           category_id: string
           description: string
           description_en: string
@@ -122,6 +125,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          badge_blink?: boolean
+          badge_on?: boolean
+          badge_text?: string
           category_id: string
           description?: string
           description_en?: string
@@ -140,6 +146,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          badge_blink?: boolean
+          badge_on?: boolean
+          badge_text?: string
           category_id?: string
           description?: string
           description_en?: string
