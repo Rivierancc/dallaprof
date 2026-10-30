@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Fold } from "@/components/fold";
 import { themesQueryOptions } from "@/components/theme-layer";
 import { deleteTheme, saveTheme } from "@/lib/menu.functions";
 import { decorList, parseDayMonth, pickTheme, showDayMonth, type KioskTheme } from "@/lib/themes";
@@ -83,8 +84,7 @@ export function ThemesPanel() {
   const refresh = () => void qc.invalidateQueries({ queryKey: ["themes"] });
   const live = pickTheme(data, new Date());
   return (
-    <section className="mt-12">
-      <h2 className="font-display text-6xl">🎉 Temi delle ricorrenze</h2>
+    <section className="mt-6"><Fold title="🎉 Temi delle ricorrenze" hint={live ? `● ${live.name}` : undefined}>
       <p className="mt-2 max-w-4xl text-xl text-muted-foreground">
         «📅 Automatico» accende il tema da solo tra le due date, ogni anno. «🔛 Sempre acceso» lo tiene acceso finché non lo spegni (uno alla volta).
         Se due temi automatici cadono negli stessi giorni vince quello più in alto. Le date di Pasqua e della Festa della mamma cambiano ogni anno: ricordati di aggiornarle.
@@ -94,6 +94,6 @@ export function ThemesPanel() {
         {data.map((t) => <ThemeCard key={t.id} theme={t} live={live?.id === t.id} onDone={refresh} />)}
         <ThemeCard theme={blank} live={false} onDone={refresh} />
       </ul>
-    </section>
+    </Fold></section>
   );
 }

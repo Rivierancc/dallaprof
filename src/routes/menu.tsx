@@ -25,6 +25,7 @@ import {
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
+import { Fold } from "@/components/fold";
 import { ThemesPanel } from "@/components/themes-panel";
 
 export const Route = createFileRoute("/menu")({
@@ -394,9 +395,8 @@ function MenuEditor() {
           </div>
         </section>
       ) : (
-        <div className="mx-auto max-w-5xl space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-display text-5xl">Categorie</h2>
+        <div className="mx-auto max-w-5xl"><Fold title="📂 Categorie e piatti" hint={`${cats.length}`} open={!!active}><div className="space-y-4">
+          <div className="flex items-center justify-end gap-4">
             <button onClick={addCategory} className="tap rounded-xl bg-primary px-5 py-3 text-xl font-bold text-primary-foreground">
               + Nuova
             </button>
@@ -448,7 +448,7 @@ function MenuEditor() {
             </div>
           ))}
           {!menu.categories.length && <p className="text-xl text-muted-foreground">Nessuna categoria: crea la prima.</p>}
-        </div>
+        </div></Fold></div>
       )}
 
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />

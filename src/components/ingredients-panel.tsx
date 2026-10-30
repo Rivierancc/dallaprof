@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
+import { Fold } from "@/components/fold";
 import { Button } from "@/components/ui/button";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -42,8 +43,7 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
     toast.success("Ingrediente salvato");
   };
   return (
-    <section className="rounded-3xl bg-card/60 p-5">
-      <h3 className="mb-3 font-display text-4xl">{title}</h3>
+    <Fold title={title} hint={`${items.length}`}>
       <datalist id={listId}>{groups.map((x) => <option key={x} value={x} />)}</datalist>
       <ul className="mb-4 space-y-2">
         {sorted.map((g) =>
@@ -76,7 +76,7 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
         {!items.length && <li className="text-lg text-muted-foreground">Nessun ingrediente</li>}
       </ul>
       <IngredientForm listId={listId} label="+ Aggiungi" initial={empty} onSave={(d) => save(d)} />
-    </section>
+    </Fold>
   );
 }
 
@@ -132,13 +132,12 @@ export function IngredientsPanel({ categories, ingredients, refresh }: { categor
       </p>
       <KindList kind="salato" title="🧀 Ingredienti salati" items={ingredients.filter((g) => g.kind === "salato")} refresh={refresh} />
       <KindList kind="dolce" title="🍫 Ingredienti dolci" items={ingredients.filter((g) => g.kind === "dolce")} refresh={refresh} />
-      <section className="rounded-3xl bg-card/60 p-5">
-        <h3 className="mb-1 font-display text-4xl">✨ Crea il tuo piatto</h3>
+      <Fold title="✨ Crea il tuo piatto">
         <p className="mb-3 text-xl text-muted-foreground">Per ogni categoria scegli se il cliente può comporre un piatto da zero e con quali ingredienti. Il prezzo finale = prezzo base + ingredienti scelti.</p>
         <ul className="space-y-2">
           {categories.map((c) => <CategoryCustom key={[c.id, c.custom_price, c.custom_title, c.custom_title_en, c.custom_title_fr, c.custom_title_es].join("|")} c={c} refresh={refresh} />)}
         </ul>
-      </section>
+      </Fold>
     </div>
   );
 }
