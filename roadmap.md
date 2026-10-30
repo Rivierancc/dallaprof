@@ -1,5 +1,5 @@
 # Intervento totem
-- [ ] Spostare Password e codici, Ordine categorie, Temi delle ricorrenze, Logo e descrizione azienda, Scritta in alto e Notizie ultima ora da Menu ad Admin; verificare accesso e apertura delle sezioni.
+- [x] Spostate le sei sezioni da Menu ad Admin; verificati accesso con PIN, apertura di ogni sezione e ritorno a Menu, senza errori. Impostazioni e protezioni invariate.
 - [x] Cambio PIN personale e codice locale uscita chiosco da Gestione menu; verificati rifiuto PIN attuale errato, nuovo accesso e uscita delle altre sessioni, salvataggio locale dopo ricarica; codici originali ripristinati dopo le prove.
 - [x] Spostamento e ingrandimento del logo dentro la forma; ripristino, salvataggio, rilettura e visualizzazione in home verificati dal pannello con PIN, preservando logo e descrizione.
 - [x] Dimensione e forma del logo (originale, tonda, ovale, cuore), descrizione ingrandibile e formattabile; salvataggio, rilettura e home verificati dal pannello con PIN su tre formati, mantenendo logo e testo esistenti.
