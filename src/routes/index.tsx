@@ -279,7 +279,7 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
   const groups = ([["salato", t.savory], ["dolce", t.sweet]] as const).flatMap(([k, title]) => {
     const items = list.filter((g) => g.kind === k)
     const names = [...new Set(items.map((g) => g.group).filter(Boolean))].sort()
-    return [...names.map((n) => ({ k: `${k}-${n}`, icon: k === "dolce" ? "🍫" : "🧀", title: n, items: items.filter((g) => g.group === n) })), { k, icon: k === "dolce" ? "🍫" : "🧀", title: names.length ? `${title} · ${t.other ?? "+"}` : title, items: items.filter((g) => !g.group) }]
+    return [...names.map((n) => ({ k: `${k}-${n}`, icon: k === "dolce" ? "🍫" : "🧀", title: n, items: items.filter((g) => g.group === n) })), { k, icon: k === "dolce" ? "🍫" : "🧀", title, items: items.filter((g) => !g.group) }]
   }).filter((g) => g.items.length)
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
