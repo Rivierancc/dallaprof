@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      kiosk_themes: {
+        Row: {
+          accent: string
+          anim: string
+          bg: string
+          created_at: string
+          decor: string
+          end_md: string
+          greeting: string
+          greeting_en: string
+          greeting_es: string
+          greeting_fr: string
+          id: string
+          mode: string
+          name: string
+          position: number
+          primary_color: string
+          start_md: string
+        }
+        Insert: {
+          accent?: string
+          anim?: string
+          bg?: string
+          created_at?: string
+          decor?: string
+          end_md?: string
+          greeting?: string
+          greeting_en?: string
+          greeting_es?: string
+          greeting_fr?: string
+          id?: string
+          mode?: string
+          name: string
+          position?: number
+          primary_color?: string
+          start_md?: string
+        }
+        Update: {
+          accent?: string
+          anim?: string
+          bg?: string
+          created_at?: string
+          decor?: string
+          end_md?: string
+          greeting?: string
+          greeting_en?: string
+          greeting_es?: string
+          greeting_fr?: string
+          id?: string
+          mode?: string
+          name?: string
+          position?: number
+          primary_color?: string
+          start_md?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean

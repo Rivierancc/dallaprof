@@ -92,6 +92,13 @@
       "when": 1793386375018,
       "tag": "0012_product_badge",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793388145010,
+      "tag": "0013_kiosk_themes",
+      "breakpoints": true
     }
   ]
 }
