@@ -11,4 +11,14 @@ describe("regolazioni logo", () => {
   it("normalizza valori fuori limite o non numerici", () => {
     expect(cleanCompanyStyle({ logoZoom: 300, logoX: -80, logoY: NaN })).toMatchObject({ logoZoom: 250, logoX: -50, logoY: 0 });
   });
+  it("accetta la taglia grandissimo e limita oltre il massimo", () => {
+    expect(cleanCompanyStyle({ logoSize: 6 }).logoSize).toBe(6);
+    expect(cleanCompanyStyle({ logoSize: 9 }).logoSize).toBe(6);
+  });
+  it("accetta tutti i colori del tema e respinge quelli sconosciuti", () => {
+    for (const color of ["foreground", "accent", "primary", "success", "muted", "destructive"] as const) {
+      expect(cleanCompanyStyle({ color }).color).toBe(color);
+    }
+    expect(cleanCompanyStyle({ color: "blue" }).color).toBe("foreground");
+  });
 });

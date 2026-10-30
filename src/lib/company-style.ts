@@ -9,12 +9,12 @@ export type CompanyStyle = {
   italic: boolean;
   underline: boolean;
   align: "left" | "center" | "right";
-  color: "foreground" | "accent" | "primary" | "success";
+  color: "foreground" | "accent" | "primary" | "success" | "muted" | "destructive";
 };
 
 export function cleanCompanyStyle(input: unknown): CompanyStyle {
   const d = input && typeof input === "object" ? input as Record<string, unknown> : {};
-  const size = (value: unknown, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(4, Math.max(1, Math.round(value))) : fallback;
+  const size = (value: unknown, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(6, Math.max(1, Math.round(value))) : fallback;
   const adjustment = (value: unknown, fallback: number, min: number, max: number) => typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   return {
     logoSize: size(d['logoSize'], 1),
@@ -25,6 +25,6 @@ export function cleanCompanyStyle(input: unknown): CompanyStyle {
     textSize: size(d['textSize'], 2),
     bold: d['bold'] === true, italic: d['italic'] === true, underline: d['underline'] === true,
     align: d['align'] === "left" || d['align'] === "right" ? d['align'] : "center",
-    color: d['color'] === "accent" || d['color'] === "primary" || d['color'] === "success" ? d['color'] : "foreground",
+    color: d['color'] === "accent" || d['color'] === "primary" || d['color'] === "success" || d['color'] === "muted" || d['color'] === "destructive" ? d['color'] : "foreground",
   };
 }

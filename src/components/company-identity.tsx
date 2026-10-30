@@ -8,9 +8,9 @@ import type { CompanyStyle } from "@/lib/company-style";
 
 const companyQuery = queryOptions({ queryKey: ["company"], queryFn: () => getCompany(), staleTime: 10_000, refetchInterval: 20_000 });
 type Company = Awaited<ReturnType<typeof getCompany>>;
-const logoSizes = ["w-40", "w-56", "w-80", "w-[25rem]"];
+const logoSizes = ["w-40", "w-56", "w-80", "w-[25rem]", "w-[35rem]", "w-[45rem]"];
 const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl"];
-const textColors = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success" };
+const textColors = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success", muted: "text-muted-foreground", destructive: "text-destructive" };
 const alignments = { left: "text-left", center: "text-center", right: "text-right" };
 
 function IdentityView({ company, preview = false }: { company: Company; preview?: boolean }) {
@@ -79,7 +79,7 @@ export function CompanySettings() {
   if (error) return <p role="alert">Impossibile caricare logo e descrizione.</p>;
   if (isLoading || !draft) return <p className="text-muted-foreground">Caricamento…</p>;
   const setStyle = (patch: Partial<CompanyStyle>) => { setDraft({ ...draft, style: { ...draft.style, ...patch } }); setMessage(""); };
-  const sizes = ["Piccolo", "Medio", "Grande", "Molto grande"];
+  const sizes = ["Piccolo", "Medio", "Grande", "Molto grande", "Enorme", "Grandissimo"];
   return <div className="space-y-5">
     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" aria-label="Carica logo azienda" hidden disabled={busy} onChange={(e) => { const image = e.target.files?.[0]; if (image) void selectLogo(image); e.target.value = ""; }} />
     <div className="flex flex-wrap gap-3">
@@ -88,7 +88,7 @@ export function CompanySettings() {
     </div>
     <div className="space-y-3">
       <p className="text-xl">Dimensione logo: {sizes[draft.style.logoSize - 1]}</p>
-      <Slider aria-label="Dimensione logo" min={1} max={4} step={1} value={[draft.style.logoSize]} disabled={busy} onValueChange={([logoSize]) => { if (logoSize !== undefined) setStyle({ logoSize }); }} className="max-w-md py-4" />
+      <Slider aria-label="Dimensione logo" min={1} max={6} step={1} value={[draft.style.logoSize]} disabled={busy} onValueChange={([logoSize]) => { if (logoSize !== undefined) setStyle({ logoSize }); }} className="max-w-md py-4" />
       <p className="text-xl">Forma logo</p>
       <div className="flex flex-wrap gap-2">{([
         ["original", "Originale", Image], ["round", "Tonda", Circle], ["oval", "Ovale", Circle], ["heart", "Cuore", Heart],
@@ -115,7 +115,7 @@ export function CompanySettings() {
         {([["bold", "Grassetto", Bold], ["italic", "Corsivo", Italic], ["underline", "Sottolineato", Underline]] as const).map(([key, label, Icon]) => <Button key={key} size="icon" title={label} aria-label={label} aria-pressed={draft.style[key]} disabled={busy} variant={draft.style[key] ? "default" : "secondary"} onClick={() => setStyle({ [key]: !draft.style[key] })}><Icon /></Button>)}
         {([["left", "Allinea a sinistra", AlignLeft], ["center", "Allinea al centro", AlignCenter], ["right", "Allinea a destra", AlignRight]] as const).map(([align, label, Icon]) => <Button key={align} size="icon" title={label} aria-label={label} aria-pressed={draft.style.align === align} disabled={busy} variant={draft.style.align === align ? "default" : "secondary"} onClick={() => setStyle({ align })}><Icon /></Button>)}
       </div>
-      <div className="flex flex-wrap items-center gap-2"><span className="mr-2 text-xl">Colore testo</span>{([["foreground", "Chiaro"], ["accent", "Giallo"], ["primary", "Rosso"], ["success", "Verde"]] as const).map(([color, label]) => <Button key={color} size="icon" title={label} aria-label={`Testo ${label.toLowerCase()}`} aria-pressed={draft.style.color === color} disabled={busy} variant={draft.style.color === color ? "default" : "outline"} onClick={() => setStyle({ color })}><Circle className={`fill-current ${textColors[color]}`} /></Button>)}</div>
+      <div className="flex flex-wrap items-center gap-2"><span className="mr-2 text-xl">Colore testo</span>{([["foreground", "Chiaro"], ["accent", "Giallo"], ["primary", "Rosso"], ["success", "Verde"], ["muted", "Grigio"], ["destructive", "Rosso scuro"]] as const).map(([color, label]) => <Button key={color} size="icon" title={label} aria-label={`Testo ${label.toLowerCase()}`} aria-pressed={draft.style.color === color} disabled={busy} variant={draft.style.color === color ? "default" : "outline"} onClick={() => setStyle({ color })}><Circle className={`fill-current ${textColors[color]}`} /></Button>)}</div>
     </div>
     {(draft.logo || draft.description) && <div className="border-t border-border pt-4"><p className="mb-4 text-xl text-muted-foreground">Anteprima</p><IdentityView company={draft} preview /></div>}
     <div className="flex flex-wrap items-center gap-4"><Button disabled={busy} onClick={() => void save()}><Save />{busy ? "Salvo…" : "Salva logo e descrizione"}</Button>{message && <span role="status" className="text-xl">{message}</span>}</div>
