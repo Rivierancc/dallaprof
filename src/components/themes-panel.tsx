@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { themesQueryOptions } from "@/components/theme-layer";
 import { deleteTheme, saveTheme } from "@/lib/menu.functions";
-import { decorList, inRange, parseDayMonth, pickTheme, showDayMonth, type KioskTheme } from "@/lib/themes";
+import { decorList, parseDayMonth, pickTheme, showDayMonth, type KioskTheme } from "@/lib/themes";
 
 const blank: KioskTheme = {
   id: "", name: "", mode: "off", start_md: "", end_md: "", bg: "#1a1410", primary_color: "#e0432b", accent: "#f5c842",
@@ -88,7 +88,7 @@ export function ThemesPanel() {
       <p className="mt-2 max-w-4xl text-xl text-muted-foreground">
         «📅 Automatico» accende il tema da solo tra le due date, ogni anno. «🔛 Sempre acceso» lo tiene acceso finché non lo spegni (uno alla volta).
         Se due temi automatici cadono negli stessi giorni vince quello più in alto. Le date di Pasqua e della Festa della mamma cambiano ogni anno: ricordati di aggiornarle.
-        {!data.some((t) => inRange(t.start_md, t.end_md, new Date()) && t.mode === "auto") && !live && " Oggi nessun tema è attivo."}
+        {!live && " Oggi nessun tema è attivo."}
       </p>
       <ul className="mt-5 grid gap-4">
         {data.map((t) => <ThemeCard key={t.id} theme={t} live={live?.id === t.id} onDone={refresh} />)}

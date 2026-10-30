@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { CustomerProvider } from "@/components/customer-session";
+import { ThemeLayer } from "@/components/theme-layer";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -127,7 +128,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <CustomerProvider><Outlet /></CustomerProvider>
+      <CustomerProvider><Outlet /><ThemeLayer /></CustomerProvider>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

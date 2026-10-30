@@ -99,3 +99,19 @@
 @utility animate-badge {
   animation: badge-blink 1s ease-in-out infinite;
 }
+
+/* Decorazioni dei temi delle ricorrenze */
+@keyframes theme-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  100% { transform: translateY(110vh) rotate(360deg); opacity: 0.9; }
+}
+@keyframes theme-float {
+  0% { transform: translateY(110vh) scale(0.8); opacity: 0; }
+  10% { opacity: 0.85; }
+  100% { transform: translateY(-10vh) scale(1.1); opacity: 0; }
+}
+.theme-fall, .theme-float { position: absolute; top: 0; animation-timing-function: linear; animation-iteration-count: infinite; animation-fill-mode: both; }
+.theme-fall { animation-name: theme-fall; }
+.theme-float { animation-name: theme-float; }
+@media (prefers-reduced-motion: reduce) { .theme-fall, .theme-float { animation: none; display: none; } }
