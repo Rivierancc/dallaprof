@@ -113,6 +113,13 @@
       "when": 1793394714538,
       "tag": "0015_news_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793396478202,
+      "tag": "0016_home_company_identity",
+      "breakpoints": true
     }
   ]
 }

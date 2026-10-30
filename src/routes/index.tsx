@@ -1,4 +1,5 @@
 import { ThemeGreeting } from "@/components/theme-layer"
+import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner } from "@/components/display-banner"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
@@ -69,6 +70,7 @@ function Totem() {
       <div className="flex-1" />
       
       <div className="mx-auto w-full max-w-[62rem] text-center">
+        <CompanyIdentity />
         <ThemeGreeting className="mb-6 [@media(max-height:900px)]:mb-2" />
         <h1 className="font-display text-8xl leading-none [@media(max-height:900px)]:text-6xl">{t.where}</h1>
         {custom ? (

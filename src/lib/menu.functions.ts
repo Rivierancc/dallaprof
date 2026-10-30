@@ -582,6 +582,44 @@ export const deleteTheme = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const getCompany = createServerFn({ method: "GET" }).handler(async () => {
+  const { data, error } = await publishable().from("kiosk_banner").select("company_description, company_logo_path").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  const path = data?.company_logo_path ?? "";
+  const urls = await sign([path]);
+  return { description: data?.company_description ?? "", logoPath: path, logo: urls[path] ?? "" };
+});
+
+export const saveCompany = createServerFn({ method: "POST" })
+  .inputValidator((d: { description: string; logoPath: string }) => {
+    const logoPath = String(d.logoPath ?? "");
+    if (logoPath && !/^logo-[a-z0-9-]+\.png$/.test(logoPath)) throw new Error("Logo non valido");
+    return { description: String(d.description ?? "").trim().slice(0, 500), logoPath };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, company_description: data.description, company_logo_path: data.logoPath });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const uploadCompanyLogo = createServerFn({ method: "POST" })
+  .inputValidator((d: { file: string }) => {
+    const file = String(d.file ?? "");
+    if (!file.startsWith("data:image/png;base64,") || file.length > MAX_FILE_CHARS) throw new Error("Logo non valido o troppo grande");
+    return { file };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const bin = atob(data.file.slice(data.file.indexOf(",") + 1));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    if (![137, 80, 78, 71, 13, 10, 26, 10].every((v, i) => bytes[i] === v)) throw new Error("Logo non valido");
+    const path = `logo-${crypto.randomUUID()}.png`;
+    const { error } = await (await admin()).storage.from(BUCKET).upload(path, bytes, { contentType: "image/png" });
+    if (error) throw new Error(error.message);
+    return { path };
+  });
+
 export const getBanner = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | number | boolean>> => {
   const { data, error } = await publishable().from("kiosk_banner").select("settings").eq("id", 1).maybeSingle();
   if (error) throw new Error(error.message);

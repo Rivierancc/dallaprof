@@ -16,18 +16,24 @@ export type Database = {
     Tables: {
       kiosk_banner: {
         Row: {
+          company_description: string
+          company_logo_path: string
           id: number
           news: Json
           settings: Json
           updated_at: string
         }
         Insert: {
+          company_description?: string
+          company_logo_path?: string
           id?: number
           news?: Json
           settings?: Json
           updated_at?: string
         }
         Update: {
+          company_description?: string
+          company_logo_path?: string
           id?: number
           news?: Json
           settings?: Json

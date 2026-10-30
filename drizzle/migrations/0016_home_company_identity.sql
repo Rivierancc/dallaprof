@@ -1,0 +1,1 @@
+ALTER TABLE public.kiosk_banner ADD COLUMN IF NOT EXISTS company_description text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS company_logo_path text NOT NULL DEFAULT '';

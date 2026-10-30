@@ -30,6 +30,7 @@ import { CategoryOrderPanel } from "@/components/category-order-panel";
 import { ThemesPanel } from "@/components/themes-panel";
 import { BannerSettings } from "@/components/display-banner";
 import { NewsSettingsPanel } from "@/components/news-ticker";
+import { CompanySettings } from "@/components/company-identity";
 
 export const Route = createFileRoute("/menu")({
   loader: async ({ context }) => {
@@ -457,6 +458,7 @@ function MenuEditor() {
       <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
       <ThemesPanel />
+      <div className="mx-auto mt-6 max-w-5xl"><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
