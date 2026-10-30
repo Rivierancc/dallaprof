@@ -629,6 +629,28 @@ export const saveBanner = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Linea di separazione tra i piatti in Gestione menu: lettura libera, scrittura solo personale.
+export const getDivider = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | boolean>> => {
+  const { data, error } = await publishable().from("kiosk_banner").select("divider").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.divider ?? {}) as Record<string, string | boolean>;
+});
+
+export const saveDivider = createServerFn({ method: "POST" })
+  .inputValidator((d: { on: boolean; color: string; style: string; width: string }) => {
+    const color = String(d.color ?? "");
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Colore non valido");
+    if (!["solid", "dashed", "dotted", "double"].includes(String(d.style))) throw new Error("Stile non valido");
+    if (!["s", "m", "l"].includes(String(d.width))) throw new Error("Spessore non valido");
+    return { on: !!d.on, color, style: String(d.style), width: String(d.width) };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").update({ divider: data as never }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getNewsSettings = createServerFn({ method: "GET" }).handler(async (): Promise<NewsSettings> => {
   const { data } = await publishable().from("kiosk_banner").select("news").eq("id", 1).maybeSingle();
   return cleanNews(data?.news);

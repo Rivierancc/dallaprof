@@ -495,6 +495,7 @@ type ProductHandlers = {
 
 // La lista dei piatti di una categoria: la stessa sia sotto la categoria sia nella pagina a sé.
 function ProductsSection({ active, products, h }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers }) {
+  const divider = useDivider();
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -504,21 +505,23 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
         </button>
       </div>
       <ul className="space-y-3">
-        {products.map((p) => (
-          <ProductRow
-            key={p.id}
-            p={p}
-            onSave={(name, price) => h.save(p, name, price)}
-            onPhoto={(file) => h.photo(p, file)}
-            onDelete={() => h.remove(p)}
-            onMove={(dir) => h.move(p, dir)}
-            onTranslation={(language, description) => h.translate(p, language, description)}
-            onDescription={(description) => h.describe(p, description)}
-            onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
-            onFeatured={(v) => h.feature(p, v)}
-            onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
-            onSoldOut={(v) => h.sold(p, v)}
-          />
+        {products.map((p, i) => (
+          <li key={p.id} className="list-none space-y-3">
+            {i > 0 && <DividerView divider={divider} />}
+            <ProductRow
+              p={p}
+              onSave={(name, price) => h.save(p, name, price)}
+              onPhoto={(file) => h.photo(p, file)}
+              onDelete={() => h.remove(p)}
+              onMove={(dir) => h.move(p, dir)}
+              onTranslation={(language, description) => h.translate(p, language, description)}
+              onDescription={(description) => h.describe(p, description)}
+              onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
+              onFeatured={(v) => h.feature(p, v)}
+              onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
+              onSoldOut={(v) => h.sold(p, v)}
+            />
+          </li>
         ))}
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
       </ul>
