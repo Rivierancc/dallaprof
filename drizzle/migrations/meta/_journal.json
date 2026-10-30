@@ -71,6 +71,13 @@
       "when": 1793360049663,
       "tag": "0009_ingredients_library",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793365820635,
+      "tag": "0010_ingredient_group",
+      "breakpoints": true
     }
   ]
 }

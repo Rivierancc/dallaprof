@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           available: boolean
           created_at: string
+          grp: string
           id: string
           kind: string
           name: string
@@ -63,6 +64,7 @@ export type Database = {
         Insert: {
           available?: boolean
           created_at?: string
+          grp?: string
           id?: string
           kind?: string
           name: string
@@ -75,6 +77,7 @@ export type Database = {
         Update: {
           available?: boolean
           created_at?: string
+          grp?: string
           id?: string
           kind?: string
           name?: string

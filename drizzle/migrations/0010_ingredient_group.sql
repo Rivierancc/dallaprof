@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_ingredients ADD COLUMN IF NOT EXISTS grp text NOT NULL DEFAULT '';
