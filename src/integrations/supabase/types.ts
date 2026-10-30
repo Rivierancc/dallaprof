@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      kiosk_banner: {
+        Row: {
+          id: number
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kiosk_themes: {
         Row: {
           accent: string
