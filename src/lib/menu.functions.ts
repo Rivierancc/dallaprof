@@ -520,3 +520,63 @@ export const setCategoryCustomTitles = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+// ---- Temi delle ricorrenze (lettura pubblica, scrittura solo personale) ----
+import type { KioskTheme } from "@/lib/themes";
+
+const hex = (v: unknown, d: string) => (/^#[0-9a-fA-F]{6}$/.test(String(v ?? "")) ? String(v) : d);
+const md = (v: unknown) => (/^\d\d-\d\d$/.test(String(v ?? "")) ? String(v) : "");
+
+export const getThemes = createServerFn({ method: "GET" }).handler(async (): Promise<KioskTheme[]> => {
+  const { data, error } = await publishable().from("kiosk_themes").select("*").order("position").order("created_at");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({
+    id: r.id, name: r.name,
+    mode: (["on", "auto"].includes(r.mode) ? r.mode : "off") as KioskTheme["mode"],
+    start_md: r.start_md, end_md: r.end_md, bg: r.bg, primary_color: r.primary_color, accent: r.accent,
+    decor: r.decor, anim: (["float", "none"].includes(r.anim) ? r.anim : "fall") as KioskTheme["anim"],
+    greeting: r.greeting, greeting_en: r.greeting_en, greeting_fr: r.greeting_fr, greeting_es: r.greeting_es, position: r.position,
+  }));
+});
+
+export const saveTheme = createServerFn({ method: "POST" })
+  .inputValidator((d: Partial<KioskTheme>) => {
+    const name = txt(d.name, 40);
+    if (!name) throw new Error("Il nome del tema è obbligatorio");
+    return {
+      id: d.id ? String(d.id) : null,
+      row: {
+        name,
+        mode: ["on", "auto"].includes(String(d.mode)) ? String(d.mode) : "off",
+        start_md: md(d.start_md), end_md: md(d.end_md),
+        bg: hex(d.bg, "#1a1410"), primary_color: hex(d.primary_color, "#e0432b"), accent: hex(d.accent, "#f5c842"),
+        decor: txt(d.decor, 60), anim: ["float", "none"].includes(String(d.anim)) ? String(d.anim) : "fall",
+        greeting: txt(d.greeting, 60), greeting_en: txt(d.greeting_en, 60), greeting_fr: txt(d.greeting_fr, 60), greeting_es: txt(d.greeting_es, 60),
+        position: Number.isFinite(Number(d.position)) ? Math.round(Number(d.position)) : 0,
+      },
+    };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    // Un solo tema può essere "sempre acceso": accenderne uno spegne gli altri accesi a mano.
+    if (data.row.mode === "on") {
+      const q = db.from("kiosk_themes").update({ mode: "off" }).eq("mode", "on");
+      const { error } = data.id ? await q.neq("id", data.id) : await q;
+      if (error) throw new Error(error.message);
+    }
+    const { error } = data.id
+      ? await db.from("kiosk_themes").update(data.row).eq("id", data.id)
+      : await db.from("kiosk_themes").insert(data.row);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const deleteTheme = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_themes").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

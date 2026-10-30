@@ -25,6 +25,7 @@ import {
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
+import { ThemesPanel } from "@/components/themes-panel";
 
 export const Route = createFileRoute("/menu")({
   loader: async ({ context }) => {
@@ -451,6 +452,7 @@ function MenuEditor() {
       )}
 
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
+      <ThemesPanel />
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
   );

@@ -1,3 +1,4 @@
+import { ThemeGreeting } from "@/components/theme-layer"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -65,6 +66,7 @@ function Totem() {
       <div className="flex-1" />
       
       <div className="mx-auto w-full max-w-[62rem] text-center">
+        <ThemeGreeting className="mb-6 [@media(max-height:900px)]:mb-2" />
         <h1 className="font-display text-8xl leading-none [@media(max-height:900px)]:text-6xl">{t.where}</h1>
         {custom ? (
           <p className="mt-5 flex flex-wrap items-center justify-center gap-4 font-display text-5xl text-accent [@media(max-height:900px)]:mt-2 [@media(max-height:900px)]:text-3xl">
