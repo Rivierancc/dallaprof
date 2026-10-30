@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 
 const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
@@ -599,13 +600,37 @@ export const saveBanner = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Titoli "Ultima ora" ANSA per la striscia che scorre sul display clienti. */
-export const getNews = createServerFn({ method: "GET" }).handler(async (): Promise<string[]> => {
+export const getNewsSettings = createServerFn({ method: "GET" }).handler(async (): Promise<NewsSettings> => {
+  const { data } = await publishable().from("kiosk_banner").select("news").eq("id", 1).maybeSingle();
+  return cleanNews(data?.news);
+});
+
+export const saveNewsSettings = createServerFn({ method: "POST" })
+  .inputValidator((d: NewsSettings) => cleanNews(d))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").update({ news: data as never }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const decode = (t: string) => t.replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/<[^>]+>/g, "").trim();
+async function feedTitles(url: string): Promise<string[]> {
   try {
-    const res = await fetch("https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml", { headers: { "User-Agent": "TotemBurger/1.0" } });
+    const res = await fetch(url, { headers: { "User-Agent": "TotemBurger/1.0" }, signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
     const xml = await res.text();
-    return [...xml.matchAll(/<item>[\s\S]*?<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)]
-      .map((m) => (m[1] ?? "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()).filter(Boolean).slice(0, 15);
+    return [...xml.matchAll(/<item[\s>][\s\S]*?<title>([\s\S]*?)<\/title>/g)].map((m) => decode(m[1] ?? "")).filter(Boolean).slice(0, 10);
   } catch { return []; }
+}
+
+/** Titoli delle fonti scelte, alternati tra loro, per la striscia che scorre. */
+export const getNews = createServerFn({ method: "GET" }).handler(async (): Promise<{ source: string; title: string }[]> => {
+  const { data } = await publishable().from("kiosk_banner").select("news").eq("id", 1).maybeSingle();
+  const settings = cleanNews(data?.news);
+  if (!settings.on) return [];
+  const lists = await Promise.all(settings.sources.map(async (s) => (await feedTitles(NEWS_SOURCES[s].url)).map((title) => ({ source: NEWS_SOURCES[s].name, title }))));
+  const out: { source: string; title: string }[] = [];
+  for (let i = 0; i < 10; i++) for (const l of lists) if (l[i]) out.push(l[i]!);
+  return out.slice(0, 30);
 });

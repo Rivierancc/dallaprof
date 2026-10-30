@@ -329,7 +329,7 @@ function HomeBanner() { return <BannerView banner={useBanner()} /> }
 function KioskButton() {
   const { fullscreen, enterKiosk, kioskError } = useCustomer()
   if (fullscreen) return null
-  return <div className="fixed bottom-3 left-3 z-[100] flex items-center gap-3">
+  return <div className="fixed left-3 top-24 z-[100] flex items-center gap-3">
     <Button variant="secondary" onClick={() => void enterKiosk()} className="tap">⛶ Attiva modalità chiosco</Button>
     {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
   </div>
