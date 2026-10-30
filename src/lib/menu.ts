@@ -53,6 +53,7 @@ export type Ingredient = {
   name_fr: string;
   name_es: string;
   kind: "dolce" | "salato";
+  group: string;
   price: number;
   available: boolean;
   position: number;

@@ -72,6 +72,7 @@ export type MenuIngredient = {
   name_fr: string;
   name_es: string;
   kind: "dolce" | "salato";
+  group: string;
   price: number;
   available: boolean;
   position: number;
@@ -123,7 +124,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
-      .select("id, name, name_en, name_fr, name_es, kind, price, available, position")
+      .select("id, name, name_en, name_fr, name_es, kind, grp, price, available, position")
       .order("kind", { ascending: true })
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
@@ -150,6 +151,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       name_fr: r.name_fr ?? "",
       name_es: r.name_es ?? "",
       kind: r.kind === "dolce" ? "dolce" : "salato",
+      group: r.grp ?? "",
       price: Number(r.price) || 0,
       available: !!r.available,
       position: r.position,
@@ -421,7 +423,7 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
 const txt = (v: unknown, n = 40) => String(v ?? "").trim().slice(0, n);
 
 export const saveIngredient = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; name: string; name_en?: string; name_fr?: string; name_es?: string; kind: string; price: number | string; available?: boolean }) => {
+  .inputValidator((d: { id?: string; name: string; name_en?: string; name_fr?: string; name_es?: string; group?: string; kind: string; price: number | string; available?: boolean }) => {
     const name = txt(d.name);
     if (!name) throw new Error("Il nome dell'ingrediente è obbligatorio");
     const price = Number(String(d.price ?? "0").replace(",", "."));
@@ -433,6 +435,7 @@ export const saveIngredient = createServerFn({ method: "POST" })
         name_en: txt(d.name_en),
         name_fr: txt(d.name_fr),
         name_es: txt(d.name_es),
+        grp: txt(d.group, 30),
         kind: d.kind === "dolce" ? "dolce" : "salato",
         price: Math.round(price * 100) / 100,
         available: d.available !== false,

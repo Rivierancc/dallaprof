@@ -276,7 +276,11 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
   const list = customIngredients(category.custom_kind, lib)
   const chosen = list.filter((g) => ids.includes(g.id))
   const total = category.custom_price + chosen.reduce((s, g) => s + g.price, 0)
-  const groups = ([["salato", t.savory], ["dolce", t.sweet]] as const).map(([k, title]) => ({ k, title, items: list.filter((g) => g.kind === k) })).filter((g) => g.items.length)
+  const groups = ([["salato", t.savory], ["dolce", t.sweet]] as const).flatMap(([k, title]) => {
+    const items = list.filter((g) => g.kind === k)
+    const names = [...new Set(items.map((g) => g.group).filter(Boolean))].sort()
+    return [...names.map((n) => ({ k: `${k}-${n}`, icon: k === "dolce" ? "🍫" : "🧀", title: n, items: items.filter((g) => g.group === n) })), { k, icon: k === "dolce" ? "🍫" : "🧀", title, items: items.filter((g) => !g.group) }]
+  }).filter((g) => g.items.length)
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
@@ -286,7 +290,7 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(category.custom_price)}</p>
           {groups.map((g) => (
             <section key={g.k} className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground">{g.k === "dolce" ? "🍫" : "🧀"} {g.title}</h3>
+              <h3 className="font-display text-4xl text-muted-foreground">{g.icon} {g.title}</h3>
               <div className="mt-3 flex flex-wrap gap-3">
                 {g.items.map((x) => {
                   const on = ids.includes(x.id)

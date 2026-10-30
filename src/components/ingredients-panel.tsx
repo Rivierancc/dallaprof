@@ -6,19 +6,20 @@ const fmt = (n: number) => n.toFixed(2).replace(".", ",");
 const err = (e: unknown) => toast.error(e instanceof Error ? e.message : "Operazione non riuscita");
 const field = "min-w-0 rounded-xl bg-muted px-3 py-3 text-xl outline-none";
 
-type Draft = { name: string; name_en: string; name_fr: string; name_es: string; price: string };
-const empty: Draft = { name: "", name_en: "", name_fr: "", name_es: "", price: "" };
+type Draft = { name: string; name_en: string; name_fr: string; name_es: string; group: string; price: string };
+const empty: Draft = { name: "", name_en: "", name_fr: "", name_es: "", group: "", price: "" };
 
-function IngredientForm({ initial, onSave, onCancel, label }: { initial: Draft; onSave: (d: Draft) => Promise<void>; onCancel?: () => void; label: string }) {
+function IngredientForm({ initial, onSave, onCancel, label, listId }: { listId: string; initial: Draft; onSave: (d: Draft) => Promise<void>; onCancel?: () => void; label: string }) {
   const [d, setD] = useState(initial);
   const [busy, setBusy] = useState(false);
   const set = (k: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement>) => setD({ ...d, [k]: e.target.value });
   return (
-    <div className="grid gap-2 rounded-2xl bg-background/40 p-3 sm:grid-cols-[repeat(4,minmax(0,1fr))_6rem_auto]">
+    <div className="grid gap-2 rounded-2xl bg-background/40 p-3 sm:grid-cols-[repeat(4,minmax(0,1fr))_9rem_6rem_auto]">
       <input aria-label="Nome italiano" placeholder="🇮🇹 Italiano" value={d.name} onChange={set("name")} className={field} />
       <input aria-label="Nome inglese" placeholder="🇬🇧 English" value={d.name_en} onChange={set("name_en")} className={field} />
       <input aria-label="Nome francese" placeholder="🇫🇷 Français" value={d.name_fr} onChange={set("name_fr")} className={field} />
       <input aria-label="Nome spagnolo" placeholder="🇪🇸 Español" value={d.name_es} onChange={set("name_es")} className={field} />
+      <input aria-label="Categoria ingrediente" placeholder="Categoria (es. Salumi)" list={listId} value={d.group} onChange={set("group")} className={field} />
       <input aria-label="Prezzo" placeholder="€ 0,00" inputMode="decimal" value={d.price} onChange={set("price")} className={`${field} text-center`} />
       <div className="flex gap-2">
         <button disabled={busy} onClick={async () => { setBusy(true); try { await onSave(d); setD(initial); } catch (e) { err(e); } finally { setBusy(false); } }} className="tap rounded-xl bg-primary px-4 text-xl font-bold text-primary-foreground">{label}</button>
@@ -30,6 +31,9 @@ function IngredientForm({ initial, onSave, onCancel, label }: { initial: Draft; 
 
 function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; title: string; items: MenuIngredient[]; refresh: () => Promise<unknown> }) {
   const [edit, setEdit] = useState<string | null>(null);
+  const listId = `grp-${kind}`;
+  const groups = [...new Set(items.map((g) => g.group).filter(Boolean))].sort();
+  const sorted = [...items].sort((a, b) => (a.group || "~").localeCompare(b.group || "~"));
   const save = async (d: Draft, g?: MenuIngredient) => {
     await saveIngredient({ data: { ...(g ? { id: g.id } : {}), ...d, kind, price: d.price || "0", available: g ? g.available : true } });
     setEdit(null);
@@ -39,16 +43,17 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
   return (
     <section className="rounded-3xl bg-card/60 p-5">
       <h3 className="mb-3 font-display text-4xl">{title}</h3>
+      <datalist id={listId}>{groups.map((x) => <option key={x} value={x} />)}</datalist>
       <ul className="mb-4 space-y-2">
-        {items.map((g) =>
+        {sorted.map((g) =>
           edit === g.id ? (
             <li key={g.id}>
-              <IngredientForm label="Salva" initial={{ name: g.name, name_en: g.name_en, name_fr: g.name_fr, name_es: g.name_es, price: fmt(g.price) }} onSave={(d) => save(d, g)} onCancel={() => setEdit(null)} />
+              <IngredientForm listId={listId} label="Salva" initial={{ name: g.name, name_en: g.name_en, name_fr: g.name_fr, name_es: g.name_es, group: g.group, price: fmt(g.price) }} onSave={(d) => save(d, g)} onCancel={() => setEdit(null)} />
             </li>
           ) : (
             <li key={g.id} className={`flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3 ${g.available ? "" : "opacity-60"}`}>
               <div className="min-w-0 flex-1">
-                <p className="text-2xl font-bold">{g.name} · € {fmt(g.price)}</p>
+                <p className="text-2xl font-bold">{g.group && <span className="mr-2 rounded-full bg-accent px-3 py-0.5 text-lg text-accent-foreground">{g.group}</span>}{g.name} · € {fmt(g.price)}</p>
                 <p className="text-lg text-muted-foreground">🇬🇧 {g.name_en || "—"} · 🇫🇷 {g.name_fr || "—"} · 🇪🇸 {g.name_es || "—"}</p>
               </div>
               <button
@@ -69,7 +74,7 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
         )}
         {!items.length && <li className="text-lg text-muted-foreground">Nessun ingrediente</li>}
       </ul>
-      <IngredientForm label="+ Aggiungi" initial={empty} onSave={(d) => save(d)} />
+      <IngredientForm listId={listId} label="+ Aggiungi" initial={empty} onSave={(d) => save(d)} />
     </section>
   );
 }
