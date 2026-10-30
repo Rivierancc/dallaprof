@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { canExitKiosk, EXIT_TAPS, EXIT_WINDOW, isLanguage, isOrderType, type Language, type OrderType } from "@/lib/customer";
+import { DEFAULT_EXIT_PIN, EXIT_PIN_KEY, validatePinChange } from "@/lib/access";
 
 function store(key: string, value: string | null) {
   try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { /* Storage may be disabled by the browser. */ }
@@ -11,6 +12,7 @@ type Session = {
   orderType: OrderType | null; setOrderType: (value: OrderType | null) => void;
   reset: () => void; fullscreen: boolean; enterKiosk: () => Promise<boolean>; exitKiosk: () => Promise<void>;
   kioskError: string;
+  changeExitPin: (current: string, next: string, confirmation: string) => void;
 };
 const CustomerContext = createContext<Session | null>(null);
 export function useCustomer() {
@@ -27,6 +29,14 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const [exitPrompt, setExitPrompt] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [exitPin, setExitPin] = useState(DEFAULT_EXIT_PIN);
+  const changeExitPin = (current: string, next: string, confirmation: string) => {
+    validatePinChange(current, next, confirmation);
+    if (!canExitKiosk(current, exitPin)) throw new Error("Codice attuale errato");
+    try { localStorage.setItem(EXIT_PIN_KEY, next); }
+    catch { throw new Error("Questo browser non permette di salvare il codice"); }
+    setExitPin(next);
+  };
   const taps = useRef<number[]>([]);
   const path = useRouterState({ select: (state) => state.location.pathname });
   const customerPage = path === "/" || path.startsWith("/ordine-confermato");
@@ -37,13 +47,19 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     try {
       const lang = localStorage.getItem("selected_lang");
       const type = localStorage.getItem("order_type");
+      const savedExit = localStorage.getItem(EXIT_PIN_KEY);
+      if (savedExit && /^\d{4,12}$/.test(savedExit)) setExitPin(savedExit);
       if (isLanguage(lang)) languageState(lang); else store("selected_lang", "IT");
       if (isOrderType(type)) orderState(type); else store("order_type", null);
     } catch { /* Keep safe defaults. */ }
     const sync = () => { setFullscreen(!!document.fullscreenElement); if (!document.fullscreenElement) setExitPrompt(false); };
     sync();
     document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
+    const syncExitPin = (event: StorageEvent) => {
+      if (event.key === EXIT_PIN_KEY) setExitPin(event.newValue && /^\d{4,12}$/.test(event.newValue) ? event.newValue : DEFAULT_EXIT_PIN);
+    };
+    window.addEventListener("storage", syncExitPin);
+    return () => { document.removeEventListener("fullscreenchange", sync); window.removeEventListener("storage", syncExitPin); };
   }, []);
   useEffect(() => {
     if (!fullscreen) return;
@@ -71,7 +87,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     taps.current = [...taps.current.filter((time) => now - time <= EXIT_WINDOW), now];
     if (taps.current.length >= EXIT_TAPS) { taps.current = []; setPin(""); setPinError(false); setExitPrompt(true); }
   };
-  return <CustomerContext.Provider value={{ language, setLanguage, orderType, setOrderType, reset, fullscreen, enterKiosk, exitKiosk, kioskError }}>
+  return <CustomerContext.Provider value={{ language, setLanguage, orderType, setOrderType, reset, fullscreen, enterKiosk, exitKiosk, kioskError, changeExitPin }}>
     {children}
     {customerPage && <>
       <Clock onTap={tapCorner} />
@@ -82,9 +98,9 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     </>}
     {!customerPage && fullscreen && <Button aria-label="Accesso uscita chiosco" variant="ghost" className="fixed left-0 top-0 z-[100] h-12 w-12" onClick={tapCorner}>•</Button>}
     {exitPrompt && <div className="fixed inset-0 z-[150] grid place-items-center bg-background/90 p-6">
-      <form onSubmit={(event) => { event.preventDefault(); if (canExitKiosk(pin)) void exitKiosk(); else { setPinError(true); setPin(""); } }} className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6">
+      <form onSubmit={(event) => { event.preventDefault(); if (canExitKiosk(pin, exitPin)) void exitKiosk(); else { setPinError(true); setPin(""); } }} className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-card p-6">
         <h2 className="font-display text-4xl">Esci da chiosco</h2>
-        <input autoFocus aria-label="PIN uscita chiosco" type="password" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} className="w-full rounded-lg bg-muted p-4 text-3xl" />
+        <input autoFocus aria-label="PIN uscita chiosco" type="password" inputMode="numeric" pattern="[0-9]*" maxLength={12} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} className="w-full rounded-lg bg-muted p-4 text-3xl" />
         {pinError && <p role="alert" className="text-destructive">PIN errato</p>}
         <div className="flex gap-3"><Button type="submit">Esci</Button><Button type="button" variant="secondary" onClick={() => setExitPrompt(false)}>Annulla</Button></div>
       </form>

@@ -298,6 +298,27 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_credentials: {
+        Row: {
+          id: number
+          pin_hash: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          id: number
+          pin_hash: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          id?: number
+          pin_hash?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

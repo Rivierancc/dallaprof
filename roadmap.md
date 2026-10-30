@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Cambio PIN personale e codice locale uscita chiosco da Gestione menu; verificati rifiuto PIN attuale errato, nuovo accesso e uscita delle altre sessioni, salvataggio locale dopo ricarica; codici originali ripristinati dopo le prove.
 - [x] Spostamento e ingrandimento del logo dentro la forma; ripristino, salvataggio, rilettura e visualizzazione in home verificati dal pannello con PIN, preservando logo e descrizione.
 - [x] Dimensione e forma del logo (originale, tonda, ovale, cuore), descrizione ingrandibile e formattabile; salvataggio, rilettura e home verificati dal pannello con PIN su tre formati, mantenendo logo e testo esistenti.
 - [x] Logo aziendale e descrizione nella home, configurabili da Gestione menu; caricamento, salvataggio, rilettura e rimozione verificati dal pannello con PIN.
