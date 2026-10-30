@@ -87,7 +87,8 @@ function Totem() {
             <h2 className="mb-5 text-center font-display text-5xl text-accent [@media(max-height:900px)]:mb-2 [@media(max-height:900px)]:text-3xl">⭐ {t.recommended}</h2>
             <div className="grid grid-cols-3 gap-5 [@media(max-height:900px)]:gap-2">
               {featured.map((p) => (
-                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
+                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap relative flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
+                  <Badge p={p} />
                   {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover [@media(max-height:900px)]:aspect-[4/3]" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl [@media(max-height:900px)]:aspect-[4/3] [@media(max-height:900px)]:text-4xl">🍽️</div>}
                   <div className="p-3 [@media(max-height:900px)]:p-2">
                     <h3 className="line-clamp-2 font-display text-3xl leading-tight [@media(max-height:900px)]:text-xl">{p.name}</h3>
@@ -171,7 +172,8 @@ function Totem() {
               </Button>
             )}
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+                <Badge p={p} />
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
@@ -306,5 +308,14 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
         </div>
       </div>
     </div>
+  )
+}
+
+function Badge({ p }: { p: Product }) {
+  if (!p.badge_on || !p.badge_text) return null
+  return (
+    <span className={`absolute right-3 top-3 z-10 -rotate-6 rounded-2xl rounded-br-none border-4 border-background bg-destructive px-4 py-2 font-display text-3xl uppercase leading-none text-destructive-foreground shadow-lg ${p.badge_blink ? "animate-badge" : ""}`}>
+      {p.badge_text}
+    </span>
   )
 }

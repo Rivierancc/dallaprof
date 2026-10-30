@@ -27,6 +27,9 @@ export type Product = {
   position: number;
   sold_out: boolean;
   is_featured: boolean;
+  badge_on: boolean;
+  badge_text: string;
+  badge_blink: boolean;
   description: string;
   description_en: string;
   description_fr: string;

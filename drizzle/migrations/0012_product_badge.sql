@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_products ADD COLUMN badge_on boolean NOT NULL DEFAULT false, ADD COLUMN badge_text text NOT NULL DEFAULT '', ADD COLUMN badge_blink boolean NOT NULL DEFAULT false;
