@@ -120,6 +120,13 @@
       "when": 1793396478202,
       "tag": "0016_home_company_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793397154851,
+      "tag": "0017_company_style",
+      "breakpoints": true
     }
   ]
 }

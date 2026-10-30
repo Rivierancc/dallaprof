@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           company_description: string
           company_logo_path: string
+          company_style: Json
           id: number
           news: Json
           settings: Json
@@ -26,6 +27,7 @@ export type Database = {
         Insert: {
           company_description?: string
           company_logo_path?: string
+          company_style?: Json
           id?: number
           news?: Json
           settings?: Json
@@ -34,6 +36,7 @@ export type Database = {
         Update: {
           company_description?: string
           company_logo_path?: string
+          company_style?: Json
           id?: number
           news?: Json
           settings?: Json

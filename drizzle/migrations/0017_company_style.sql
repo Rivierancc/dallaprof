@@ -1,0 +1,2 @@
+ALTER TABLE public.kiosk_banner ADD COLUMN company_style jsonb NOT NULL DEFAULT '{}'::jsonb;
+COMMENT ON COLUMN public.kiosk_banner.company_style IS 'Shared company logo dimensions/shape and description formatting; written only through staff-checked server functions.';
