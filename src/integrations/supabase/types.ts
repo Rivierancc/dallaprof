@@ -19,6 +19,10 @@ export type Database = {
           active: boolean
           custom_kind: string
           custom_price: number
+          custom_title: string
+          custom_title_en: string
+          custom_title_es: string
+          custom_title_fr: string
           id: string
           image_path: string
           name: string
@@ -29,6 +33,10 @@ export type Database = {
           active?: boolean
           custom_kind?: string
           custom_price?: number
+          custom_title?: string
+          custom_title_en?: string
+          custom_title_es?: string
+          custom_title_fr?: string
           id?: string
           image_path?: string
           name: string
@@ -39,6 +47,10 @@ export type Database = {
           active?: boolean
           custom_kind?: string
           custom_price?: number
+          custom_title?: string
+          custom_title_en?: string
+          custom_title_es?: string
+          custom_title_fr?: string
           id?: string
           image_path?: string
           name?: string
