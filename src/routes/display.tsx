@@ -1,4 +1,7 @@
-import { ThemeGreeting } from "@/components/theme-layer"
+import { ThemeGreeting } from "@/components/theme-layer";
+import { useState } from "react";
+import { useCustomer } from "@/components/customer-session";
+import { BannerEditor, BannerView, useBanner } from "@/components/display-banner";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 
@@ -22,10 +25,22 @@ function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
+  const { fullscreen, enterKiosk, exitKiosk, kioskError } = useCustomer();
+  const [banner, setBanner] = useBanner();
+  const [editing, setEditing] = useState(false);
 
   return (
-    <main className="relative grid h-screen grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
+    <div className="flex h-screen flex-col">
+    <BannerView banner={banner} />
+    {editing && <BannerEditor banner={banner} set={setBanner} onClose={() => setEditing(false)} />}
+    <main className="relative grid min-h-0 flex-1 grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
       <div className="pointer-events-none absolute inset-x-0 top-4 z-30"><ThemeGreeting /></div>
+      {!fullscreen && <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+        <button onClick={() => void enterKiosk()} className="tap rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">⛶ Modalità chiosco</button>
+        <button onClick={() => setEditing(true)} className="tap rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">✏️ Scritta in alto</button>
+        {kioskError && <span role="alert" className="self-center text-destructive">{kioskError}</span>}
+      </div>}
+      {fullscreen && <button onClick={() => void exitKiosk()} aria-label="Esci da chiosco" className="absolute bottom-0 left-0 z-10 h-10 w-10 opacity-0" />}
       <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
         ← Totem
       </Link>
@@ -48,5 +63,6 @@ function Display() {
         </div>
       </section>
     </main>
+    </div>
   );
 }
