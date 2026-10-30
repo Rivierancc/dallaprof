@@ -277,22 +277,50 @@ function MenuEditor() {
         </button>
       </header>
 
-      <p className="mb-6 text-2xl text-muted-foreground">
-        Le modifiche si vedono subito sul totem e in cucina. Tocca una categoria per vederne i piatti.
+      <p className="mb-4 text-2xl text-muted-foreground">
+        Le modifiche si vedono subito sul totem e in cucina.
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <section className="rounded-3xl bg-card/60 p-5">
-          <div className="mb-4 flex items-center justify-between">
+      <ViewToggle view={view} onChange={changeView} />
+
+      {view === "focus" && active ? (
+        <section className="mx-auto max-w-5xl">
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <button onClick={() => setSel(null)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+              ← Categorie
+            </button>
+            <h2 className="font-display text-5xl">{active.name}</h2>
+            <span className="text-2xl text-muted-foreground">{products.length} piatti</span>
+            <button onClick={addProduct} className="tap ml-auto rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
+              + Nuovo piatto
+            </button>
+          </div>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => openCategory(c.id)}
+                className={`tap rounded-full px-5 py-3 text-xl font-bold ${active.id === c.id ? "bg-accent text-accent-foreground" : "bg-card"}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+          <div data-dishes={active.id} className="rounded-3xl bg-card/60 p-5">
+            <ProductsSection active={active} products={products} h={handlers} />
+          </div>
+        </section>
+      ) : (
+        <div className="mx-auto max-w-5xl space-y-4">
+          <div className="flex items-center justify-between gap-4">
             <h2 className="font-display text-5xl">Categorie</h2>
             <button onClick={addCategory} className="tap rounded-xl bg-primary px-5 py-3 text-xl font-bold text-primary-foreground">
               + Nuova
             </button>
           </div>
-          <ul className="space-y-3">
-            {cats.map((c, i) => (
+          {cats.map((c, i) => (
+            <div key={c.id} className="space-y-3">
               <div
-                key={c.id}
                 draggable
                 onDragStart={() => setDragId(c.id)}
                 onDragOver={(e) => e.preventDefault()}
@@ -320,86 +348,96 @@ function MenuEditor() {
                 <div className="min-w-0 flex-1">
                   <CategoryRow
                     c={c}
-                    count={menu.products.filter((p) => p.category_id === c.id).length}
+                    count={productsOf(c.id).length}
                     selected={active?.id === c.id}
-                    onSelect={() => setSel(c.id)}
+                    onOpen={() => (active?.id === c.id ? setSel(null) : openCategory(c.id))}
                     onRename={(name) => renameCategory(c, name)}
                     onPhoto={(file) => categoryPhoto(c, file)}
                     onDelete={() => removeCategory(c)}
                   />
                 </div>
               </div>
-            ))}
-            {!menu.categories.length && (
-              <li className="text-xl text-muted-foreground">Nessuna categoria: crea la prima.</li>
-            )}
-          </ul>
-        </section>
+              {view === "inline" && active?.id === c.id && (
+                <div data-dishes={c.id} className="ml-8 rounded-3xl border-l-4 border-accent bg-card/40 p-5">
+                  <ProductsSection active={active} products={products} h={handlers} />
+                </div>
+              )}
+            </div>
+          ))}
+          {!menu.categories.length && <p className="text-xl text-muted-foreground">Nessuna categoria: crea la prima.</p>}
+        </div>
+      )}
 
-        <section className="rounded-3xl bg-card/60 p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-5xl">{active ? active.name : "Piatti"}</h2>
-            <button onClick={addProduct} disabled={!active} className="tap rounded-xl bg-accent px-5 py-3 text-xl font-bold text-accent-foreground disabled:opacity-40">
-              + Nuovo piatto
-            </button>
-          </div>
-          <ul className="space-y-3">
-            {products.map((p) => (
-              <ProductRow
-                key={p.id}
-                p={p}
-                onSave={(name, price) => saveRow(p, name, price)}
-                onPhoto={(file) => productPhoto(p, file)}
-                onDelete={() => removeProduct(p)}
-                onMove={(dir) => move(p, dir)}
-                onTranslation={async (language, description) => {
-                  await setTranslation({ data: { id: p.id, language, description } });
-                  await refresh();
-                }}
-                onDescription={async (description) => {
-                  try {
-                    await setDescription({ data: { id: p.id, description } });
-                    refresh();
-                    toast.success("Descrizione salvata");
-                  } catch (e) {
-                    err(e);
-                  }
-                }}
-                onOptions={async (ingredients, extras) => {
-                  try {
-                    await setProductOptions({ data: { id: p.id, ingredients, extras } });
-                    refresh();
-                  } catch (e) {
-                    err(e);
-                  }
-                }}
-                onFeatured={async (v) => {
-                  try {
-                    await setFeatured({ data: { id: p.id, featured: v } });
-                    refresh();
-                    toast.success(v ? "In evidenza sul totem (max 3)" : "Tolto dall'evidenza");
-                  } catch (e) {
-                    err(e);
-                  }
-                }}
-                onSoldOut={async (v) => {
-                  try {
-                    await soldOut({ data: { id: p.id, soldOut: v } });
-                    refresh();
-                    toast.success(v ? "Nascosto dal totem" : "Di nuovo visibile sul totem");
-                  } catch (e) {
-                    err(e);
-                  }
-                }}
-              />
-            ))}
-            {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto in questa categoria.</li>}
-          </ul>
-        </section>
-      </div>
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
+  );
+}
+
+// Dove finiscono i piatti di una categoria: sotto la categoria stessa, oppure in una pagina a sé.
+type View = "inline" | "focus";
+
+function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => void }) {
+  const btn = (v: View, label: string) => (
+    <button
+      onClick={() => onChange(v)}
+      aria-pressed={view === v}
+      className={`tap rounded-xl px-5 py-3 text-xl font-bold ${view === v ? "bg-accent text-accent-foreground" : "bg-card"}`}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-3">
+      <span className="text-xl text-muted-foreground">I piatti</span>
+      {btn("inline", "Sotto alla categoria")}
+      {btn("focus", "In una pagina a sé")}
+    </div>
+  );
+}
+
+type ProductHandlers = {
+  add: () => void;
+  save: (p: MenuProduct, name: string, price: number) => Promise<unknown> | void;
+  photo: (p: MenuProduct, file: File) => Promise<unknown> | void;
+  remove: (p: MenuProduct) => Promise<unknown> | void;
+  move: (p: MenuProduct, dir: -1 | 1) => void;
+  translate: (p: MenuProduct, language: "EN" | "FR" | "ES", description: string) => Promise<unknown>;
+  describe: (p: MenuProduct, description: string) => Promise<unknown>;
+  options: (p: MenuProduct, ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
+  feature: (p: MenuProduct, v: boolean) => Promise<unknown>;
+  sold: (p: MenuProduct, v: boolean) => Promise<unknown>;
+};
+
+// La lista dei piatti di una categoria: la stessa sia sotto la categoria sia nella pagina a sé.
+function ProductsSection({ active, products, h }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers }) {
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-4xl">{active.name} · {products.length} piatti</h3>
+        <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
+          + Nuovo piatto
+        </button>
+      </div>
+      <ul className="space-y-3">
+        {products.map((p) => (
+          <ProductRow
+            key={p.id}
+            p={p}
+            onSave={(name, price) => h.save(p, name, price)}
+            onPhoto={(file) => h.photo(p, file)}
+            onDelete={() => h.remove(p)}
+            onMove={(dir) => h.move(p, dir)}
+            onTranslation={(language, description) => h.translate(p, language, description)}
+            onDescription={(description) => h.describe(p, description)}
+            onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
+            onFeatured={(v) => h.feature(p, v)}
+            onSoldOut={(v) => h.sold(p, v)}
+          />
+        ))}
+        {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
+      </ul>
+    </>
   );
 }
 
