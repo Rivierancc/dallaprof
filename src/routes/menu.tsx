@@ -885,7 +885,7 @@ function BadgeEditor({ p, onSave }: { p: MenuProduct; onSave: (on: boolean, text
   const [text, setText] = useState(p.badge_text);
   useEffect(() => setText(p.badge_text), [p.badge_text]);
   const save = (on: boolean, t: string, blink: boolean) => {
-    if (on && !t.trim()) return toast.error("Scrivi prima il testo del fumetto");
+    if (on && !t.trim()) { toast.error("Scrivi prima il testo del fumetto"); return; }
     onSave(on, t.trim(), blink);
   };
   return (
