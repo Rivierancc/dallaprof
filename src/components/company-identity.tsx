@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Trash2, Save, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Circle, Heart, Image } from "lucide-react";
+import { ImagePlus, Trash2, Save, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Circle, Heart, Image, RotateCcw } from "lucide-react";
 import { getCompany, saveCompany, uploadCompanyLogo } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -16,10 +16,12 @@ const alignments = { left: "text-left", center: "text-center", right: "text-righ
 function IdentityView({ company, preview = false }: { company: Company; preview?: boolean }) {
   const id = `company-heart-${useId().replace(/:/g, "")}`;
   const s = company.style;
-  const shape = s.logoShape === "original" ? "aspect-[12/5] object-contain" : s.logoShape === "oval" ? "aspect-[3/2] rounded-full object-cover bg-secondary" : s.logoShape === "round" ? "aspect-square rounded-full object-cover bg-secondary" : "aspect-square object-cover bg-secondary";
+  const shape = s.logoShape === "original" ? "aspect-[12/5]" : s.logoShape === "oval" ? "aspect-[3/2] rounded-full bg-secondary" : s.logoShape === "round" ? "aspect-square rounded-full bg-secondary" : "aspect-square bg-secondary";
   return <section aria-label={preview ? "Anteprima azienda" : "Azienda"} className="mb-6 flex w-full min-w-0 flex-col items-center gap-4 [@media(max-height:900px)]:mb-3 [@media(max-height:900px)]:gap-2">
     {s.logoShape === "heart" && <svg width="0" height="0" aria-hidden="true" className="absolute"><defs><clipPath id={id} clipPathUnits="objectBoundingBox"><path d="M.5,.96 C.4,.86 0,.57 0,.29 C0,-.03 .36,-.07 .5,.18 C.64,-.07 1,-.03 1,.29 C1,.57 .6,.86 .5,.96 Z" /></clipPath></defs></svg>}
-    {company.logo && <img src={company.logo} alt={preview ? "Anteprima logo azienda" : "Logo azienda"} className={`${logoSizes[s.logoSize - 1]} max-w-full shrink-0 ${shape}`} style={s.logoShape === "heart" ? { clipPath: `url(#${id})` } : undefined} />}
+    {company.logo && <div className={`relative overflow-hidden ${logoSizes[s.logoSize - 1]} max-w-full shrink-0 ${shape}`} style={s.logoShape === "heart" ? { clipPath: `url(#${id})` } : undefined}>
+      <img src={company.logo} alt={preview ? "Anteprima logo azienda" : "Logo azienda"} draggable={false} className={`absolute inset-0 h-full w-full ${s.logoShape === "original" ? "object-contain" : "object-cover"}`} style={{ transform: `translate(${s.logoX}%, ${s.logoY}%) scale(${s.logoZoom / 100})` }} />
+    </div>}
     {company.description && <p className={`w-full max-w-3xl whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color]} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`}>{company.description}</p>}
   </section>;
 }
@@ -91,6 +93,16 @@ export function CompanySettings() {
       <div className="flex flex-wrap gap-2">{([
         ["original", "Originale", Image], ["round", "Tonda", Circle], ["oval", "Ovale", Circle], ["heart", "Cuore", Heart],
       ] as const).map(([logoShape, label, Icon]) => <Button key={logoShape} disabled={busy} variant={draft.style.logoShape === logoShape ? "default" : "secondary"} aria-pressed={draft.style.logoShape === logoShape} onClick={() => setStyle({ logoShape })}><Icon className={logoShape === "oval" ? "scale-x-125" : ""} />{label}</Button>)}</div>
+      {draft.logo && <div className="space-y-3 border-t border-border pt-4">
+        <p className="text-xl">Logo dentro la forma</p>
+        <p>Ingrandimento: {draft.style.logoZoom}%</p>
+        <Slider aria-label="Ingrandimento dentro la forma" min={50} max={250} step={5} value={[draft.style.logoZoom]} disabled={busy} onValueChange={([logoZoom]) => { if (logoZoom !== undefined) setStyle({ logoZoom }); }} className="max-w-md py-4" />
+        <p>Posizione orizzontale: {draft.style.logoX === 0 ? "Centro" : `${Math.abs(draft.style.logoX)}% ${draft.style.logoX < 0 ? "a sinistra" : "a destra"}`}</p>
+        <Slider aria-label="Posizione orizzontale logo" min={-50} max={50} step={1} value={[draft.style.logoX]} disabled={busy} onValueChange={([logoX]) => { if (logoX !== undefined) setStyle({ logoX }); }} className="max-w-md py-4" />
+        <p>Posizione verticale: {draft.style.logoY === 0 ? "Centro" : `${Math.abs(draft.style.logoY)}% ${draft.style.logoY < 0 ? "in alto" : "in basso"}`}</p>
+        <Slider aria-label="Posizione verticale logo" min={-50} max={50} step={1} value={[draft.style.logoY]} disabled={busy} onValueChange={([logoY]) => { if (logoY !== undefined) setStyle({ logoY }); }} className="max-w-md py-4" />
+        <Button variant="outline" disabled={busy} onClick={() => setStyle({ logoZoom: 100, logoX: 0, logoY: 0 })}><RotateCcw />Ripristina posizione e ingrandimento</Button>
+      </div>}
     </div>
     <label className="block space-y-2 text-xl">
       <span>Descrizione azienda</span>
