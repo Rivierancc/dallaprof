@@ -1,36 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { useSession, getRequest } from "@tanstack/react-start/server";
+import { useSession } from "@tanstack/react-start/server";
 import type { PaymentMethod } from "@/lib/customer";
-import { createHash, timingSafeEqual } from "node:crypto";
-
-type KitchenSession = { unlocked?: boolean };
-type GateFlags = { secure?: boolean; partitioned?: boolean };
-
-// Il totem vive in un iframe (serve cookie partitioned), il tablet apre la pagina da sola
-// (serve cookie normale) e spesso in http (dove Secure non viene accettato).
-// I due flag li decide il browser, che è l'unico a conoscere il contesto reale.
-const sessionConfig = (f: GateFlags = {}) => {
-  const partitioned = !!f.secure && !!f.partitioned;
-  return {
-    password: process.env["SESSION_SECRET"]!,
-    name: "kitchen-gate",
-    maxAge: 60 * 60 * 14,
-    cookie: {
-      httpOnly: true,
-      secure: partitioned,
-      sameSite: partitioned ? ("none" as const) : ("lax" as const),
-      ...(partitioned ? { partitioned: true } : {}),
-      path: "/",
-    },
-  };
-};
-
-const matches = (a: string, b: string) =>
-  timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
+import { validatePinChange } from "@/lib/access";
 
 export const kitchenStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await useSession<KitchenSession>(sessionConfig());
-  return { unlocked: !!s.data.unlocked };
+  const { staffStatus } = await import("@/lib/staff.server");
+  return staffStatus();
 });
 
 export const unlockKitchen = createServerFn({ method: "POST" })
@@ -40,11 +15,11 @@ export const unlockKitchen = createServerFn({ method: "POST" })
     partitioned: !!d.partitioned,
   }))
   .handler(async ({ data }) => {
-    const expected = process.env["KITCHEN_PIN"];
-    if (!expected) throw new Error("PIN non configurato");
-    if (!matches(data.pin, expected)) return { ok: false as const };
-    const s = await useSession<KitchenSession>(sessionConfig(data));
-    await s.update({ unlocked: true });
+    const { staffCredentials, matchesStaffPin, staffSessionConfig } = await import("@/lib/staff.server");
+    const credentials = await staffCredentials();
+    if (!await matchesStaffPin(data.pin, credentials)) return { ok: false as const };
+    const s = await useSession<{ unlocked?: boolean; version?: string }>(staffSessionConfig(data));
+    await s.update({ unlocked: true, version: credentials?.version ?? "initial" });
     return { ok: true as const };
   });
 
@@ -54,7 +29,8 @@ export const lockKitchen = createServerFn({ method: "POST" })
     partitioned: !!d.partitioned,
   }))
   .handler(async ({ data }) => {
-    const s = await useSession<KitchenSession>(sessionConfig(data));
+    const { staffSessionConfig } = await import("@/lib/staff.server");
+    const s = await useSession(staffSessionConfig(data));
     await s.clear();
     return { ok: true as const };
   });
@@ -65,8 +41,8 @@ export const setOrderStatus = createServerFn({ method: "POST" })
     return { id: String(d.id), status: d.status };
   })
   .handler(async ({ data }) => {
-    const s = await useSession<KitchenSession>(sessionConfig());
-    if (!s.data.unlocked) throw new Error("Non autorizzato");
+    const { requireStaff } = await import("@/lib/staff.server");
+    await requireStaff();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("orders").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -80,8 +56,8 @@ export const settleOrder = createServerFn({ method: "POST" })
     return { id: String(d.id), paid: !!d.paid, method: d.method ?? "card" };
   })
   .handler(async ({ data }) => {
-    const s = await useSession<KitchenSession>(sessionConfig());
-    if (!s.data.unlocked) throw new Error("Non autorizzato");
+    const { requireStaff } = await import("@/lib/staff.server");
+    await requireStaff();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch = data.paid
       ? { status: "preparing", paid_at: new Date().toISOString(), payment_method: data.method }
@@ -94,4 +70,27 @@ export const settleOrder = createServerFn({ method: "POST" })
       .select("*");
     if (error) throw new Error(error.message);
     return { ok: true, order: rows?.[0] ?? null };
+  });
+
+export const changeStaffPin = createServerFn({ method: "POST" })
+  .inputValidator((data: { current: string; next: string; confirmation: string; secure?: boolean; partitioned?: boolean }) => {
+    validatePinChange(data.current, data.next, data.confirmation);
+    return { current: data.current, next: data.next, secure: !!data.secure, partitioned: !!data.partitioned };
+  })
+  .handler(async ({ data }) => {
+    const { requireStaff, staffCredentials, matchesStaffPin, hashPin, staffSessionConfig } = await import("@/lib/staff.server");
+    await requireStaff();
+    const credentials = await staffCredentials();
+    if (!await matchesStaffPin(data.current, credentials)) throw new Error("PIN attuale errato");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const version = crypto.randomUUID();
+    const row = { id: 1, pin_hash: await hashPin(data.next), version, updated_at: new Date().toISOString() };
+    // Compare the previous version so simultaneous changes cannot overwrite each other.
+    const result = credentials
+      ? await supabaseAdmin.from("staff_credentials").update(row).eq("id", 1).eq("version", credentials.version).select("id")
+      : await supabaseAdmin.from("staff_credentials").insert(row).select("id");
+    if (result.error || !result.data?.length) throw new Error("PIN non modificato. Riprova con il codice attuale.");
+    const session = await useSession<{ unlocked?: boolean; version?: string }>(staffSessionConfig(data));
+    await session.update({ unlocked: true, version });
+    return { ok: true };
   });

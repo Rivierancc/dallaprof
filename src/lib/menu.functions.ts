@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { useSession } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
@@ -9,18 +8,9 @@ const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
 const MAX_FILE_CHARS = 6_000_000;
 
-type StaffSession = { unlocked?: boolean };
-
-const sessionConfig = () => ({
-  password: process.env["SESSION_SECRET"]!,
-  name: "kitchen-gate",
-  maxAge: 60 * 60 * 14,
-  cookie: { httpOnly: true, secure: true, sameSite: "none" as const, partitioned: true, path: "/" },
-});
-
 const staffOnly = async () => {
-  const s = await useSession<StaffSession>(sessionConfig());
-  if (!s.data.unlocked) throw new Error("Inserisci il PIN del personale");
+  const { requireStaff } = await import("@/lib/staff.server");
+  await requireStaff();
 };
 
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
