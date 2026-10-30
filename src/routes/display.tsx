@@ -2,6 +2,7 @@ import { ThemeGreeting } from "@/components/theme-layer";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
+import { NewsTicker } from "@/components/news-ticker";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -25,7 +26,8 @@ function Display() {
   const ready = orders.filter((o) => o.status === "ready").reverse();
 
   return (
-    <main className="relative grid h-screen grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
+    <div className="flex h-screen flex-col">
+    <main className="relative grid min-h-0 flex-1 grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
       <div className="pointer-events-none absolute inset-x-0 top-4 z-30"><ThemeGreeting /></div>
       <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
         ← Totem
@@ -49,5 +51,7 @@ function Display() {
         </div>
       </section>
     </main>
+    <NewsTicker />
+    </div>
   );
 }
