@@ -59,29 +59,37 @@ function Totem() {
   if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">{t.loading}</div>
 
   if (!dineOption) return (
-    <main className="grid min-h-screen place-items-center p-8 pt-24">
+    <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
+      <div className="flex-1" />
       
-      <div className="w-full max-w-[60rem] text-center">
-        <h1 className="font-display text-9xl leading-none">{t.where}</h1>
-        {custom && <p className="mt-6 font-display text-5xl text-accent">{t.chosen} {custom.name}: {t.where}</p>}
-        <div className="mt-16 grid gap-8">
-          <Button variant="ghost" onClick={() => setDineOption("qui")} className="whitespace-normal tap flex h-44 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-10 text-left">
-            <span className="text-8xl">🍽️</span><span className="font-display text-8xl">{t.here}</span>
+      <div className="mx-auto w-full max-w-[62rem] text-center">
+        <h1 className="font-display text-8xl leading-none [@media(max-height:900px)]:text-6xl">{t.where}</h1>
+        {custom ? (
+          <p className="mt-5 flex flex-wrap items-center justify-center gap-4 font-display text-5xl text-accent [@media(max-height:900px)]:mt-2 [@media(max-height:900px)]:text-3xl">
+            ⭐ {t.chosen} {custom.name}
+            <Button variant="ghost" aria-label={t.close} onClick={() => setCustom(null)} className="tap rounded-full bg-secondary px-5 py-1 font-display text-3xl text-secondary-foreground [@media(max-height:900px)]:text-xl">✕</Button>
+          </p>
+        ) : (
+          <p className="mt-3 text-2xl text-muted-foreground [@media(max-height:900px)]:text-lg">{t.pickFirst}</p>
+        )}
+        <div className="mt-10 grid gap-6 [@media(max-height:900px)]:mt-4 [@media(max-height:900px)]:gap-3">
+          <Button variant="ghost" onClick={() => setDineOption("qui")} className={`whitespace-normal tap flex h-40 items-center gap-8 rounded-3xl border-4 border-accent bg-card px-8 text-left [@media(max-height:900px)]:h-20 [@media(max-height:900px)]:gap-4 [@media(max-height:900px)]:px-4 ${custom ? "glow ring-4 ring-accent" : ""}`}>
+            <span className="text-7xl [@media(max-height:900px)]:text-4xl">🍽️</span><span className="font-display text-7xl [@media(max-height:900px)]:text-4xl">{t.here}</span>
           </Button>
-          <Button variant="ghost" onClick={() => setDineOption("asporto")} className="whitespace-normal tap flex h-44 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-10 text-left">
-            <span className="text-8xl">🥡</span><span className="font-display text-8xl">{t.takeaway}</span>
+          <Button variant="ghost" onClick={() => setDineOption("asporto")} className={`whitespace-normal tap flex h-40 items-center gap-8 rounded-3xl border-4 border-primary bg-card px-8 text-left [@media(max-height:900px)]:h-20 [@media(max-height:900px)]:gap-4 [@media(max-height:900px)]:px-4 ${custom ? "glow ring-4 ring-primary" : ""}`}>
+            <span className="text-7xl [@media(max-height:900px)]:text-4xl">🥡</span><span className="font-display text-7xl [@media(max-height:900px)]:text-4xl">{t.takeaway}</span>
           </Button>
         </div>
         {featured.length > 0 && (
-          <section className="mt-16 text-left">
-            <h2 className="mb-6 text-center font-display text-6xl text-accent">⭐ {t.recommended}</h2>
-            <div className="grid grid-cols-3 gap-6">
+          <section className="mt-10 text-left [@media(max-height:900px)]:mt-4">
+            <h2 className="mb-5 text-center font-display text-5xl text-accent [@media(max-height:900px)]:mb-2 [@media(max-height:900px)]:text-3xl">⭐ {t.recommended}</h2>
+            <div className="grid grid-cols-3 gap-5 [@media(max-height:900px)]:gap-2">
               {featured.map((p) => (
-                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap h-auto p-0 flex flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card text-left">
-                  {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="aspect-square w-full bg-muted" />}
-                  <div className="p-4">
-                    <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
-                    <span className="mt-2 inline-block rounded-full bg-primary px-4 py-1 font-display text-3xl text-primary-foreground">{euro(p.price)}</span>
+                <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
+                  {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover [@media(max-height:900px)]:aspect-[4/3]" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl [@media(max-height:900px)]:aspect-[4/3] [@media(max-height:900px)]:text-4xl">🍽️</div>}
+                  <div className="p-3 [@media(max-height:900px)]:p-2">
+                    <h3 className="line-clamp-2 font-display text-3xl leading-tight [@media(max-height:900px)]:text-xl">{p.name}</h3>
+                    <span className="mt-2 inline-block rounded-full bg-primary px-4 py-1 font-display text-2xl text-primary-foreground [@media(max-height:900px)]:px-2 [@media(max-height:900px)]:text-lg">{euro(p.price)}</span>
                   </div>
                 </Button>
               ))}
@@ -89,6 +97,7 @@ function Totem() {
           </section>
         )}
       </div>
+      <div className="flex-1" />
     </main>
   )
 
