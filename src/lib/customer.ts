@@ -1,4 +1,5 @@
 import type { CartItem } from "@/lib/menu";
+import { DEFAULT_EXIT_PIN } from "@/lib/access";
 
 export type Language = "IT" | "EN" | "FR" | "ES";
 export type OrderType = "qui" | "asporto";
@@ -8,7 +9,7 @@ export const EXIT_TAPS = 5;
 export const EXIT_WINDOW = 2_000;
 export const isLanguage = (value: unknown): value is Language => ["IT", "EN", "FR", "ES"].includes(String(value));
 export const isOrderType = (value: unknown): value is OrderType => value === "qui" || value === "asporto";
-export const canExitKiosk = (pin: string) => pin === "1234";
+export const canExitKiosk = (pin: string, expected = DEFAULT_EXIT_PIN) => pin === expected;
 export const isPaidOrder = (order: { status: string; paid_at?: string | null }) =>
   !!order.paid_at && ["preparing", "ready", "done"].includes(order.status);
 export const descriptionFor = (product: { description: string; description_en?: string; description_fr?: string; description_es?: string }, language: Language) => {
