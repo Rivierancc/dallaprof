@@ -84,7 +84,7 @@ export function ThemesPanel() {
   const refresh = () => void qc.invalidateQueries({ queryKey: ["themes"] });
   const live = pickTheme(data, new Date());
   return (
-    <section className="mt-6"><Fold title="🎉 Temi delle ricorrenze" hint={live ? `● ${live.name}` : undefined}>
+    <section className="mx-auto mt-6 max-w-5xl"><Fold title="🎉 Temi delle ricorrenze" hint={live ? `● ${live.name}` : undefined}>
       <p className="mt-2 max-w-4xl text-xl text-muted-foreground">
         «📅 Automatico» accende il tema da solo tra le due date, ogni anno. «🔛 Sempre acceso» lo tiene acceso finché non lo spegni (uno alla volta).
         Se due temi automatici cadono negli stessi giorni vince quello più in alto. Le date di Pasqua e della Festa della mamma cambiano ogni anno: ricordati di aggiornarle.
