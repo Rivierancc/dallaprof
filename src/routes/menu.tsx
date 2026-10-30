@@ -366,11 +366,6 @@ function MenuEditor() {
             <button onClick={() => setSel(null)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
               ← Categorie
             </button>
-            <h2 className="font-display text-5xl">{active.name}</h2>
-            <span className="text-2xl text-muted-foreground">{products.length} piatti</span>
-            <button onClick={addProduct} className="tap ml-auto rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
-              + Nuovo piatto
-            </button>
           </div>
           <div className="mb-5 flex flex-wrap gap-2">
             {cats.map((c) => (
