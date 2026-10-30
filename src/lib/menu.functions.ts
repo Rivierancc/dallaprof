@@ -3,6 +3,7 @@ import { useSession } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
+import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
 
 const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
@@ -583,22 +584,22 @@ export const deleteTheme = createServerFn({ method: "POST" })
   });
 
 export const getCompany = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await publishable().from("kiosk_banner").select("company_description, company_logo_path").eq("id", 1).maybeSingle();
+  const { data, error } = await publishable().from("kiosk_banner").select("company_description, company_logo_path, company_style").eq("id", 1).maybeSingle();
   if (error) throw new Error(error.message);
   const path = data?.company_logo_path ?? "";
   const urls = await sign([path]);
-  return { description: data?.company_description ?? "", logoPath: path, logo: urls[path] ?? "" };
+  return { description: data?.company_description ?? "", logoPath: path, logo: urls[path] ?? "", style: cleanCompanyStyle(data?.company_style) };
 });
 
 export const saveCompany = createServerFn({ method: "POST" })
-  .inputValidator((d: { description: string; logoPath: string }) => {
+  .inputValidator((d: { description: string; logoPath: string; style?: CompanyStyle }) => {
     const logoPath = String(d.logoPath ?? "");
     if (logoPath && !/^logo-[a-z0-9-]+\.png$/.test(logoPath)) throw new Error("Logo non valido");
-    return { description: String(d.description ?? "").trim().slice(0, 500), logoPath };
+    return { description: String(d.description ?? "").trim().slice(0, 500), logoPath, style: cleanCompanyStyle(d.style) };
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, company_description: data.description, company_logo_path: data.logoPath });
+    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, company_description: data.description, company_logo_path: data.logoPath, company_style: data.style });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
