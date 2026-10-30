@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen } from "@/lib/kitchen.functions";
@@ -69,9 +69,41 @@ function MenuEditor() {
   const qc = useQueryClient();
   const { data: menu } = useSuspenseQuery(menuQueryOptions);
   const lock = useServerFn(lockKitchen);
-  const [sel, setSel] = useState("");
+  const [sel, setSel] = useState<string | null>(null);
+  const [view, setView] = useState<View>("inline");
+  const [jump, setJump] = useState(0);
 
-  const active = menu.categories.find((c) => c.id === sel) ?? menu.categories[0];
+  // La scelta su dove mostrare i piatti resta in memoria sul dispositivo del locale.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("menu_view");
+      if (saved === "inline" || saved === "focus") setView(saved);
+    } catch {
+      /* memoria non disponibile: si resta sulla scelta di default */
+    }
+  }, []);
+
+  const changeView = (next: View) => {
+    setView(next);
+    try {
+      localStorage.setItem("menu_view", next);
+    } catch {
+      /* la scelta varrà solo per questa sessione */
+    }
+  };
+
+  // Quando si apre una categoria si scorre subito fino ai suoi piatti.
+  useEffect(() => {
+    if (!jump) return;
+    document.querySelector(`[data-dishes="${sel ?? ""}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [jump, sel]);
+
+  const active = menu.categories.find((c) => c.id === sel) ?? null;
+  const openCategory = (id: string) => {
+    setSel(id);
+    setJump((n) => n + 1);
+  };
+  const productsOf = (id: string) => menu.products.filter((p) => p.category_id === id).sort((a, b) => a.position - b.position);
   const refresh = () => qc.invalidateQueries({ queryKey: ["menu"] });
 
   const err = (e: unknown) => toast.error(e instanceof Error ? e.message : "Operazione non riuscita");
@@ -158,7 +190,7 @@ function MenuEditor() {
   const removeCategory = async (c: MenuCategory) => {
     try {
       await deleteCategory({ data: { id: c.id } });
-      if (active?.id === c.id) setSel("");
+      if (active?.id === c.id) setSel(null);
       refresh();
       toast.success("Categoria eliminata");
     } catch (e) {
@@ -257,9 +289,54 @@ function MenuEditor() {
     }
   };
 
-  const products = menu.products
-    .filter((p) => p.category_id === active?.id)
-    .sort((a, b) => a.position - b.position);
+  const products = active ? productsOf(active.id) : [];
+
+  const handlers: ProductHandlers = {
+    add: addProduct,
+    save: saveRow,
+    photo: productPhoto,
+    remove: removeProduct,
+    move,
+    translate: async (p, language, description) => {
+      await setTranslation({ data: { id: p.id, language, description } });
+      await refresh();
+    },
+    describe: async (p, description) => {
+      try {
+        await setDescription({ data: { id: p.id, description } });
+        refresh();
+        toast.success("Descrizione salvata");
+      } catch (e) {
+        err(e);
+      }
+    },
+    options: async (p, ingredients, extras) => {
+      try {
+        await setProductOptions({ data: { id: p.id, ingredients, extras } });
+        refresh();
+      } catch (e) {
+        err(e);
+      }
+    },
+    feature: async (p, v) => {
+      try {
+        await setFeatured({ data: { id: p.id, featured: v } });
+        refresh();
+        toast.success(v ? "In evidenza sul totem (max 3)" : "Tolto dall'evidenza");
+      } catch (e) {
+        err(e);
+      }
+    },
+    sold: async (p, v) => {
+      try {
+        await soldOut({ data: { id: p.id, soldOut: v } });
+        refresh();
+        toast.success(v ? "Nascosto dal totem" : "Di nuovo visibile sul totem");
+      } catch (e) {
+        err(e);
+      }
+    },
+  };
 
   return (
     <main className="min-h-screen p-6">
