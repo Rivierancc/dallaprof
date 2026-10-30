@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteIngredient, saveIngredient, setCategoryCustom, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
+import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
+import { Button } from "@/components/ui/button";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
 const err = (e: unknown) => toast.error(e instanceof Error ? e.message : "Operazione non riuscita");
@@ -81,6 +82,8 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
 
 function CategoryCustom({ c, refresh }: { c: MenuCategory; refresh: () => Promise<unknown> }) {
   const [price, setPrice] = useState(fmt(c.custom_price));
+  const [titles, setTitles] = useState({ custom_title: c.custom_title, custom_title_en: c.custom_title_en, custom_title_fr: c.custom_title_fr, custom_title_es: c.custom_title_es });
+  const [busy, setBusy] = useState(false);
   const save = async (kind: string, p = price) => {
     try { await setCategoryCustom({ data: { id: c.id, kind, price: p } }); await refresh(); toast.success("Salvato"); } catch (e) { err(e); }
   };
@@ -97,6 +100,25 @@ function CategoryCustom({ c, refresh }: { c: MenuCategory; refresh: () => Promis
         Prezzo base €
         <input aria-label="Prezzo base" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onBlur={() => save(c.custom_kind)} className={`${field} w-24 text-center`} />
       </label>
+      <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2">
+        {([
+          ["custom_title", "Titolo italiano", "Crea la tua piadina"],
+          ["custom_title_en", "Titolo inglese", "Create your own flatbread"],
+          ["custom_title_fr", "Titolo francese", "Composez votre galette"],
+          ["custom_title_es", "Titolo spagnolo", "Crea tu piadina"],
+        ] as const).map(([key, label, placeholder]) => (
+          <label key={key} className="grid min-w-0 gap-1 text-lg">
+            {label}
+            <input aria-label={`${label} ${c.name}`} maxLength={120} placeholder={placeholder} value={titles[key]} onChange={(e) => setTitles({ ...titles, [key]: e.target.value })} className={field} />
+          </label>
+        ))}
+      </div>
+      <Button disabled={busy} onClick={async () => {
+        setBusy(true);
+        try { await setCategoryCustomTitles({ data: { id: c.id, ...titles } }); await refresh(); toast.success("Titoli salvati"); }
+        catch (e) { err(e); }
+        finally { setBusy(false); }
+      }} className="tap h-auto whitespace-normal px-5 py-3 text-xl font-bold">{busy ? "Salvataggio…" : "Salva titoli"}</Button>
     </li>
   );
 }
@@ -114,7 +136,7 @@ export function IngredientsPanel({ categories, ingredients, refresh }: { categor
         <h3 className="mb-1 font-display text-4xl">✨ Crea il tuo piatto</h3>
         <p className="mb-3 text-xl text-muted-foreground">Per ogni categoria scegli se il cliente può comporre un piatto da zero e con quali ingredienti. Il prezzo finale = prezzo base + ingredienti scelti.</p>
         <ul className="space-y-2">
-          {categories.map((c) => <CategoryCustom key={c.id + c.custom_price} c={c} refresh={refresh} />)}
+          {categories.map((c) => <CategoryCustom key={[c.id, c.custom_price, c.custom_title, c.custom_title_en, c.custom_title_fr, c.custom_title_es].join("|")} c={c} refresh={refresh} />)}
         </ul>
       </section>
     </div>

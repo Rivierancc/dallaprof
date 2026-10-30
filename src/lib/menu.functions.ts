@@ -62,6 +62,10 @@ export type MenuCategory = {
   position: number;
   custom_kind: CustomKind;
   custom_price: number;
+  custom_title: string;
+  custom_title_en: string;
+  custom_title_fr: string;
+  custom_title_es: string;
 };
 
 export type CustomKind = "none" | "dolce" | "salato" | "entrambi";
@@ -116,7 +120,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
   const db = publishable();
   const [c, p, g] = await Promise.all([
     db.from("menu_categories")
-      .select("id, slug, name, image_path, position, custom_kind, custom_price")
+      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
@@ -143,6 +147,10 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       position: r.position,
       custom_kind: (["dolce", "salato", "entrambi"].includes(r.custom_kind) ? r.custom_kind : "none") as CustomKind,
       custom_price: Number(r.custom_price) || 0,
+      custom_title: r.custom_title,
+      custom_title_en: r.custom_title_en,
+      custom_title_fr: r.custom_title_fr,
+      custom_title_es: r.custom_title_es,
     })),
     ingredients: (g.data ?? []).map((r) => ({
       id: r.id,
@@ -474,6 +482,23 @@ export const setCategoryCustom = createServerFn({ method: "POST" })
     await staffOnly();
     const db = await admin();
     const { error } = await db.from("menu_categories").update({ custom_kind: data.kind, custom_price: data.price }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setCategoryCustomTitles = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; custom_title: string; custom_title_en: string; custom_title_fr: string; custom_title_es: string }) => ({
+    id: String(d.id),
+    custom_title: txt(d.custom_title, 120),
+    custom_title_en: txt(d.custom_title_en, 120),
+    custom_title_fr: txt(d.custom_title_fr, 120),
+    custom_title_es: txt(d.custom_title_es, 120),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { id, ...titles } = data;
+    const { error } = await db.from("menu_categories").update(titles).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

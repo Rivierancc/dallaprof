@@ -24,3 +24,4 @@
 - Kiosk exit code is only a local fullscreen control and never authorizes staff data operations; why: fullscreen is not a security boundary.
 - Epson printing is done from the till/kitchen browser on the local network (ePOS-Print), config stored per device; why: the printer is not reachable from the server.
 - Ingredients live in one shared library (`menu_ingredients`, sweet/savory, 4-language names, price, availability); dish options keep Italian names and are matched to the library by name for translation and hiding; why: the kitchen ticket stays in Italian while the kiosk shows the customer's language.
+- Custom dish titles are category-owned database fields edited through the staff panel; use customTitleFor for customer headings and its Italian result for order tickets, with a neutral fallback to avoid inflecting category names.
