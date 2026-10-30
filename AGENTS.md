@@ -22,6 +22,7 @@
 - Customer browser preferences and fullscreen are shared through the root CustomerProvider; why: language and order type must survive navigation without SSR storage reads.
 - Order confirmation reads actual payment status and starts its reset countdown only after staff confirmation; why: choosing a payment method is not proof of payment.
 - Kiosk exit code is only a local fullscreen control and never authorizes staff data operations; why: fullscreen is not a security boundary.
+- Staff access uses one shared server-only credential hash with a version; all staff reads and writes verify the session version through staff.server, while the original secret is only a fallback before the first PIN change. PIN changes require the current PIN and invalidate other devices' sessions; local kiosk exit codes stay per-device and grant no staff access.
 - Epson printing is done from the till/kitchen browser on the local network (ePOS-Print), config stored per device; why: the printer is not reachable from the server.
 - Ingredients live in one shared library (`menu_ingredients`, sweet/savory, 4-language names, price, availability); dish options keep Italian names and are matched to the library by name for translation and hiding; why: the kitchen ticket stays in Italian while the kiosk shows the customer's language.
 - Custom dish titles are category-owned database fields edited through the staff panel; use customTitleFor for customer headings and its Italian result for order tickets, with a neutral fallback to avoid inflecting category names.

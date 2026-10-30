@@ -31,6 +31,7 @@ import { ThemesPanel } from "@/components/themes-panel";
 import { BannerSettings } from "@/components/display-banner";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { CompanySettings } from "@/components/company-identity";
+import { PasswordSettings } from "@/components/password-settings";
 
 export const Route = createFileRoute("/menu")({
   loader: async ({ context }) => {
@@ -373,6 +374,8 @@ function MenuEditor() {
       <p className="mb-4 text-2xl text-muted-foreground">
         Le modifiche si vedono subito sul totem e in cucina.
       </p>
+
+      <PasswordSettings />
 
       <ViewToggle view={view} onChange={changeView} />
 
