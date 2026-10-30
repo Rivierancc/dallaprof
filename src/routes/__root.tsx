@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { CustomerProvider } from "@/components/customer-session";
 import { ThemeLayer } from "@/components/theme-layer";
+import { NewsTicker } from "@/components/news-ticker";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -128,7 +129,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <CustomerProvider><Outlet /><ThemeLayer /></CustomerProvider>
+      <CustomerProvider><Outlet /><ThemeLayer /><NewsTicker fixed /></CustomerProvider>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

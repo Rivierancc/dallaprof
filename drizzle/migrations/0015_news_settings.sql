@@ -1,0 +1,1 @@
+ALTER TABLE public.kiosk_banner ADD COLUMN news jsonb NOT NULL DEFAULT '{"on": true, "sources": ["ansa"], "pages": ["display"]}'::jsonb;

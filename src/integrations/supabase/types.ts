@@ -17,16 +17,19 @@ export type Database = {
       kiosk_banner: {
         Row: {
           id: number
+          news: Json
           settings: Json
           updated_at: string
         }
         Insert: {
           id?: number
+          news?: Json
           settings?: Json
           updated_at?: string
         }
         Update: {
           id?: number
+          news?: Json
           settings?: Json
           updated_at?: string
         }
