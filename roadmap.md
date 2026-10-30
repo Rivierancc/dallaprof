@@ -1,5 +1,5 @@
 # Intervento totem
-- [ ] Logo aziendale e descrizione nella home, configurabili da Gestione menu; verificare salvataggio e rilettura.
+- [x] Logo aziendale e descrizione nella home, configurabili da Gestione menu; caricamento, salvataggio, rilettura e rimozione verificati dal pannello con PIN.
 - [x] Titoli personalizzabili per categoria nelle quattro lingue; salvataggio, rilettura e visualizzazione sul totem verificati dal pannello con PIN.
 - [x] Correggere scelta qui/asporto e carrello consigliati (verificato cliccando: piatto in evidenza → scelta Mangia qui/Asporto → piatto aperto).
 - [x] Aggiungere lingue cliente (barra più grande, IT/EN/FR/ES provati) e descrizioni modificabili.
