@@ -589,7 +589,7 @@ function CategoryRow({
   c,
   count,
   selected,
-  onSelect,
+  onOpen,
   onRename,
   onPhoto,
   onDelete,
@@ -597,7 +597,7 @@ function CategoryRow({
   c: MenuCategory;
   count: number;
   selected: boolean;
-  onSelect: () => void;
+  onOpen: () => void;
   onRename: (name: string) => Promise<unknown>;
   onPhoto: (f: File) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
@@ -607,7 +607,7 @@ function CategoryRow({
   const dirty = name.trim() !== c.name;
 
   return (
-    <li className={`rounded-2xl border-4 bg-card p-3 ${selected ? "border-accent" : "border-transparent"}`}>
+    <div className={`rounded-2xl border-4 bg-card p-3 ${selected ? "border-accent" : "border-transparent"}`}>
       <div className="flex items-center gap-3">
         <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={c.image} size="h-16 w-16" />
         <input
@@ -621,13 +621,17 @@ function CategoryRow({
         />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button onClick={onSelect} className="tap rounded-lg bg-secondary px-4 py-2 text-lg font-bold">
-          Apri piatti
+        <button
+          onClick={onOpen}
+          aria-expanded={selected}
+          className={`tap rounded-lg px-5 py-3 text-xl font-bold ${selected ? "bg-accent text-accent-foreground" : "bg-secondary"}`}
+        >
+          {selected ? "Chiudi i piatti ▲" : "Apri i piatti ▼"}
         </button>
         <span className="mr-auto text-lg text-muted-foreground">{count} piatti</span>
         <DeleteButton small onConfirm={() => void run(onDelete)} />
       </div>
-    </li>
+    </div>
   );
 }
 
