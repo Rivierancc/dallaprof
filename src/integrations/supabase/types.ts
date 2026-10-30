@@ -17,6 +17,8 @@ export type Database = {
       menu_categories: {
         Row: {
           active: boolean
+          custom_kind: string
+          custom_price: number
           id: string
           image_path: string
           name: string
@@ -25,6 +27,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          custom_kind?: string
+          custom_price?: number
           id?: string
           image_path?: string
           name: string
@@ -33,11 +37,52 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          custom_kind?: string
+          custom_price?: number
           id?: string
           image_path?: string
           name?: string
           position?: number
           slug?: string
+        }
+        Relationships: []
+      }
+      menu_ingredients: {
+        Row: {
+          available: boolean
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          name_en: string
+          name_es: string
+          name_fr: string
+          position: number
+          price: number
+        }
+        Insert: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          name_en?: string
+          name_es?: string
+          name_fr?: string
+          position?: number
+          price?: number
+        }
+        Update: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          name_en?: string
+          name_es?: string
+          name_fr?: string
+          position?: number
+          price?: number
         }
         Relationships: []
       }

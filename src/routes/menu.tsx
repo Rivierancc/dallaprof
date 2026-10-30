@@ -23,6 +23,7 @@ import {
   type MenuProduct,
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
+import { IngredientsPanel } from "@/components/ingredients-panel";
 
 export const Route = createFileRoute("/menu")({
   loader: async ({ context }) => {
@@ -396,6 +397,8 @@ function MenuEditor() {
           </ul>
         </section>
       </div>
+      <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
+      <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
   );
 }
@@ -685,6 +688,7 @@ function OptionsEditor({
             value={ing}
             onChange={(e) => setIng(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addIng()}
+            list="ing-lib"
             placeholder="es. Cipolla"
             className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
           />
@@ -705,7 +709,12 @@ function OptionsEditor({
         <div className="flex gap-2">
           <input
             value={exName}
-            onChange={(e) => setExName(e.target.value)}
+            list="ing-lib"
+            onChange={(e) => {
+              setExName(e.target.value);
+              const opt = document.querySelector<HTMLOptionElement>(`#ing-lib option[value="${CSS.escape(e.target.value)}"]`);
+              if (opt?.dataset["price"] && !exPrice) setExPrice(opt.dataset["price"]);
+            }}
             placeholder="es. Bacon"
             className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
           />

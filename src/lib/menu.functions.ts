@@ -60,6 +60,21 @@ export type MenuCategory = {
   image: string;
   image_path: string;
   position: number;
+  custom_kind: CustomKind;
+  custom_price: number;
+};
+
+export type CustomKind = "none" | "dolce" | "salato" | "entrambi";
+export type MenuIngredient = {
+  id: string;
+  name: string;
+  name_en: string;
+  name_fr: string;
+  name_es: string;
+  kind: "dolce" | "salato";
+  price: number;
+  available: boolean;
+  position: number;
 };
 
 export type MenuProduct = {
@@ -94,20 +109,26 @@ const cleanExtras = (v: unknown): MenuExtra[] =>
     .filter((x) => x.name)
     .slice(0, 20);
 
-export type MenuData = { categories: MenuCategory[]; products: MenuProduct[] };
+export type MenuData = { categories: MenuCategory[]; products: MenuProduct[]; ingredients: MenuIngredient[] };
 
 export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promise<MenuData> => {
   const db = publishable();
-  const [c, p] = await Promise.all([
+  const [c, p, g] = await Promise.all([
     db.from("menu_categories")
-      .select("id, slug, name, image_path, position")
+      .select("id, slug, name, image_path, position, custom_kind, custom_price")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
       .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured")
       .eq("active", true)
       .order("position", { ascending: true }),
+    db.from("menu_ingredients")
+      .select("id, name, name_en, name_fr, name_es, kind, price, available, position")
+      .order("kind", { ascending: true })
+      .order("position", { ascending: true })
+      .order("name", { ascending: true }),
   ]);
+  if (g.error) throw new Error(g.error.message);
   if (c.error) throw new Error(c.error.message);
   if (p.error) throw new Error(p.error.message);
   const urls = await sign([...(c.data ?? []), ...(p.data ?? [])].map((r) => r.image_path));
@@ -118,6 +139,19 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       name: r.name,
       image_path: r.image_path,
       image: urls[r.image_path] ?? "",
+      position: r.position,
+      custom_kind: (["dolce", "salato", "entrambi"].includes(r.custom_kind) ? r.custom_kind : "none") as CustomKind,
+      custom_price: Number(r.custom_price) || 0,
+    })),
+    ingredients: (g.data ?? []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      name_en: r.name_en ?? "",
+      name_fr: r.name_fr ?? "",
+      name_es: r.name_es ?? "",
+      kind: r.kind === "dolce" ? "dolce" : "salato",
+      price: Number(r.price) || 0,
+      available: !!r.available,
       position: r.position,
     })),
     products: (p.data ?? []).map((r) => ({
@@ -382,4 +416,61 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
     const { data: order, error } = await publishable().from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     return order;
+  });
+
+const txt = (v: unknown, n = 40) => String(v ?? "").trim().slice(0, n);
+
+export const saveIngredient = createServerFn({ method: "POST" })
+  .inputValidator((d: { id?: string; name: string; name_en?: string; name_fr?: string; name_es?: string; kind: string; price: number | string; available?: boolean }) => {
+    const name = txt(d.name);
+    if (!name) throw new Error("Il nome dell'ingrediente è obbligatorio");
+    const price = Number(String(d.price ?? "0").replace(",", "."));
+    if (!Number.isFinite(price) || price < 0) throw new Error("Prezzo non valido");
+    return {
+      id: d.id ? String(d.id) : null,
+      row: {
+        name,
+        name_en: txt(d.name_en),
+        name_fr: txt(d.name_fr),
+        name_es: txt(d.name_es),
+        kind: d.kind === "dolce" ? "dolce" : "salato",
+        price: Math.round(price * 100) / 100,
+        available: d.available !== false,
+      },
+    };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const q = data.id
+      ? db.from("menu_ingredients").update(data.row).eq("id", data.id)
+      : db.from("menu_ingredients").insert(data.row);
+    const { error } = await q;
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const deleteIngredient = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_ingredients").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setCategoryCustom = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; kind: string; price: number | string }) => {
+    const price = Number(String(d.price ?? "0").replace(",", "."));
+    if (!Number.isFinite(price) || price < 0) throw new Error("Prezzo non valido");
+    const kind = ["dolce", "salato", "entrambi"].includes(d.kind) ? d.kind : "none";
+    return { id: String(d.id), kind, price: Math.round(price * 100) / 100 };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_categories").update({ custom_kind: data.kind, custom_price: data.price }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });

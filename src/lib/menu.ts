@@ -42,7 +42,34 @@ export type Category = {
   image: string;
   image_path: string;
   position: number;
+  custom_kind: "none" | "dolce" | "salato" | "entrambi";
+  custom_price: number;
 };
+
+export type Ingredient = {
+  id: string;
+  name: string;
+  name_en: string;
+  name_fr: string;
+  name_es: string;
+  kind: "dolce" | "salato";
+  price: number;
+  available: boolean;
+  position: number;
+};
+
+// Nome dell'ingrediente nella lingua scelta (sempre italiano se manca la traduzione).
+export const ingredientLabel = (name: string, list: Ingredient[], language: "IT" | "EN" | "FR" | "ES") => {
+  const g = list.find((x) => x.name.toLowerCase() === name.toLowerCase());
+  if (!g || language === "IT") return name;
+  const t = language === "EN" ? g.name_en : language === "FR" ? g.name_fr : g.name_es;
+  return t.trim() || name;
+};
+// Un ingrediente dell'archivio segnato "non disponibile" sparisce dal totem.
+export const ingredientOff = (name: string, list: Ingredient[]) =>
+  list.some((x) => x.name.toLowerCase() === name.toLowerCase() && !x.available);
+export const customIngredients = (kind: Category["custom_kind"], list: Ingredient[]) =>
+  kind === "none" ? [] : list.filter((g) => g.available && (kind === "entrambi" || g.kind === kind));
 
 export const euro = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
 
