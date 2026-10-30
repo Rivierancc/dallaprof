@@ -36,7 +36,7 @@ export const pickTheme = (themes: KioskTheme[], d: Date): KioskTheme | null => {
 };
 
 export const greetingFor = (t: KioskTheme, lang: string) =>
-  (lang === "en" ? t.greeting_en : lang === "fr" ? t.greeting_fr : lang === "es" ? t.greeting_es : "") || t.greeting;
+  ((l) => l === "en" ? t.greeting_en : l === "fr" ? t.greeting_fr : l === "es" ? t.greeting_es : "")(lang.toLowerCase()) || t.greeting;
 
 /** "25/12" or "25-12" → "12-25"; returns "" when invalid. */
 export const parseDayMonth = (s: string) => {
