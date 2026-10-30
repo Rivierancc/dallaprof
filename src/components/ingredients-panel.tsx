@@ -31,7 +31,7 @@ function IngredientForm({ initial, onSave, onCancel, label }: { initial: Draft; 
 function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; title: string; items: MenuIngredient[]; refresh: () => Promise<unknown> }) {
   const [edit, setEdit] = useState<string | null>(null);
   const save = async (d: Draft, g?: MenuIngredient) => {
-    await saveIngredient({ data: { id: g?.id, ...d, kind, price: d.price || "0", available: g ? g.available : true } });
+    await saveIngredient({ data: { ...(g ? { id: g.id } : {}), ...d, kind, price: d.price || "0", available: g ? g.available : true } });
     setEdit(null);
     await refresh();
     toast.success("Ingrediente salvato");

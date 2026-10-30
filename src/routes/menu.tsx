@@ -713,7 +713,7 @@ function OptionsEditor({
             onChange={(e) => {
               setExName(e.target.value);
               const opt = document.querySelector<HTMLOptionElement>(`#ing-lib option[value="${CSS.escape(e.target.value)}"]`);
-              if (opt?.dataset.price && !exPrice) setExPrice(opt.dataset.price);
+              if (opt?.dataset["price"] && !exPrice) setExPrice(opt.dataset["price"]);
             }}
             placeholder="es. Bacon"
             className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
