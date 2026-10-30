@@ -32,7 +32,7 @@ export async function requireStaff() {
 }
 
 const equal = (a: string, b: string) => timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
-export async function hashPin(pin: string, salt = crypto.randomUUID()) {
+export async function hashPin(pin: string, salt: string = crypto.randomUUID()) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: new TextEncoder().encode(salt), iterations: 100_000 }, key, 256);
   return `${salt}:${Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2, "0")).join("")}`;
