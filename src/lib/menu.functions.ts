@@ -581,10 +581,10 @@ export const deleteTheme = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-export const getBanner = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, unknown>> => {
+export const getBanner = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | number | boolean>> => {
   const { data, error } = await publishable().from("kiosk_banner").select("settings").eq("id", 1).maybeSingle();
   if (error) throw new Error(error.message);
-  return (data?.settings ?? {}) as Record<string, unknown>;
+  return (data?.settings ?? {}) as Record<string, string | number | boolean>;
 });
 
 export const saveBanner = createServerFn({ method: "POST" })
