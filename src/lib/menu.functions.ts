@@ -598,3 +598,14 @@ export const saveBanner = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Titoli "Ultima ora" ANSA per la striscia che scorre sul display clienti. */
+export const getNews = createServerFn({ method: "GET" }).handler(async (): Promise<string[]> => {
+  try {
+    const res = await fetch("https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml", { headers: { "User-Agent": "TotemBurger/1.0" } });
+    if (!res.ok) return [];
+    const xml = await res.text();
+    return [...xml.matchAll(/<item>[\s\S]*?<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)]
+      .map((m) => m[1].replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()).filter(Boolean).slice(0, 15);
+  } catch { return []; }
+});
