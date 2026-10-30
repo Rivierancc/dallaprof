@@ -127,6 +127,13 @@
       "when": 1793397154851,
       "tag": "0017_company_style",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793399764868,
+      "tag": "0018_staff_credentials",
+      "breakpoints": true
     }
   ]
 }
