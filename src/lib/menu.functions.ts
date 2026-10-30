@@ -92,6 +92,9 @@ export type MenuProduct = {
   position: number;
   sold_out: boolean;
   is_featured: boolean;
+  badge_on: boolean;
+  badge_text: string;
+  badge_blink: boolean;
   description: string;
   description_en: string;
   description_fr: string;
@@ -124,7 +127,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -174,6 +177,9 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       position: r.position,
       sold_out: !!r.sold_out,
       is_featured: !!r.is_featured,
+      badge_on: !!r.badge_on,
+      badge_text: r.badge_text ?? "",
+      badge_blink: !!r.badge_blink,
       description: r.description ?? "",
       description_en: r.description_en ?? "",
       description_fr: r.description_fr ?? "",
@@ -399,6 +405,18 @@ export const setFeatured = createServerFn({ method: "POST" })
       const extra = (rows ?? []).slice(3).map((r) => r.id);
       if (extra.length) await supabase.from("menu_products").update({ is_featured: false, featured_at: null }).in("id", extra);
     }
+    return { ok: true as const };
+  });
+
+export const setBadge = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; on: boolean; text: string; blink: boolean }) => ({
+    id: String(d.id), on: !!d.on, blink: !!d.blink, text: String(d.text ?? "").trim().slice(0, 24),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_products").update({ badge_on: data.on && !!data.text, badge_text: data.text, badge_blink: data.blink }).eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true as const };
   });
 

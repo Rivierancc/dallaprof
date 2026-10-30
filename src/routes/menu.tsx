@@ -15,6 +15,7 @@ import {
   saveProduct,
   setSoldOut as soldOut,
   setFeatured,
+  setBadge,
   setProductOptions,
   setDescription,
   setTranslation,
@@ -318,6 +319,15 @@ function MenuEditor() {
         err(e);
       }
     },
+    badge: async (p, on, text, blink) => {
+      try {
+        await setBadge({ data: { id: p.id, on, text, blink } });
+        refresh();
+        toast.success(on && text ? "Fumetto aggiornato sul totem" : "Fumetto spento");
+      } catch (e) {
+        err(e);
+      }
+    },
     feature: async (p, v) => {
       try {
         await setFeatured({ data: { id: p.id, featured: v } });
@@ -478,6 +488,7 @@ type ProductHandlers = {
   describe: (p: MenuProduct, description: string) => Promise<unknown>;
   options: (p: MenuProduct, ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   feature: (p: MenuProduct, v: boolean) => Promise<unknown>;
+  badge: (p: MenuProduct, on: boolean, text: string, blink: boolean) => Promise<unknown>;
   sold: (p: MenuProduct, v: boolean) => Promise<unknown>;
 };
 
@@ -504,6 +515,7 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
             onDescription={(description) => h.describe(p, description)}
             onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
             onFeatured={(v) => h.feature(p, v)}
+            onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
             onSoldOut={(v) => h.sold(p, v)}
           />
         ))}
@@ -638,6 +650,7 @@ function ProductRow({
   onMove,
   onSoldOut,
   onFeatured,
+  onBadge,
   onOptions,
   onDescription,
   onTranslation,
@@ -648,6 +661,7 @@ function ProductRow({
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
   onFeatured: (v: boolean) => Promise<unknown>;
+  onBadge: (on: boolean, text: string, blink: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
   onPhoto: (f: File) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
@@ -749,6 +763,7 @@ function ProductRow({
       <div className="grid w-full basis-full gap-3 md:grid-cols-3">
         {(["EN", "FR", "ES"] as const).map((language) => <TranslationField key={language} language={language} value={language === "EN" ? p.description_en : language === "FR" ? p.description_fr : p.description_es} onSave={(text) => run(() => onTranslation(language, text))} />)}
       </div>
+      <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
     </li>
   );
@@ -862,4 +877,50 @@ function TranslationField({ language, value, onSave }: { language: "EN" | "FR" |
     }} className="w-full rounded-lg bg-muted px-4 py-3" />
     {error && <span role="alert" className="text-destructive">{error}</span>}
   </label>;
+}
+
+const BADGE_IDEAS = ["Novità", "Vegano", "Piccante 🌶️", "Vegetariano", "Senza glutine", "Top"];
+
+function BadgeEditor({ p, onSave }: { p: MenuProduct; onSave: (on: boolean, text: string, blink: boolean) => void }) {
+  const [text, setText] = useState(p.badge_text);
+  useEffect(() => setText(p.badge_text), [p.badge_text]);
+  const save = (on: boolean, t: string, blink: boolean) => {
+    if (on && !t.trim()) return toast.error("Scrivi prima il testo del fumetto");
+    onSave(on, t.trim(), blink);
+  };
+  return (
+    <div className="flex w-full basis-full flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-3">
+      <span className="text-xl font-bold">💬 Fumetto</span>
+      <button
+        role="switch"
+        aria-checked={p.badge_on}
+        onClick={() => save(!p.badge_on, text, p.badge_blink)}
+        className={`tap rounded-xl px-4 py-2 text-lg font-bold ${p.badge_on ? "bg-destructive text-destructive-foreground" : "bg-secondary"}`}
+      >
+        {p.badge_on ? "Acceso" : "Spento"}
+      </button>
+      <input
+        value={text}
+        maxLength={24}
+        list="badge-ideas"
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => text.trim() !== p.badge_text && save(p.badge_on && !!text.trim(), text, p.badge_blink)}
+        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        placeholder="Es. Novità, Vegano, Piccante"
+        className="min-w-[12rem] flex-1 rounded-xl bg-muted px-4 py-2 text-xl outline-none"
+      />
+      <datalist id="badge-ideas">{BADGE_IDEAS.map((b) => <option key={b} value={b} />)}</datalist>
+      <button
+        role="switch"
+        aria-checked={p.badge_blink}
+        onClick={() => save(p.badge_on, text, !p.badge_blink)}
+        className={`tap rounded-xl px-4 py-2 text-lg font-bold ${p.badge_blink ? "bg-accent text-accent-foreground" : "bg-secondary"}`}
+      >
+        {p.badge_blink ? "✨ Lampeggia" : "Fisso"}
+      </button>
+      {text.trim() && (
+        <span className={`-rotate-6 rounded-2xl rounded-br-none bg-destructive px-3 py-1 font-display text-2xl uppercase text-destructive-foreground ${p.badge_blink ? "animate-badge" : ""}`}>{text}</span>
+      )}
+    </div>
+  );
 }
