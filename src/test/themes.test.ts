@@ -25,7 +25,6 @@ describe("temi ricorrenze", () => {
   });
   it("legge le date scritte giorno/mese", () => {
     expect(parseDayMonth("25/12")).toBe("12-25");
-    expect(parseDayMonth("31/02")).toBe("02-31".length ? parseDayMonth("31/02") : "");
     expect(parseDayMonth("40/12")).toBe("");
   });
 });
