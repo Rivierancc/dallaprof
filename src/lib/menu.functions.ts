@@ -606,6 +606,6 @@ export const getNews = createServerFn({ method: "GET" }).handler(async (): Promi
     if (!res.ok) return [];
     const xml = await res.text();
     return [...xml.matchAll(/<item>[\s\S]*?<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/g)]
-      .map((m) => m[1].replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()).filter(Boolean).slice(0, 15);
+      .map((m) => (m[1] ?? "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()).filter(Boolean).slice(0, 15);
   } catch { return []; }
 });
