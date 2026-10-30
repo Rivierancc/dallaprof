@@ -15,6 +15,11 @@ export const descriptionFor = (product: { description: string; description_en?: 
   const translated = language === "EN" ? product.description_en : language === "FR" ? product.description_fr : language === "ES" ? product.description_es : product.description;
   return translated?.trim() || product.description;
 };
+export const customTitleFor = (category: { name: string; custom_title?: string; custom_title_en?: string; custom_title_fr?: string; custom_title_es?: string }, language: Language) => {
+  const translated = language === "EN" ? category.custom_title_en : language === "FR" ? category.custom_title_fr : language === "ES" ? category.custom_title_es : category.custom_title;
+  const fallback = { IT: "Componi il tuo piatto", EN: "Create your own dish", FR: "Composez votre plat", ES: "Crea tu plato" };
+  return translated?.trim() || category.custom_title?.trim() || `${fallback[language]} · ${category.name}`;
+};
 export function orderPayload(orderType: unknown, items: CartItem[], method: PaymentMethod) {
   if (!isOrderType(orderType)) throw new Error("Scegli prima mangia qui o asporto");
   if (!items.length) throw new Error("Il carrello è vuoto");

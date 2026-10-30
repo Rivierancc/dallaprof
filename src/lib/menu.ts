@@ -44,6 +44,10 @@ export type Category = {
   position: number;
   custom_kind: "none" | "dolce" | "salato" | "entrambi";
   custom_price: number;
+  custom_title: string;
+  custom_title_en: string;
+  custom_title_fr: string;
+  custom_title_es: string;
 };
 
 export type Ingredient = {

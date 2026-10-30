@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
-import { copy, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
+import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -166,7 +166,7 @@ function Totem() {
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
               <Button variant="ghost" onClick={() => setCompose(cat)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
                 <div className="grid h-44 w-full place-items-center rounded-2xl bg-muted text-8xl">✨</div>
-                <h3 className="mt-4 font-display text-4xl leading-tight">{t.createOwn} {cat.name}</h3>
+                <h3 className="mt-4 break-words font-display text-4xl leading-tight">{customTitleFor(cat, language)}</h3>
                 <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(cat.custom_price)}</span>
               </Button>
             )}
@@ -200,7 +200,7 @@ function Totem() {
         <Compose category={compose} lib={lib} onClose={() => setCompose(null)} onAdd={(chosen) => {
           if (!dineOption) return
           const price = compose.custom_price + chosen.reduce((s, g) => s + g.price, 0)
-          setCart((c) => [...c, { id: crypto.randomUUID(), name: `Crea il tuo ${compose.name}`, price: Math.round(price * 100) / 100, qty: 1, extras: chosen.map((g) => g.name) }])
+          setCart((c) => [...c, { id: crypto.randomUUID(), name: customTitleFor(compose, "IT"), price: Math.round(price * 100) / 100, qty: 1, extras: chosen.map((g) => g.name) }])
           setCompose(null)
         }} />
       )}
@@ -285,7 +285,7 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
-          <h2 className="font-display text-7xl">✨ {t.createOwn} {category.name}</h2>
+          <h2 className="break-words font-display text-5xl sm:text-7xl">✨ {customTitleFor(category, language)}</h2>
           <p className="mt-2 text-2xl text-muted-foreground">{t.pickIngredients}</p>
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(category.custom_price)}</p>
           {groups.map((g) => (
