@@ -1,25 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Trash2, Save } from "lucide-react";
+import { ImagePlus, Trash2, Save, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Circle, Heart, Image } from "lucide-react";
 import { getCompany, saveCompany, uploadCompanyLogo } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import type { CompanyStyle } from "@/lib/company-style";
 
 const companyQuery = queryOptions({ queryKey: ["company"], queryFn: () => getCompany(), staleTime: 10_000, refetchInterval: 20_000 });
+type Company = Awaited<ReturnType<typeof getCompany>>;
+const logoSizes = ["w-40", "w-56", "w-80", "w-[25rem]"];
+const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl"];
+const textColors = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success" };
+const alignments = { left: "text-left", center: "text-center", right: "text-right" };
+
+function IdentityView({ company, preview = false }: { company: Company; preview?: boolean }) {
+  const id = `company-heart-${useId().replace(/:/g, "")}`;
+  const s = company.style;
+  const shape = s.logoShape === "original" ? "aspect-[12/5] object-contain" : s.logoShape === "oval" ? "aspect-[3/2] rounded-full object-cover bg-secondary" : s.logoShape === "round" ? "aspect-square rounded-full object-cover bg-secondary" : "aspect-square object-cover bg-secondary";
+  return <section aria-label={preview ? "Anteprima azienda" : "Azienda"} className="mb-6 flex w-full min-w-0 flex-col items-center gap-4 [@media(max-height:900px)]:mb-3 [@media(max-height:900px)]:gap-2">
+    {s.logoShape === "heart" && <svg width="0" height="0" aria-hidden="true" className="absolute"><defs><clipPath id={id} clipPathUnits="objectBoundingBox"><path d="M.5,.96 C.4,.86 0,.57 0,.29 C0,-.03 .36,-.07 .5,.18 C.64,-.07 1,-.03 1,.29 C1,.57 .6,.86 .5,.96 Z" /></clipPath></defs></svg>}
+    {company.logo && <img src={company.logo} alt={preview ? "Anteprima logo azienda" : "Logo azienda"} className={`${logoSizes[s.logoSize - 1]} max-w-full shrink-0 ${shape}`} style={s.logoShape === "heart" ? { clipPath: `url(#${id})` } : undefined} />}
+    {company.description && <p className={`w-full max-w-3xl whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color]} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`}>{company.description}</p>}
+  </section>;
+}
 
 export function CompanyIdentity() {
   const { data } = useQuery(companyQuery);
   if (!data || (!data.logo && !data.description)) return null;
-  return <section aria-label="Azienda" className="mb-6 flex flex-col items-center gap-4 [@media(max-height:900px)]:mb-3 [@media(max-height:900px)]:gap-2">
-    {data.logo && <img src={data.logo} alt="Logo azienda" className="h-40 w-full max-w-96 object-contain [@media(max-height:900px)]:h-20" />}
-    {data.description && <p className="max-w-3xl whitespace-pre-wrap break-words text-center text-2xl leading-snug text-foreground [@media(max-height:900px)]:text-lg">{data.description}</p>}
-  </section>;
+  return <IdentityView company={data} />;
 }
 
 export function CompanySettings() {
   const { data, isLoading, error } = useQuery(companyQuery);
   const qc = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<{ description: string; logoPath: string; logo: string } | null>(null);
+  const [draft, setDraft] = useState<Company | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -49,7 +64,7 @@ export function CompanySettings() {
     setMessage("");
     try {
       const logoPath = file ? (await uploadCompanyLogo({ data: { file } })).path : draft.logoPath;
-      await saveCompany({ data: { description: draft.description, logoPath } });
+      await saveCompany({ data: { description: draft.description, logoPath, style: draft.style } });
       await qc.invalidateQueries({ queryKey: ["company"] });
       const saved = await qc.fetchQuery(companyQuery);
       setDraft(saved);
@@ -61,17 +76,36 @@ export function CompanySettings() {
 
   if (error) return <p role="alert">Impossibile caricare logo e descrizione.</p>;
   if (isLoading || !draft) return <p className="text-muted-foreground">Caricamento…</p>;
+  const setStyle = (patch: Partial<CompanyStyle>) => { setDraft({ ...draft, style: { ...draft.style, ...patch } }); setMessage(""); };
+  const sizes = ["Piccolo", "Medio", "Grande", "Molto grande"];
   return <div className="space-y-5">
     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" aria-label="Carica logo azienda" hidden disabled={busy} onChange={(e) => { const image = e.target.files?.[0]; if (image) void selectLogo(image); e.target.value = ""; }} />
-    {draft.logo && <img src={draft.logo} alt="Anteprima logo azienda" className="h-40 w-full max-w-96 object-contain" />}
     <div className="flex flex-wrap gap-3">
       <Button variant="secondary" disabled={busy} onClick={() => input.current?.click()}><ImagePlus />{draft.logo ? "Cambia logo" : "Carica logo"}</Button>
       {draft.logo && <Button variant="outline" disabled={busy} onClick={() => { setFile(null); setDraft({ ...draft, logoPath: "", logo: "" }); setMessage(""); }}><Trash2 />Rimuovi logo</Button>}
+    </div>
+    <div className="space-y-3">
+      <p className="text-xl">Dimensione logo: {sizes[draft.style.logoSize - 1]}</p>
+      <Slider aria-label="Dimensione logo" min={1} max={4} step={1} value={[draft.style.logoSize]} disabled={busy} onValueChange={([logoSize]) => { if (logoSize !== undefined) setStyle({ logoSize }); }} className="max-w-md py-4" />
+      <p className="text-xl">Forma logo</p>
+      <div className="flex flex-wrap gap-2">{([
+        ["original", "Originale", Image], ["round", "Tonda", Circle], ["oval", "Ovale", Circle], ["heart", "Cuore", Heart],
+      ] as const).map(([logoShape, label, Icon]) => <Button key={logoShape} disabled={busy} variant={draft.style.logoShape === logoShape ? "default" : "secondary"} aria-pressed={draft.style.logoShape === logoShape} onClick={() => setStyle({ logoShape })}><Icon className={logoShape === "oval" ? "scale-x-125" : ""} />{label}</Button>)}</div>
     </div>
     <label className="block space-y-2 text-xl">
       <span>Descrizione azienda</span>
       <textarea rows={4} maxLength={500} disabled={busy} value={draft.description} onChange={(e) => { setDraft({ ...draft, description: e.target.value }); setMessage(""); }} className="w-full select-text rounded-lg border border-border bg-muted p-3 text-xl text-foreground" />
     </label>
+    <div className="space-y-3">
+      <p className="text-xl">Dimensione descrizione: {sizes[draft.style.textSize - 1]}</p>
+      <Slider aria-label="Dimensione descrizione" min={1} max={4} step={1} value={[draft.style.textSize]} disabled={busy} onValueChange={([textSize]) => { if (textSize !== undefined) setStyle({ textSize }); }} className="max-w-md py-4" />
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Formato descrizione">
+        {([["bold", "Grassetto", Bold], ["italic", "Corsivo", Italic], ["underline", "Sottolineato", Underline]] as const).map(([key, label, Icon]) => <Button key={key} size="icon" title={label} aria-label={label} aria-pressed={draft.style[key]} disabled={busy} variant={draft.style[key] ? "default" : "secondary"} onClick={() => setStyle({ [key]: !draft.style[key] })}><Icon /></Button>)}
+        {([["left", "Allinea a sinistra", AlignLeft], ["center", "Allinea al centro", AlignCenter], ["right", "Allinea a destra", AlignRight]] as const).map(([align, label, Icon]) => <Button key={align} size="icon" title={label} aria-label={label} aria-pressed={draft.style.align === align} disabled={busy} variant={draft.style.align === align ? "default" : "secondary"} onClick={() => setStyle({ align })}><Icon /></Button>)}
+      </div>
+      <div className="flex flex-wrap items-center gap-2"><span className="mr-2 text-xl">Colore testo</span>{([["foreground", "Chiaro"], ["accent", "Giallo"], ["primary", "Rosso"], ["success", "Verde"]] as const).map(([color, label]) => <Button key={color} size="icon" title={label} aria-label={`Testo ${label.toLowerCase()}`} aria-pressed={draft.style.color === color} disabled={busy} variant={draft.style.color === color ? "default" : "outline"} onClick={() => setStyle({ color })}><Circle className={`fill-current ${textColors[color]}`} /></Button>)}</div>
+    </div>
+    {(draft.logo || draft.description) && <div className="border-t border-border pt-4"><p className="mb-4 text-xl text-muted-foreground">Anteprima</p><IdentityView company={draft} preview /></div>}
     <div className="flex flex-wrap items-center gap-4"><Button disabled={busy} onClick={() => void save()}><Save />{busy ? "Salvo…" : "Salva logo e descrizione"}</Button>{message && <span role="status" className="text-xl">{message}</span>}</div>
   </div>;
 }
