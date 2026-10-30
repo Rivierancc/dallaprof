@@ -26,6 +26,7 @@ import {
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { Fold } from "@/components/fold";
+import { CategoryOrderPanel } from "@/components/category-order-panel";
 import { ThemesPanel } from "@/components/themes-panel";
 
 export const Route = createFileRoute("/menu")({
@@ -451,6 +452,7 @@ function MenuEditor() {
         </div></Fold></div>
       )}
 
+      <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
       <ThemesPanel />
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
