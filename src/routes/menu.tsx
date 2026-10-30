@@ -26,12 +26,7 @@ import {
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { Fold } from "@/components/fold";
-import { CategoryOrderPanel } from "@/components/category-order-panel";
-import { ThemesPanel } from "@/components/themes-panel";
-import { BannerSettings } from "@/components/display-banner";
-import { NewsSettingsPanel } from "@/components/news-ticker";
-import { CompanySettings } from "@/components/company-identity";
-import { PasswordSettings } from "@/components/password-settings";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/menu")({
   loader: async ({ context }) => {
@@ -359,7 +354,7 @@ function MenuEditor() {
     <main className="min-h-screen p-6">
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
-        <Link to="/admin" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">Chiosco</Link>
+        <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/admin">Admin</Link></Button>
         <Link to="/cucina" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           Cucina
         </Link>
@@ -374,8 +369,6 @@ function MenuEditor() {
       <p className="mb-4 text-2xl text-muted-foreground">
         Le modifiche si vedono subito sul totem e in cucina.
       </p>
-
-      <PasswordSettings />
 
       <ViewToggle view={view} onChange={changeView} />
 
@@ -458,12 +451,7 @@ function MenuEditor() {
         </div></Fold></div>
       )}
 
-      <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
-      <ThemesPanel />
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></div>
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
   );
