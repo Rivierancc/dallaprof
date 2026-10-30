@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen } from "@/lib/kitchen.functions";
@@ -25,6 +25,7 @@ import {
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
+import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
 import { Button } from "@/components/ui/button";
 
@@ -495,6 +496,7 @@ type ProductHandlers = {
 
 // La lista dei piatti di una categoria: la stessa sia sotto la categoria sia nella pagina a sé.
 function ProductsSection({ active, products, h }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers }) {
+  const divider = useDivider();
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -504,21 +506,23 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
         </button>
       </div>
       <ul className="space-y-3">
-        {products.map((p) => (
-          <ProductRow
-            key={p.id}
-            p={p}
-            onSave={(name, price) => h.save(p, name, price)}
-            onPhoto={(file) => h.photo(p, file)}
-            onDelete={() => h.remove(p)}
-            onMove={(dir) => h.move(p, dir)}
-            onTranslation={(language, description) => h.translate(p, language, description)}
-            onDescription={(description) => h.describe(p, description)}
-            onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
-            onFeatured={(v) => h.feature(p, v)}
-            onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
-            onSoldOut={(v) => h.sold(p, v)}
-          />
+        {products.map((p, i) => (
+          <Fragment key={p.id}>
+            {i > 0 && <li aria-hidden className="list-none"><DividerView divider={divider} /></li>}
+            <ProductRow
+              p={p}
+              onSave={(name, price) => h.save(p, name, price)}
+              onPhoto={(file) => h.photo(p, file)}
+              onDelete={() => h.remove(p)}
+              onMove={(dir) => h.move(p, dir)}
+              onTranslation={(language, description) => h.translate(p, language, description)}
+              onDescription={(description) => h.describe(p, description)}
+              onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
+              onFeatured={(v) => h.feature(p, v)}
+              onBadge={(on, text, blink) => h.badge(p, on, text, blink)}
+              onSoldOut={(v) => h.sold(p, v)}
+            />
+          </Fragment>
         ))}
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
       </ul>

@@ -19,6 +19,7 @@ export type Database = {
           company_description: string
           company_logo_path: string
           company_style: Json
+          divider: Json | null
           id: number
           news: Json
           settings: Json
@@ -28,6 +29,7 @@ export type Database = {
           company_description?: string
           company_logo_path?: string
           company_style?: Json
+          divider?: Json | null
           id?: number
           news?: Json
           settings?: Json
@@ -37,6 +39,7 @@ export type Database = {
           company_description?: string
           company_logo_path?: string
           company_style?: Json
+          divider?: Json | null
           id?: number
           news?: Json
           settings?: Json

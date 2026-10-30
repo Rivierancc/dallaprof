@@ -134,6 +134,13 @@
       "when": 1793399764868,
       "tag": "0018_staff_credentials",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793401354397,
+      "tag": "0019_add_menu_divider_settings",
+      "breakpoints": true
     }
   ]
 }
