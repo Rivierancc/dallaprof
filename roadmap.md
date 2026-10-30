@@ -5,4 +5,5 @@
 - [x] Mantenere pagamento confermato dal personale; contanti/carta e conferma ordine.
 - [x] Chiosco e pannello /admin ("Attiva modalità chiosco", uscita con 5 tocchi + PIN).
 - [x] Verificare prove e pagine (home, piatti in evidenza, lingue, scelta qui/asporto provati su 4 formati schermo).
+- [x] Piatti del pannello Menu subito sotto la categoria aperta, con scelta "pagina a sé"; apertura, chiusura e memoria della scelta verificate cliccando.
 - [ ] Da provare sul posto: schermo intero sul tablet vero, stampa Epson, incasso reale al POS.
