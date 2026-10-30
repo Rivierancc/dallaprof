@@ -1,4 +1,5 @@
 # Intervento totem
+- [ ] Spostamento e ingrandimento del logo dentro la forma, con ripristino e salvataggio verificati in Gestione menu e home.
 - [x] Dimensione e forma del logo (originale, tonda, ovale, cuore), descrizione ingrandibile e formattabile; salvataggio, rilettura e home verificati dal pannello con PIN su tre formati, mantenendo logo e testo esistenti.
 - [x] Logo aziendale e descrizione nella home, configurabili da Gestione menu; caricamento, salvataggio, rilettura e rimozione verificati dal pannello con PIN.
 - [x] Titoli personalizzabili per categoria nelle quattro lingue; salvataggio, rilettura e visualizzazione sul totem verificati dal pannello con PIN.
