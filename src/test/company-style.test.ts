@@ -21,4 +21,12 @@ describe("regolazioni logo", () => {
     }
     expect(cleanCompanyStyle({ color: "blue" }).color).toBe("foreground");
   });
+  it("accetta una tonalità libera in formato esadecimale", () => {
+    expect(cleanCompanyStyle({ color: "#a1b2c3" }).color).toBe("#a1b2c3");
+    expect(cleanCompanyStyle({ color: "red" }).color).toBe("foreground");
+  });
+  it("accetta la descrizione grandissimo e limita oltre il massimo", () => {
+    expect(cleanCompanyStyle({ textSize: 6 }).textSize).toBe(6);
+    expect(cleanCompanyStyle({ textSize: 9 }).textSize).toBe(6);
+  });
 });
