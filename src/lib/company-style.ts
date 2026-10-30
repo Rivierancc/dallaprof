@@ -25,7 +25,7 @@ export function cleanCompanyStyle(input: unknown): CompanyStyle {
     logoZoom: adjustment(d['logoZoom'], 100, 50, 250),
     logoX: adjustment(d['logoX'], 0, -50, 50),
     logoY: adjustment(d['logoY'], 0, -50, 50),
-    textSize: size(d['textSize'], 2),
+    textSize: size(d['textSize'], 2, 6),
     bold: d['bold'] === true, italic: d['italic'] === true, underline: d['underline'] === true,
     align: d['align'] === "left" || d['align'] === "right" ? d['align'] : "center",
     color: typeof d['color'] === "string" && (themeColors.includes(d['color']) || hexColor.test(d['color'])) ? d['color'] : "foreground",
