@@ -75,9 +75,9 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     {children}
     {customerPage && <>
       <Clock onTap={tapCorner} />
-      <div className="fixed right-3 top-3 z-[100] flex gap-1 rounded-lg border border-border bg-card p-1" aria-label="Lingua">
+      <div className="fixed right-3 top-3 z-[100] flex gap-2 rounded-2xl border-2 border-border bg-card p-2" aria-label="Lingua">
         {([ ["IT", "🇮🇹"], ["EN", "🇬🇧"], ["FR", "🇫🇷"], ["ES", "🇪🇸"] ] as const).map(([lang, flag]) =>
-          <Button key={lang} title={lang} aria-label={lang} aria-pressed={language === lang} variant={language === lang ? "default" : "ghost"} onClick={() => setLanguage(lang)} className="h-10 min-w-10 gap-1 px-2 text-xl"><span aria-hidden="true">{flag}</span><span className="font-sans text-xs font-bold">{lang}</span></Button>)}
+          <Button key={lang} title={lang} aria-label={lang} aria-pressed={language === lang} variant={language === lang ? "default" : "ghost"} onClick={() => setLanguage(lang)} className="tap h-16 min-w-16 gap-2 rounded-xl px-3"><span aria-hidden="true" className="text-4xl leading-none">{flag}</span><span className="font-sans text-xl font-bold">{lang}</span></Button>)}
       </div>
     </>}
     {!customerPage && fullscreen && <Button aria-label="Accesso uscita chiosco" variant="ghost" className="fixed left-0 top-0 z-[100] h-12 w-12" onClick={tapCorner}>•</Button>}
