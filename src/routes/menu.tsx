@@ -475,9 +475,9 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
 
 type ProductHandlers = {
   add: () => void;
-  save: (p: MenuProduct, name: string, price: number) => Promise<unknown> | void;
-  photo: (p: MenuProduct, file: File) => Promise<unknown> | void;
-  remove: (p: MenuProduct) => Promise<unknown> | void;
+  save: (p: MenuProduct, name: string, price: number) => Promise<unknown>;
+  photo: (p: MenuProduct, file: File) => Promise<unknown>;
+  remove: (p: MenuProduct) => Promise<unknown>;
   move: (p: MenuProduct, dir: -1 | 1) => void;
   translate: (p: MenuProduct, language: "EN" | "FR" | "ES", description: string) => Promise<unknown>;
   describe: (p: MenuProduct, description: string) => Promise<unknown>;
