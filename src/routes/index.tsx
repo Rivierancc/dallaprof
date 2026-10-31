@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
+import { canAddExtra, groupsValid, suggestPrice } from "@/lib/options"
 import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -42,12 +43,23 @@ function Totem() {
   const categories = data?.categories?? []
   const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), [data])
   const featured = useMemo(() => products.filter((p) => p.is_featured).slice(0, 3), [products])
-  const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const [suggestSeen, setSuggestSeen] = useState(false)
+  const [offerPick, setOfferPick] = useState(false)
+  // Prodotti suggeriti: prezzo d'offerta ricalcolato sulla spesa del resto del carrello.
+  const spent = cart.filter((i) => !i.offer).reduce((s, i) => s + i.price * i.qty, 0)
+  const priced = cart.map((i) => {
+    const p = i.offer ? products.find((x) => x.id === i.productId) : undefined
+    return p ? { ...i, price: Math.round((suggestPrice(p.price, p.suggest, spent) + i.price - p.price) * 100) / 100 } : i
+  })
+  const total = priced.reduce((s, i) => s + i.price * i.qty, 0)
+  const suggestions = products.filter((p) => p.suggest.on && !cart.some((i) => i.productId === p.id))
+  const openCart = () => { if (!suggestSeen && suggestions.length) { setSuggestSeen(true); setShowSuggest(true) } else setShowCart(true) }
+  const [showSuggest, setShowSuggest] = useState(false)
 
   const createOrder = useMutation({
     mutationFn: async (method: PaymentMethod) => {
       setOrderError("")
-      const payload = orderPayload(dineOption, cart, method)
+      const payload = orderPayload(dineOption, priced, method)
       const { data: order, error } = await supabase.from("orders").insert(payload).select("id, order_number").single()
       if (error) throw error
       return order
@@ -56,6 +68,7 @@ function Totem() {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
       try { localStorage.setItem("last_order_id", order.id) } catch { /* Navigation also carries the order ID. */ }
       setCart([])
+      setSuggestSeen(false)
       void navigate({ to: "/ordine-confermato/$id", params: { id: order.id } })
     },
     onError: () => setOrderError(t.error),
@@ -111,6 +124,38 @@ function Totem() {
     </main>
   )
 
+  if (showSuggest) return (
+    <main className="min-h-screen p-8 pt-24">
+      <h1 className="mb-8 font-display text-7xl">💡 {t.suggestTitle}</h1>
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+        {suggestions.map((p) => {
+          const offer = suggestPrice(p.price, p.suggest, spent)
+          const missing = p.suggest.price !== null && spent < p.suggest.min ? p.suggest.min - spent : 0
+          const label = (s: string) => s.replace("{x}", euro(missing)).replace("{y}", euro(p.suggest.price ?? 0))
+          return (
+            <Button variant="ghost" key={p.id} onClick={() => {
+              if (p.choice_groups.length || p.extras.length || p.ingredients.length) { setOfferPick(true); setCustom(p); setShowSuggest(false); setShowCart(false) }
+              else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1, offer: true }])
+            }} className="whitespace-normal tap relative flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
+              {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl">🍽️</div>}
+              <div className="p-4">
+                <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  {offer < p.price && <s className="font-display text-3xl text-muted-foreground">{euro(p.price)}</s>}
+                  <span className="rounded-full bg-primary px-4 py-1 font-display text-3xl text-primary-foreground">{offer === 0 ? t.free : euro(offer)}</span>
+                </div>
+                {missing > 0 && <p className="mt-2 text-xl text-accent">{label(p.suggest.price === 0 ? t.spendMoreFree : t.spendMore)}</p>}
+                <p className="mt-2 font-display text-3xl text-success">+ {t.add}</p>
+              </div>
+            </Button>
+          )
+        })}
+      </div>
+      {suggestions.length === 0 && <p className="text-3xl text-muted-foreground">✓</p>}
+      <Button onClick={() => { setShowSuggest(false); setShowCart(true) }} className="whitespace-normal tap mt-10 h-24 w-full rounded-3xl font-display text-5xl">{t.noThanks} · {euro(total)}</Button>
+    </main>
+  )
+
   if (showCart) return (
     <main className="min-h-screen p-8 pt-20">
       
@@ -120,14 +165,14 @@ function Totem() {
       </header>
       <h1 className="mb-8 font-display text-8xl">{t.yourOrder}</h1>
       <div className="grid gap-4">
-        {cart.map((i) => (
+        {priced.map((i) => (
           <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
             <div>
               <p className="font-display text-5xl">{i.qty} × {i.name}</p>
               <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `${t.without} ${r}`)].join(" · ") : ""}</p>
             </div>
             <div className="flex items-center gap-6">
-              <p className="font-display text-5xl text-accent">{euro(i.price * i.qty)}</p>
+              <p className="font-display text-5xl text-accent">{i.offer && i.price === 0 ? t.free : euro(i.price * i.qty)}</p>
               <Button variant="ghost" onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="whitespace-normal tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</Button>
             </div>
           </div>
@@ -197,11 +242,12 @@ function Totem() {
       )}
 
       {custom && (
-        <Customize key={custom.id} product={custom} lib={lib} onClose={() => setCustom(null)} onAdd={(extras, removed) => {
+        <Customize key={custom.id} product={custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed) => {
           if (!dineOption) { setShowCart(false); return }
-          const price = p2(custom) + extras.reduce((s, e) => s + e.price, 0)
-          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed }])
+          const price = Math.round((p2(custom) + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
+          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
           setCustom(null)
+          if (offerPick) { setOfferPick(false); setShowSuggest(true) }
         }} />
       )}
 
@@ -220,7 +266,7 @@ function Totem() {
             <p className="text-2xl text-muted-foreground">{cart.length} {t.products} · {dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</p>
             <p className="font-display text-6xl text-accent">{euro(total)}</p>
           </div>
-          <Button variant="ghost" onClick={() => setShowCart(true)} className="whitespace-normal tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 {t.cart}</Button>
+          <Button variant="ghost" onClick={openCart} className="whitespace-normal tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 {t.cart}</Button>
         </div>
       )}
     </main>
@@ -229,7 +275,7 @@ function Totem() {
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, lib, onClose, onAdd }: { product: Product; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
+function Customize({ product, all, lib, onClose, onAdd }: { product: Product; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [removed, setRemoved] = useState<string[]>([])
@@ -238,7 +284,19 @@ function Customize({ product, lib, onClose, onAdd }: { product: Product; lib: In
   const offers = product.extras.filter((e) => !ingredientOff(e.name, lib))
   const chosen = offers.filter((e) => extras.includes(e.name))
   const L = (n: string) => ingredientLabel(n, lib, language)
-  const total = p2(product) + chosen.reduce((s, e) => s + e.price, 0)
+  const [picks, setPicks] = useState<Record<string, string[]>>({})
+  const groups = product.choice_groups.map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib)) })).filter((g) => g.options.length)
+  const ok = groupsValid(groups, picks)
+  const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
+  const combo = product.combo_items.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x)
+  const comboLines = combo.map((x) => ({ name: `🍱 ${x.name}`, price: 0 }))
+  const total = p2(product) + [...chosen, ...picked].reduce((s, e) => s + e.price, 0)
+  const toggle = (g: { name: string; max: number }, o: string) => setPicks((cur) => {
+    const list = cur[g.name] ?? []
+    if (list.includes(o)) return { ...cur, [g.name]: list.filter((x) => x !== o) }
+    if (g.max === 1) return { ...cur, [g.name]: [o] }
+    return list.length >= g.max ? cur : { ...cur, [g.name]: [...list, o] }
+  })
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
@@ -246,6 +304,30 @@ function Customize({ product, lib, onClose, onAdd }: { product: Product; lib: In
           <h2 className="font-display text-7xl">{product.name}</h2>
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(product.price)}</p>
+          {combo.length > 0 && (
+            <section className="mt-6">
+              <h3 className="font-display text-4xl text-muted-foreground">🍱 {t.includes}</h3>
+              <ul className="mt-3 flex flex-wrap gap-3">{combo.map((x) => <li key={x.id} className="rounded-full bg-muted px-6 py-3 text-2xl font-bold">{x.name}</li>)}</ul>
+            </section>
+          )}
+          {groups.map((g) => {
+            const n = (picks[g.name] ?? []).length
+            return (
+              <section key={g.name} className="mt-6">
+                <h3 className="flex flex-wrap items-center gap-3 font-display text-4xl text-muted-foreground">
+                  {L(g.name)}
+                  {g.min > 0 && <span className={`rounded-full px-3 py-1 font-sans text-lg font-bold ${n >= g.min ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground"}`}>{n >= g.min ? "✓" : "!"} {t.required}</span>}
+                  <span className="font-sans text-xl">{g.min === g.max ? `${g.min}` : g.min > 0 ? t.pickN.replace("{a}", String(g.min)).replace("{b}", String(g.max)) : t.upTo.replace("{n}", String(g.max))}</span>
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {g.options.map((o) => {
+                    const on = (picks[g.name] ?? []).includes(o.name)
+                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
+                  })}
+                </div>
+              </section>
+            )
+          })}
           {ingredients.length > 0 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">{t.remove}</h3>
@@ -259,18 +341,19 @@ function Customize({ product, lib, onClose, onAdd }: { product: Product; lib: In
           )}
           {offers.length > 0 && (
             <section className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground">Extra</h3>
+              <h3 className="font-display text-4xl text-muted-foreground">Extra{product.max_extras > 0 ? ` · ${t.maxExtras.replace("{n}", String(product.max_extras))} (${chosen.length}/${product.max_extras})` : ""}</h3>
               <div className="mt-3 flex flex-wrap gap-3">
                 {offers.map((e) => {
                   const on = extras.includes(e.name)
-                  return <Button variant="ghost" key={e.name} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : [...x, e.name]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {L(e.name)} · {euro(e.price)}</Button>
+                  const full = !on && !canAddExtra(product.max_extras, chosen.length)
+                  return <Button variant="ghost" key={e.name} disabled={full} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : canAddExtra(product.max_extras, x.length) ? [...x, e.name] : x))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {L(e.name)} · {euro(e.price)}</Button>
                 })}
               </div>
             </section>
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <Button variant="ghost" disabled={!orderType} onClick={() => { if (orderType) onAdd(chosen, removed) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
+          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...comboLines, ...picked, ...chosen], removed) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
           <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
         </div>
       </div>
