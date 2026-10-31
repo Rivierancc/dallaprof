@@ -1,0 +1,139 @@
+import { useState } from "react";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { menuQueryOptions } from "@/lib/menu";
+import { setProductRules, type MenuProduct } from "@/lib/menu.functions";
+import type { ChoiceGroup, Suggest } from "@/lib/options";
+
+const fmt = (n: number) => n.toFixed(2).replace(".", ",");
+const num = (s: string) => Number(s.replace(",", "."));
+const box = "rounded-xl bg-muted px-3 py-2 text-xl outline-none";
+const btn = "tap rounded-xl px-4 py-2 text-xl font-bold";
+
+// Limite extra, scelte obbligatorie, menu combinato e prodotto suggerito di un piatto.
+export function ProductRules({ p }: { p: MenuProduct }) {
+  const qc = useQueryClient();
+  const { data: menu } = useSuspenseQuery(menuQueryOptions);
+  const save = useServerFn(setProductRules);
+  const [busy, setBusy] = useState(false);
+  const run = async (patch: Partial<{ maxExtras: number; groups: ChoiceGroup[]; combo: string[]; suggest: Suggest }>, msg = "Salvato") => {
+    setBusy(true);
+    try {
+      await save({ data: { id: p.id, maxExtras: p.max_extras, groups: p.choice_groups, combo: p.combo_items, suggest: p.suggest, ...patch } });
+      await qc.invalidateQueries({ queryKey: ["menu"] });
+      toast.success(msg);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const groups = p.choice_groups;
+  const setGroups = (g: ChoiceGroup[]) => run({ groups: g });
+  const [gName, setGName] = useState("");
+  const others = menu.products.filter((x) => x.id !== p.id);
+  const catName = (id: string) => menu.categories.find((c) => c.id === id)?.name ?? "";
+  const [sPrice, setSPrice] = useState(p.suggest.price === null ? "" : fmt(p.suggest.price));
+  const [sMin, setSMin] = useState(fmt(p.suggest.min));
+
+  return (
+    <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
+      <section>
+        <h3 className="mb-2 text-2xl font-bold">Quanti extra può aggiungere il cliente</h3>
+        <div className="flex flex-wrap gap-2">
+          {[0, 1, 2, 3, 4, 5].map((n) => (
+            <button key={n} disabled={busy} onClick={() => run({ maxExtras: n })} className={`${btn} ${p.max_extras === n ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{n === 0 ? "Senza limite" : `Max ${n}`}</button>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-1 text-2xl font-bold">Scelte del cliente (es. salse, condimenti)</h3>
+        <p className="mb-3 text-lg text-muted-foreground">Con «minimo» 1 o più la scelta è obbligatoria: il totem non aggiunge il piatto finché il cliente non sceglie.</p>
+        <div className="grid gap-3">
+          {groups.map((g, gi) => (
+            <GroupEditor key={g.name + gi} g={g} disabled={busy}
+              onChange={(ng) => setGroups(groups.map((x, i) => (i === gi ? ng : x)))}
+              onDelete={() => setGroups(groups.filter((_, i) => i !== gi))} />
+          ))}
+        </div>
+        <div className="mt-3 flex gap-2">
+          <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="Nome gruppo, es. Salsa" className={`${box} min-w-0 flex-1`} />
+          <button disabled={busy || !gName.trim() || groups.some((g) => g.name === gName.trim())} onClick={() => { setGroups([...groups, { name: gName.trim(), min: 1, max: 1, options: [] }]); setGName(""); }} className={`${btn} bg-primary text-primary-foreground disabled:opacity-40`}>+ Nuovo gruppo</button>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-1 text-2xl font-bold">🍱 Menu combinato</h3>
+        <p className="mb-3 text-lg text-muted-foreground">Tocca gli articoli (di qualsiasi categoria) inclusi in questo piatto. Il prezzo del menu è quello del piatto. In cucina arrivano anche gli articoli inclusi.</p>
+        <div className="flex flex-wrap gap-2">
+          {others.map((x) => {
+            const on = p.combo_items.includes(x.id);
+            return <button key={x.id} disabled={busy} aria-pressed={on} onClick={() => run({ combo: on ? p.combo_items.filter((i) => i !== x.id) : [...p.combo_items, x.id] })} className={`${btn} ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "✓ " : "+ "}{x.name} <span className="text-base opacity-70">· {catName(x.category_id)}</span></button>;
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-1 text-2xl font-bold">💡 Suggerisci prima di chiudere l'ordine</h3>
+        <p className="mb-3 text-lg text-muted-foreground">Compare al cliente quando va al carrello, se non l'ha già preso. Prezzo offerta 0 = omaggio; vuoto = prezzo normale. Spesa minima 0 = offerta sempre valida.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button disabled={busy} role="switch" aria-checked={p.suggest.on} onClick={() => run({ suggest: { ...p.suggest, on: !p.suggest.on } })} className={`${btn} ${p.suggest.on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.suggest.on ? "💡 Suggerito" : "Non suggerito"}</button>
+          <label className="flex items-center gap-2 text-xl">Prezzo offerta €<input value={sPrice} inputMode="decimal" onChange={(e) => setSPrice(e.target.value)} placeholder="—" className={`${box} w-24 text-center`} /></label>
+          <label className="flex items-center gap-2 text-xl">se spende almeno €<input value={sMin} inputMode="decimal" onChange={(e) => setSMin(e.target.value)} className={`${box} w-24 text-center`} /></label>
+          <button disabled={busy} onClick={() => {
+            const price = sPrice.trim() === "" ? null : num(sPrice);
+            const min = num(sMin || "0");
+            if ((price !== null && !(price >= 0)) || !(min >= 0)) return toast.error("Controlla i prezzi");
+            void run({ suggest: { on: p.suggest.on, price, min } }, "Offerta salvata");
+          }} className={`${btn} bg-primary text-primary-foreground`}>Salva offerta</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function GroupEditor({ g, disabled, onChange, onDelete }: { g: ChoiceGroup; disabled: boolean; onChange: (g: ChoiceGroup) => void; onDelete: () => void }) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const n = g.options.length;
+  const add = () => {
+    const v = name.trim();
+    const pr = price.trim() ? num(price) : 0;
+    if (!v || !(pr >= 0) || g.options.some((o) => o.name === v)) return toast.error("Scrivi un nome nuovo e un prezzo valido");
+    onChange({ ...g, options: [...g.options, { name: v, price: Math.round(pr * 100) / 100 }] });
+    setName(""); setPrice("");
+  };
+  const step = (k: "min" | "max", d: number) => {
+    const next = { ...g, [k]: Math.max(k === "max" ? 1 : 0, g[k] + d) };
+    if (next.min > next.max) k === "min" ? (next.max = next.min) : (next.min = next.max);
+    if (next.max > Math.max(1, n)) return;
+    onChange(next);
+  };
+  return (
+    <div className="rounded-xl bg-card p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <strong className="text-2xl">{g.name}</strong>
+        <span className={`rounded-full px-3 py-1 text-base font-bold ${g.min > 0 ? "bg-destructive text-destructive-foreground" : "bg-secondary"}`}>{g.min > 0 ? "Obbligatoria" : "Facoltativa"}</span>
+        <span className="flex items-center gap-1 text-xl">minimo <button disabled={disabled} onClick={() => step("min", -1)} className={`${btn} bg-secondary`}>−</button><b className="w-6 text-center">{g.min}</b><button disabled={disabled} onClick={() => step("min", 1)} className={`${btn} bg-secondary`}>+</button></span>
+        <span className="flex items-center gap-1 text-xl">massimo <button disabled={disabled} onClick={() => step("max", -1)} className={`${btn} bg-secondary`}>−</button><b className="w-6 text-center">{g.max}</b><button disabled={disabled} onClick={() => step("max", 1)} className={`${btn} bg-secondary`}>+</button></span>
+        <button disabled={disabled} onClick={() => confirm(`Eliminare il gruppo «${g.name}»?`) && onDelete()} className={`${btn} ml-auto bg-destructive text-destructive-foreground`}>Elimina gruppo</button>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {g.options.map((o) => (
+          <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
+            {o.name}{o.price > 0 ? ` · € ${fmt(o.price)}` : ""}
+            <button disabled={disabled} onClick={() => { const options = g.options.filter((x) => x.name !== o.name); onChange({ ...g, options, max: Math.min(g.max, Math.max(1, options.length)), min: Math.min(g.min, Math.max(1, options.length)) }); }} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button>
+          </span>
+        ))}
+        {!n && <span className="text-lg text-muted-foreground">Aggiungi le opzioni qui sotto</span>}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <input value={name} list="ing-lib" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="es. Ketchup" className={`${box} min-w-0 flex-1`} />
+        <input value={price} inputMode="decimal" onChange={(e) => setPrice(e.target.value)} placeholder="€ 0" className={`${box} w-24 text-center`} />
+        <button disabled={disabled} onClick={add} className={`${btn} bg-primary text-primary-foreground`}>+ Opzione</button>
+      </div>
+    </div>
+  );
+}
