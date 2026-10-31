@@ -13,4 +13,5 @@
 - [x] Piatti del pannello Menu subito sotto la categoria aperta, con scelta "pagina a sé"; apertura, chiusura e memoria della scelta verificate cliccando.
 - [x] Temi delle ricorrenze (Natale, Halloween, San Valentino, Pasqua, mamma, papà, stagioni) con colori, decorazioni, auguri, acceso a mano o automatico.
 - [x] Ordine categorie riunito in Gestione menu; eliminata la pagina separata (ora "pagina non trovata"), sezione apribile con frecce e Salva ordine verificata cliccando.
+- [x] Limite extra, scelte obbligatorie (min/max), menu combinati e pagina suggeriti con offerte; provato sul totem.
 - [ ] Da provare sul posto: schermo intero sul tablet vero, stampa Epson, incasso reale al POS.
