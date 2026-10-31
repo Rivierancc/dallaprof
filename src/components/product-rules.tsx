@@ -85,7 +85,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
           <button disabled={busy} onClick={() => {
             const price = sPrice.trim() === "" ? null : num(sPrice);
             const min = num(sMin || "0");
-            if ((price !== null && !(price >= 0)) || !(min >= 0)) return toast.error("Controlla i prezzi");
+            if ((price !== null && !(price >= 0)) || !(min >= 0)) { toast.error("Controlla i prezzi"); return; }
             void run({ suggest: { on: p.suggest.on, price, min } }, "Offerta salvata");
           }} className={`${btn} bg-primary text-primary-foreground`}>Salva offerta</button>
         </div>
@@ -101,7 +101,7 @@ function GroupEditor({ g, disabled, onChange, onDelete }: { g: ChoiceGroup; disa
   const add = () => {
     const v = name.trim();
     const pr = price.trim() ? num(price) : 0;
-    if (!v || !(pr >= 0) || g.options.some((o) => o.name === v)) return toast.error("Scrivi un nome nuovo e un prezzo valido");
+    if (!v || !(pr >= 0) || g.options.some((o) => o.name === v)) { toast.error("Scrivi un nome nuovo e un prezzo valido"); return; }
     onChange({ ...g, options: [...g.options, { name: v, price: Math.round(pr * 100) / 100 }] });
     setName(""); setPrice("");
   };

@@ -12,9 +12,9 @@ export const cleanMaxExtras = (v: unknown) => int(v, 0, 20);
 
 export function cleanGroups(v: unknown): ChoiceGroup[] {
   return (Array.isArray(v) ? v : []).slice(0, 8).map((g) => {
-    const o = (g ?? {}) as Record<string, unknown>;
+    const o = (g ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown };
     const options = (Array.isArray(o.options) ? o.options : []).slice(0, 20)
-      .map((x) => { const r = (x ?? {}) as Record<string, unknown>; return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price) }; })
+      .map((x) => { const r = (x ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown }; return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price) }; })
       .filter((x) => x.name);
     const max = int(o.max, 1, Math.max(1, options.length || 1));
     return { name: String(o.name ?? "").trim().slice(0, 40), min: int(o.min, 0, max), max, options };
@@ -25,7 +25,7 @@ export const cleanCombo = (v: unknown): string[] =>
   [...new Set((Array.isArray(v) ? v : []).map((x) => String(x ?? "")).filter((x) => /^[0-9a-f-]{36}$/i.test(x)))].slice(0, 10);
 
 export function cleanSuggest(v: unknown): Suggest {
-  const o = (v ?? {}) as Record<string, unknown>;
+  const o = (v ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown };
   const raw = o.price;
   return { on: !!o.on, price: raw === null || raw === undefined || raw === "" ? null : money(raw), min: money(o.min) };
 }
