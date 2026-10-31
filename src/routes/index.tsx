@@ -242,7 +242,7 @@ function Totem() {
       )}
 
       {custom && (
-        <Customize key={custom.id} product={custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed) => {
+        <Customize key={custom.id} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((p2(custom) + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
           setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
