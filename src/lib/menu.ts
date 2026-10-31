@@ -1,3 +1,4 @@
+import type { ChoiceGroup, Suggest } from "@/lib/options";
 import { queryOptions } from "@tanstack/react-query";
 import { getMenu } from "@/lib/menu.functions";
 
@@ -10,6 +11,7 @@ export type CartItem = {
   qty: number;
   extras?: string[];
   removed?: string[];
+  offer?: boolean; // prodotto suggerito: prezzo ricalcolato in base alla spesa
 };
 
 export const itemNotes = (i: CartItem) => [
@@ -36,6 +38,10 @@ export type Product = {
   description_es: string;
   ingredients: string[];
   extras: { name: string; price: number }[];
+  max_extras: number;
+  choice_groups: ChoiceGroup[];
+  combo_items: string[];
+  suggest: Suggest;
 };
 
 export type Category = {

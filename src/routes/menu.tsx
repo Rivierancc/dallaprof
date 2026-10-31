@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { ProductRules } from "@/components/product-rules";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
@@ -753,7 +754,7 @@ function ProductRow({
         aria-expanded={open}
         className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold"
       >
-        Opzioni ({p.extras.length + p.ingredients.length}) {open ? "▲" : "▼"}
+        Opzioni ({p.extras.length + p.ingredients.length + p.choice_groups.length}{p.combo_items.length ? " · 🍱" : ""}{p.suggest.on ? " · 💡" : ""}) {open ? "▲" : "▼"}
       </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
       <textarea
@@ -770,6 +771,7 @@ function ProductRow({
       </div>
       <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
+      {open && <ProductRules p={p} />}
     </li>
   );
 }

@@ -198,6 +198,8 @@ export type Database = {
           badge_on: boolean
           badge_text: string
           category_id: string
+          choice_groups: Json
+          combo_items: Json
           description: string
           description_en: string
           description_es: string
@@ -208,10 +210,12 @@ export type Database = {
           image_path: string
           ingredients: Json
           is_featured: boolean
+          max_extras: number
           name: string
           position: number
           price: number
           sold_out: boolean
+          suggest: Json
         }
         Insert: {
           active?: boolean
@@ -219,6 +223,8 @@ export type Database = {
           badge_on?: boolean
           badge_text?: string
           category_id: string
+          choice_groups?: Json
+          combo_items?: Json
           description?: string
           description_en?: string
           description_es?: string
@@ -229,10 +235,12 @@ export type Database = {
           image_path?: string
           ingredients?: Json
           is_featured?: boolean
+          max_extras?: number
           name: string
           position?: number
           price?: number
           sold_out?: boolean
+          suggest?: Json
         }
         Update: {
           active?: boolean
@@ -240,6 +248,8 @@ export type Database = {
           badge_on?: boolean
           badge_text?: string
           category_id?: string
+          choice_groups?: Json
+          combo_items?: Json
           description?: string
           description_en?: string
           description_es?: string
@@ -250,10 +260,12 @@ export type Database = {
           image_path?: string
           ingredients?: Json
           is_featured?: boolean
+          max_extras?: number
           name?: string
           position?: number
           price?: number
           sold_out?: boolean
+          suggest?: Json
         }
         Relationships: [
           {

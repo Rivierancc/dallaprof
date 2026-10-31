@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
+import { cleanCombo, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
 
 const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
@@ -93,6 +94,10 @@ export type MenuProduct = {
   description_es: string;
   ingredients: string[];
   extras: MenuExtra[];
+  max_extras: number;
+  choice_groups: ChoiceGroup[];
+  combo_items: string[];
+  suggest: Suggest;
 };
 
 export type MenuExtra = { name: string; price: number };
@@ -119,7 +124,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, suggest")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -178,6 +183,10 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       description_es: r.description_es ?? "",
       ingredients: cleanIngredients(r.ingredients),
       extras: cleanExtras(r.extras),
+      max_extras: cleanMaxExtras(r.max_extras),
+      choice_groups: cleanGroups(r.choice_groups),
+      combo_items: cleanCombo(r.combo_items),
+      suggest: cleanSuggest(r.suggest),
     })),
   };
 });
@@ -208,6 +217,23 @@ export const setProductOptions = createServerFn({ method: "POST" })
       .from("menu_products")
       .update({ ingredients: data.ingredients, extras: data.extras })
       .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setProductRules = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; maxExtras: number; groups: ChoiceGroup[]; combo: string[]; suggest: Suggest }) => ({
+    id: String(d.id),
+    max_extras: cleanMaxExtras(d.maxExtras),
+    choice_groups: cleanGroups(d.groups),
+    combo_items: cleanCombo(d.combo).filter((x) => x !== String(d.id)),
+    suggest: cleanSuggest(d.suggest),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { id, ...row } = data;
+    const { error } = await supabase.from("menu_products").update(row as never).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
