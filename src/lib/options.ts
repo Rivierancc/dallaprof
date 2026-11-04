@@ -1,8 +1,8 @@
 // Regole condivise tra pannello e totem: scelte obbligatorie, limite extra, menu combinati, suggeriti.
 // to = con cosa va in cucina nei menu: panino, contorno o bevanda.
 export type Place = "dish" | "side" | "drink";
-export type ChoiceOption = { name: string; price: number; to?: Place };
-export type ChoiceGroup = { name: string; min: number; max: number; options: ChoiceOption[]; to?: Place };
+export type ChoiceOption = { name: string; price: number; to?: Place | undefined };
+export type ChoiceGroup = { name: string; min: number; max: number; options: ChoiceOption[]; to?: Place | undefined };
 const place = (v: unknown): Place | undefined => (v === "dish" || v === "side" || v === "drink" ? v : undefined);
 // price = prezzo d'offerta (0 = omaggio, null = prezzo normale); min = spesa minima (0 = sempre).
 export type Suggest = { on: boolean; price: number | null; min: number };
