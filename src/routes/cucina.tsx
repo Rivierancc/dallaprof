@@ -289,7 +289,15 @@ function RecipePanel({ item, product, close }: { item: CartItem; product: Produc
             : <li key={g}>• {g}</li>)}
         </ul>
       </>}
-      {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
+      {onlyDesc.length > 0 && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti (dalla descrizione)</h3>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
+          {onlyDesc.map((g) => removed.includes(g.toLowerCase())
+            ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
+            : <li key={g}>• {g}</li>)}
+        </ul>
+      </>}
+      {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase()) && !onlyDesc.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
         <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
       ))}
       {(item.extras ?? []).length > 0 && <>
