@@ -739,8 +739,8 @@ export const setOrderKitchenInfo = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await staffOnly();
     const patch: Record<string, unknown> = {};
-    if (data.partial_notes) patch.partial_notes = data.partial_notes;
-    if (data.checked_items) patch.checked_items = data.checked_items;
+    if (data.partial_notes) patch["partial_notes"] = data.partial_notes;
+    if (data.checked_items) patch["checked_items"] = data.checked_items;
     const { error } = await (await admin()).from("orders").update(patch as never).eq("id", data.id).in("status", ["preparing", "ready"]);
     if (error) throw new Error(error.message);
     return { ok: true };
