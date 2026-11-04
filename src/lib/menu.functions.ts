@@ -99,6 +99,8 @@ export type MenuProduct = {
   choice_groups: ChoiceGroup[];
   combo_items: string[];
   suggest: Suggest;
+  recipe_on: boolean;
+  recipe: string;
 };
 
 export type MenuExtra = { name: string; price: number };
@@ -125,7 +127,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, suggest")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, suggest, recipe_on, recipe")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -188,6 +190,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       choice_groups: cleanGroups(r.choice_groups),
       combo_items: cleanCombo(r.combo_items),
       suggest: cleanSuggest(r.suggest),
+      recipe_on: r.recipe_on !== false,
+      recipe: r.recipe ?? "",
     })),
   };
 });
@@ -235,6 +239,16 @@ export const setProductRules = createServerFn({ method: "POST" })
     const supabase = await admin();
     const { id, ...row } = data;
     const { error } = await supabase.from("menu_products").update(row as never).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setProductRecipe = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; on: boolean; recipe: string }) => ({ id: String(d.id), on: !!d.on, recipe: String(d.recipe ?? "").slice(0, 1000) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase.from("menu_products").update({ recipe_on: data.on, recipe: data.recipe }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

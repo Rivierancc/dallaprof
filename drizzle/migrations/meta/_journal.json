@@ -162,6 +162,13 @@
       "when": 1793784304933,
       "tag": "0022_add_order_delivered_items",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793785857929,
+      "tag": "0023_product_kitchen_recipe",
+      "breakpoints": true
     }
   ]
 }

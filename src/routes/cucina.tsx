@@ -7,7 +7,8 @@ import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functi
 import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { gateFlags } from "@/lib/gate";
-import { itemNotes, type Order } from "@/lib/menu";
+import { itemNotes, menuQueryOptions, type CartItem, type Order, type Product } from "@/lib/menu";
+import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
 
 export const Route = createFileRoute("/cucina")({
@@ -58,6 +59,12 @@ function Kitchen() {
   const features = useKitchenFeatures();
   const info = useServerFn(setOrderKitchenInfo);
   const [showHistory, setShowHistory] = useState(false);
+  const { data: menu } = useQuery(menuQueryOptions);
+  // Piatto toccato: apre il riquadro ingredienti accanto al suo ordine.
+  const [sel, setSel] = useState<{ o: string; i: string } | null>(null);
+  const productOf = (i: CartItem) => menu?.products.find((p) => p.id === i.productId) ?? menu?.products.find((p) => p.name.toLowerCase() === i.name.toLowerCase());
+  const selOrder = sel ? orders.find((o) => o.id === sel.o) : undefined;
+  const selItem = selOrder?.items.find((i) => i.id === sel?.i);
   const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) =>
     info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
 
@@ -97,8 +104,31 @@ function Kitchen() {
       </header>
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
+      {selOrder && selItem ? (
+        <div className="flex gap-5">
+          <aside className="hidden w-1/6 shrink-0 space-y-3 lg:block">
+            {orders.filter((o) => o.id !== selOrder.id).map((o) => (
+              <button key={o.id} onClick={() => setSel(null)} className={`tap block w-full rounded-2xl border-4 bg-card p-3 text-left ${o.status === "ready" ? "border-success" : "border-accent"}`}>
+                <span className="font-display text-5xl leading-none">{String(o.order_number).padStart(2, "0")}</span>
+                <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}</span>
+              </button>
+            ))}
+          </aside>
+          <div className="grid min-w-0 flex-1 gap-5 md:grid-cols-[minmax(18rem,1fr)_2fr]">
+            {card(selOrder)}
+            <RecipePanel item={selItem} product={productOf(selItem)} close={() => setSel(null)} />
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-5">
-        {orders.map((o) => {
+        {orders.map((o) => card(o))}
+      </div>
+      )}
+      </>}
+    </main>
+  );
+
+  function card(o: Order) {
           const delivered = o.delivered_items ?? [];
           const allDelivered = o.items.length > 0 && delivered.length >= o.items.length;
           return (
@@ -140,7 +170,11 @@ function Kitchen() {
                     </button>
                   )}
                   <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
-                    {i.qty} × {i.name}
+                    {productOf(i)?.recipe_on !== false ? (
+                      <button onClick={() => setSel(sel?.i === i.id && sel.o === o.id ? null : { o: o.id, i: i.id })} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${sel?.i === i.id && sel.o === o.id ? "bg-accent px-2 text-accent-foreground" : ""}`}>
+                        {i.qty} × {i.name} 📖
+                      </button>
+                    ) : <>{i.qty} × {i.name}</>}
                     {itemNotes(i).length > 0 && (
                       <span className="block text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
                     )}
@@ -169,11 +203,7 @@ function Kitchen() {
             )}
           </article>
           );
-        })}
-      </div>
-      </>}
-    </main>
-  );
+  }
 }
 
 const QUICK = ["Bevande pronte", "Patatine pronte", "Panini pronti", "Dolce pronto"];
@@ -232,6 +262,40 @@ function History() {
           </article>
         ))}
       </div>
+    </section>
+  );
+}
+
+function RecipePanel({ item, product, close }: { item: CartItem; product: Product | undefined; close: () => void }) {
+  const removed = (item.removed ?? []).map((r) => r.toLowerCase());
+  const combo = product?.combo_items ?? [];
+  return (
+    <section className="animate-pop rounded-3xl border-4 border-primary bg-card p-6">
+      <div className="mb-4 flex items-start gap-4">
+        <h2 className="mr-auto font-display text-6xl leading-none">{item.qty} × {item.name}</h2>
+        <button onClick={close} className="tap rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi</button>
+      </div>
+      {(product?.ingredients.length ?? 0) > 0 && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti</h3>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
+          {product!.ingredients.map((g) => removed.includes(g.toLowerCase())
+            ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
+            : <li key={g}>• {g}</li>)}
+        </ul>
+      </>}
+      {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
+        <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
+      ))}
+      {(item.extras ?? []).length > 0 && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Aggiunte e scelte del cliente</h3>
+        <ul className="mb-5 space-y-2 text-3xl font-bold text-accent">{item.extras!.map((e) => <li key={e}>+ {e}</li>)}</ul>
+      </>}
+      {combo.length > 0 && <p className="mb-5 text-2xl font-bold">🍱 Menu combinato: vedi gli articoli inclusi nell'ordine</p>}
+      {product?.recipe.trim() && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Note di preparazione</h3>
+        <p className="whitespace-pre-line text-2xl">{product.recipe}</p>
+      </>}
+      {!product && <p className="text-2xl text-muted-foreground">Questo piatto non è più nel menu: valgono solo le modifiche scritte nell'ordine.</p>}
     </section>
   );
 }
