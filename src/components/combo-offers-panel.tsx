@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { menuQueryOptions } from "@/lib/menu";
 import { setComboOffer, setOffersTitle, setProductRules, type MenuProduct } from "@/lib/menu.functions";
-import { menuName } from "@/lib/options";
+import { menuName, type ChoiceGroup, type ChoiceOption } from "@/lib/options";
+import { GroupEditor } from "@/components/product-rules";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
 const num = (s: string) => Number(s.replace(",", "."));
@@ -19,7 +20,7 @@ export function ComboOffersPanel() {
   const saveTitle = useServerFn(setOffersTitle);
   const [title, setTitle] = useState(menu.offersTitle);
   const [extra, setExtra] = useState<string[]>([]);
-  const menus = menu.products.filter((p) => p.combo_items.length || p.combo_offer || extra.includes(p.id));
+  const menus = menu.products.filter((p) => p.combo_items.length || p.combo_groups.length || p.combo_offer || extra.includes(p.id));
   const rest = menu.products.filter((p) => !menus.includes(p));
   const offers = menu.products.filter((p) => p.combo_offer).length;
   return (
@@ -62,7 +63,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
     catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
     finally { setBusy(false); }
   };
-  const rules = (patch: { combo?: string[]; comboPrice?: number | null }) => go(() => saveRules({ data: { id: p.id, maxExtras: p.max_extras, groups: p.choice_groups, combo: p.combo_items, comboPrice: p.combo_price, suggest: p.suggest, ...patch } }));
+  const rules = (patch: { combo?: string[]; comboPrice?: number | null; comboGroups?: ChoiceGroup[]; comboExtras?: ChoiceOption[] }) => go(() => saveRules({ data: { id: p.id, maxExtras: p.max_extras, groups: p.choice_groups, combo: p.combo_items, comboPrice: p.combo_price, suggest: p.suggest, ...patch } }));
   return (
     <div className={`grid gap-4 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
       <div className="flex flex-wrap items-center gap-3">
@@ -84,13 +85,84 @@ function ComboEditor({ p }: { p: MenuProduct }) {
             return <button key={x.id} disabled={busy} aria-pressed={on} onClick={() => rules({ combo: on ? p.combo_items.filter((i) => i !== x.id) : [...p.combo_items, x.id] })} className={`${btn} ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "✓ " : "+ "}{x.name} <span className="text-base opacity-70">· {catName(x.category_id)}</span></button>;
           })}
         </div>
-        <p className="mt-2 text-lg text-muted-foreground">Per far scegliere al cliente (es. una bevanda a scelta) usa «Scelte del cliente» nelle Opzioni del piatto.</p>
-      </div>
+              </div>
+      <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
+      <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-xl">Prezzo totale del menu €<input value={cPrice} inputMode="decimal" onChange={(e) => setCPrice(e.target.value)} placeholder="—" className={`${box} w-28 text-center`} /></label>
         <button disabled={busy} onClick={() => { const v = cPrice.trim() === "" ? null : num(cPrice); if (v !== null && !(v >= 0)) { toast.error("Controlla il prezzo"); return; } void rules({ comboPrice: v }); }} className={`${btn} bg-primary text-primary-foreground`}>Salva prezzo</button>
         <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €), articoli in omaggio.</span>
       </div>
     </div>
+  );
+}
+
+type MenuData = { categories: { id: string; name: string }[]; products: { id: string; name: string; category_id: string; sold_out: boolean }[] };
+
+// Scelte valide solo quando il cliente prende il menu (es. contorno e bevanda a scelta).
+function MenuChoices({ p, busy, menu, onChange }: { p: MenuProduct; busy: boolean; menu: MenuData; onChange: (g: ChoiceGroup[]) => void }) {
+  const groups = p.combo_groups;
+  const [name, setName] = useState("");
+  const [cat, setCat] = useState("");
+  const create = (n: string, catId: string) => {
+    const v = n.trim();
+    if (!v || groups.some((g) => g.name === v)) { toast.error("Scrivi un nome nuovo"); return; }
+    const options = menu.products.filter((x) => x.category_id === catId).map((x) => ({ name: x.name.slice(0, 40), price: 0 })).slice(0, 20);
+    onChange([...groups, { name: v.slice(0, 40), min: 1, max: 1, options }]);
+    setName(""); setCat("");
+  };
+  return (
+    <section>
+      <h3 className="mb-1 text-2xl font-bold">🥤 Scelte del menu (contorno, bevanda…)</h3>
+      <p className="mb-3 text-lg text-muted-foreground">Valgono solo quando il cliente prende il menu. Scegli il nome e la categoria: entrano tutti i suoi prodotti; togli con la ✕ quelli non adatti. I prodotti esauriti spariscono da soli. Prezzo 0 = compreso; puoi mettere un supplemento.</p>
+      <div className="grid gap-3">
+        {groups.map((g, gi) => (
+          <GroupEditor key={g.name + gi} g={g} disabled={busy} menu={menu}
+            onChange={(ng) => onChange(groups.map((x, i) => (i === gi ? ng : x)))}
+            onDelete={() => onChange(groups.filter((_, i) => i !== gi))} />
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome, es. Bevanda" className={`${box} min-w-0 flex-1`} />
+        <select value={cat} onChange={(e) => setCat(e.target.value)} className={`${box} min-w-0 flex-1`}>
+          <option value="">Da quale categoria?</option>
+          {menu.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <button disabled={busy || !name.trim() || !cat} onClick={() => create(name, cat)} className={`${btn} bg-primary text-primary-foreground disabled:opacity-40`}>+ Aggiungi scelta</button>
+      </div>
+    </section>
+  );
+}
+
+// Extra a pagamento proposti solo nel menu (si sommano agli extra del piatto).
+function MenuExtras({ p, busy, onChange }: { p: MenuProduct; busy: boolean; onChange: (e: ChoiceOption[]) => void }) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const list = p.combo_extras;
+  const add = () => {
+    const v = name.trim(); const pr = num(price || "0");
+    if (!v || !(pr >= 0) || list.some((x) => x.name === v)) { toast.error("Scrivi un nome nuovo e un prezzo valido"); return; }
+    onChange([...list, { name: v.slice(0, 40), price: Math.round(pr * 100) / 100 }]);
+    setName(""); setPrice("");
+  };
+  return (
+    <section>
+      <h3 className="mb-1 text-2xl font-bold">➕ Extra a pagamento nel menu</h3>
+      <p className="mb-3 text-lg text-muted-foreground">Es. bacon, salse. Il cliente li vede insieme agli extra già impostati nelle Opzioni del piatto{p.extras.length ? ` (${p.extras.map((e) => e.name).join(", ")})` : ""}.</p>
+      <div className="flex flex-wrap gap-2">
+        {list.map((o) => (
+          <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
+            {o.name} · € {fmt(o.price)}
+            <button disabled={busy} onClick={() => onChange(list.filter((x) => x.name !== o.name))} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button>
+          </span>
+        ))}
+        {!list.length && <span className="text-lg text-muted-foreground">Nessun extra solo-menu</span>}
+      </div>
+      <div className="mt-2 flex gap-2">
+        <input value={name} list="ing-lib" onChange={(e) => setName(e.target.value)} placeholder="es. Bacon" className={`${box} min-w-0 flex-1`} />
+        <input value={price} inputMode="decimal" onChange={(e) => setPrice(e.target.value)} placeholder="€ 0" className={`${box} w-24 text-center`} />
+        <button disabled={busy} onClick={add} className={`${btn} bg-primary text-primary-foreground`}>+ Extra</button>
+      </div>
+    </section>
   );
 }

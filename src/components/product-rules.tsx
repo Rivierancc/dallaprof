@@ -84,7 +84,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
   );
 }
 
-function GroupEditor({ g, disabled, menu, onChange, onDelete }: { g: ChoiceGroup; disabled: boolean; menu: { categories: { id: string; name: string }[]; products: { id: string; name: string; category_id: string }[] }; onChange: (g: ChoiceGroup) => void; onDelete: () => void }) {
+export function GroupEditor({ g, disabled, menu, onChange, onDelete }: { g: ChoiceGroup; disabled: boolean; menu: { categories: { id: string; name: string }[]; products: { id: string; name: string; category_id: string }[] }; onChange: (g: ChoiceGroup) => void; onDelete: () => void }) {
   const addNames = (names: string[]) => {
     const fresh = names.filter((v) => !g.options.some((o) => o.name === v)).map((v) => ({ name: v.slice(0, 40), price: 0 }));
     const options = [...g.options, ...fresh].slice(0, 20);

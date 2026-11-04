@@ -101,6 +101,8 @@ export type MenuProduct = {
   combo_price: number | null;
   combo_offer: boolean;
   combo_name: string;
+  combo_groups: ChoiceGroup[];
+  combo_extras: { name: string; price: number }[];
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
@@ -130,7 +132,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, suggest, recipe_on, recipe")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, combo_groups, combo_extras, suggest, recipe_on, recipe")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -197,6 +199,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       combo_price: cleanComboPrice(r.combo_price),
       combo_offer: !!r.combo_offer,
       combo_name: r.combo_name ?? "",
+      combo_groups: cleanGroups(r.combo_groups),
+      combo_extras: cleanExtras(r.combo_extras),
       suggest: cleanSuggest(r.suggest),
       recipe_on: r.recipe_on !== false,
       recipe: r.recipe ?? "",
@@ -235,7 +239,9 @@ export const setProductOptions = createServerFn({ method: "POST" })
   });
 
 export const setProductRules = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; maxExtras: number; groups: ChoiceGroup[]; combo: string[]; comboPrice?: number | null; suggest: Suggest }) => ({
+  .inputValidator((d: { id: string; maxExtras: number; groups: ChoiceGroup[]; combo: string[]; comboPrice?: number | null; suggest: Suggest; comboGroups?: ChoiceGroup[]; comboExtras?: { name: string; price: number }[] }) => ({
+    ...(d.comboGroups ? { combo_groups: cleanGroups(d.comboGroups) } : {}),
+    ...(d.comboExtras ? { combo_extras: cleanExtras(d.comboExtras) } : {}),
     combo_price: cleanComboPrice(d.comboPrice),
     id: String(d.id),
     max_extras: cleanMaxExtras(d.maxExtras),
