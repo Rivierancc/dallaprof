@@ -12,7 +12,7 @@ vi.mock("@/lib/menu.functions", () => ({
 const { KitchenFeaturesSettings } = await import("@/components/kitchen-features");
 
 const rowOf = (title: string) => {
-  const row = screen.getByText(title).closest("div.flex");
+  const row = screen.getByText(title).closest("div.flex") as HTMLElement | null;
   if (!row) throw new Error(`riga non trovata: ${title}`);
   return within(row).getByRole("button");
 };
