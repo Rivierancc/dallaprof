@@ -54,7 +54,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
         <p className="mb-3 text-lg text-muted-foreground">Con «minimo» 1 o più la scelta è obbligatoria: il totem non aggiunge il piatto finché il cliente non sceglie.</p>
         <div className="grid gap-3">
           {groups.map((g, gi) => (
-            <GroupEditor key={g.name + gi} g={g} disabled={busy}
+            <GroupEditor key={g.name + gi} g={g} disabled={busy} menu={menu}
               onChange={(ng) => setGroups(groups.map((x, i) => (i === gi ? ng : x)))}
               onDelete={() => setGroups(groups.filter((_, i) => i !== gi))} />
           ))}
@@ -95,7 +95,13 @@ export function ProductRules({ p }: { p: MenuProduct }) {
   );
 }
 
-function GroupEditor({ g, disabled, onChange, onDelete }: { g: ChoiceGroup; disabled: boolean; onChange: (g: ChoiceGroup) => void; onDelete: () => void }) {
+function GroupEditor({ g, disabled, menu, onChange, onDelete }: { g: ChoiceGroup; disabled: boolean; menu: { categories: { id: string; name: string }[]; products: { id: string; name: string; category_id: string }[] }; onChange: (g: ChoiceGroup) => void; onDelete: () => void }) {
+  const addNames = (names: string[]) => {
+    const fresh = names.filter((v) => !g.options.some((o) => o.name === v)).map((v) => ({ name: v.slice(0, 40), price: 0 }));
+    const options = [...g.options, ...fresh].slice(0, 20);
+    if (!fresh.length) { toast.error("Già presente"); return; }
+    onChange({ ...g, options });
+  };
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const n = g.options.length;
@@ -134,6 +140,20 @@ function GroupEditor({ g, disabled, onChange, onDelete }: { g: ChoiceGroup; disa
         <input value={name} list="ing-lib" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="es. Ketchup" className={`${box} min-w-0 flex-1`} />
         <input value={price} inputMode="decimal" onChange={(e) => setPrice(e.target.value)} placeholder="€ 0" className={`${box} w-24 text-center`} />
         <button disabled={disabled} onClick={add} className={`${btn} bg-primary text-primary-foreground`}>+ Opzione</button>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <select disabled={disabled} value="" onChange={(e) => e.target.value && addNames([e.target.value])} className={`${box} min-w-0 flex-1`}>
+          <option value="">🍱 Aggiungi un articolo del menu…</option>
+          {menu.categories.map((c) => (
+            <optgroup key={c.id} label={c.name}>
+              {menu.products.filter((x) => x.category_id === c.id).map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}
+            </optgroup>
+          ))}
+        </select>
+        <select disabled={disabled} value="" onChange={(e) => e.target.value && addNames(menu.products.filter((x) => x.category_id === e.target.value).map((x) => x.name))} className={`${box} min-w-0 flex-1`}>
+          <option value="">📂 Aggiungi tutta una categoria…</option>
+          {menu.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
       </div>
     </div>
   );
