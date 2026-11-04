@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
-import { cleanCombo, cleanComboPrice, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
+import { cleanCombo, cleanComboPrice, cleanExtras, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
 import { cleanKitchenFeatures, type KitchenFeatures } from "@/lib/kitchen";
 
 const BUCKET = "menu-photos";
