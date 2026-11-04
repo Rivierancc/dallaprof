@@ -5,7 +5,9 @@ import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, settleOrder } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
-import { euro, itemNotes, type Order } from "@/lib/menu";
+import { euro, menuQueryOptions, type Order } from "@/lib/menu";
+import { useQuery } from "@tanstack/react-query";
+import { orderLines } from "@/lib/order-lines";
 import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
@@ -31,6 +33,7 @@ function Cassa() {
   const settle = useServerFn(settleOrder);
   const lock = useServerFn(lockKitchen);
   const orders = useLiveOrders(["awaiting_payment"]);
+  const { data: menu } = useQuery(menuQueryOptions);
   const [cfg, setCfg] = useState<PrinterCfg>({ ip: "", https: true, auto: true });
   const [showCfg, setShowCfg] = useState(false);
   const [msg, setMsg] = useState("");
@@ -52,7 +55,7 @@ function Cassa() {
 
   const print = async (o: Order) => {
     try {
-      await printTicket(cfg, o);
+      await printTicket(cfg, o, menu);
       setMsg(`Comanda ${String(o.order_number).padStart(2, "0")} stampata`);
     } catch (e) {
       setMsg(`⚠ Stampa non riuscita: ${(e as Error).message}. L'ordine è comunque in cucina.`);
@@ -141,12 +144,14 @@ function Cassa() {
               <span className="rounded-full bg-muted px-4 py-1 text-xl font-bold uppercase">{o.dine_option}</span>
             </div>
             <ul className="my-4 flex-1 space-y-1 text-xl">
-              {o.items.map((i) => (
+              {o.items.map((i) => { const l = orderLines(i, menu); return (
                 <li key={i.id}>
-                  {i.qty} × {i.name}
-                  {itemNotes(i).length > 0 && <span className="block pl-6 text-lg text-accent">{itemNotes(i).join(" · ")}</span>}
+                  {i.qty} × {l.title}
+                  {l.dish.length > 0 && <span className="block pl-6 text-lg text-accent">{l.dish.join(" · ")}</span>}
+                  {l.side.length > 0 && <span className="block pl-6 text-lg">🍟 {l.side.join(" · ")}</span>}
+                  {l.drink.length > 0 && <span className="block pl-6 text-lg">🥤 {l.drink.join(" · ")}</span>}
                 </li>
-              ))}
+              ); })}
             </ul>
             <p className="mb-4 font-display text-6xl text-accent">{euro(Number(o.total))}</p>
             <button
