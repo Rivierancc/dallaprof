@@ -471,18 +471,20 @@ function CategoryStrip({ cats, onPick }: { cats: Category[]; onPick: (id: string
     const el = ref.current; if (!el) return
     const mid = el.scrollLeft + el.clientWidth / 2
     let best = 0, dist = Infinity
-    Array.from(el.children).forEach((ch, i) => { const c = ch as HTMLElement; const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < dist) { dist = d; best = i } })
+    Array.from(el.querySelectorAll("[data-strip-item]")).forEach((ch, i) => { const c = ch as HTMLElement; const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < dist) { dist = d; best = i } })
     setCenter(best)
   }
   useEffect(() => { update() }, [cats.length])
   return (
-    <div ref={ref} onScroll={update} className="col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-[30%] py-4 [scrollbar-width:none]">
+    <div ref={ref} onScroll={update} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
+      <div aria-hidden className="w-[20%] shrink-0" />
       {cats.map((c, i) => (
-        <Button variant="ghost" key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl bg-card transition-all duration-300 ${i === center ? "h-64 w-[40%] border-4 border-accent" : "h-44 w-[28%] opacity-70"}`}>
+        <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl bg-card transition-all duration-300 ${i === center ? "h-72 w-[60%] border-4 border-accent" : "h-56 w-[45%] opacity-70"}`}>
           {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
           <span className={`glow relative z-10 font-display text-accent ${i === center ? "text-6xl" : "text-4xl"}`}>{c.name.toUpperCase()}</span>
         </Button>
       ))}
+      <div aria-hidden className="w-[20%] shrink-0" />
     </div>
   )
 }
