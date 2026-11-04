@@ -442,10 +442,10 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
   )
 }
 
-function Badge({ p }: { p: Product }) {
+function Badge({ p, pos = "right-3 top-3" }: { p: Product; pos?: string }) {
   if (!p.badge_on || !p.badge_text) return null
   return (
-    <span className={`absolute right-3 top-3 z-10 -rotate-6 rounded-2xl rounded-br-none border-4 border-background bg-destructive px-4 py-2 font-display text-3xl uppercase leading-none text-destructive-foreground shadow-lg ${p.badge_blink ? "animate-badge" : ""}`}>
+    <span className={`absolute ${pos} z-10 -rotate-6 rounded-2xl rounded-br-none border-4 border-background bg-destructive px-4 py-2 font-display text-3xl uppercase leading-none text-destructive-foreground shadow-lg ${p.badge_blink ? "animate-badge" : ""}`}>
       {p.badge_text}
     </span>
   )
