@@ -27,7 +27,7 @@ export function ComboOffersPanel() {
     <div className="mx-auto mt-6 max-w-5xl">
       <Fold title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
         <div className="grid gap-5">
-          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli gli articoli inclusi e il prezzo; se lo metti «In offerta» compare anche nella sezione speciale del totem.</p>
+          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; se lo metti «In offerta» compare anche nella sezione speciale del totem.</p>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome della sezione sul totem
               <input value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} placeholder="Menu in offerta" className={`${box} min-w-0 flex-1`} /></label>
@@ -77,21 +77,18 @@ function ComboEditor({ p }: { p: MenuProduct }) {
         <button disabled={busy} onClick={() => go(() => saveOffer({ data: { id: p.id, on: p.combo_offer, name } }), "Nome salvato")} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
       </div>
       <p className="-mt-2 text-lg text-muted-foreground">Vuoto = si chiama «Menu {p.name}».</p>
-      <div>
-        <p className="mb-2 text-xl">Articoli inclusi (tocca per aggiungere o togliere):</p>
-        <div className="flex flex-wrap gap-2">
-          {menu.products.filter((x) => x.id !== p.id).map((x) => {
-            const on = p.combo_items.includes(x.id);
-            return <button key={x.id} disabled={busy} aria-pressed={on} onClick={() => rules({ combo: on ? p.combo_items.filter((i) => i !== x.id) : [...p.combo_items, x.id] })} className={`${btn} ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "✓ " : "+ "}{x.name} <span className="text-base opacity-70">· {catName(x.category_id)}</span></button>;
-          })}
+      {p.combo_items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3">
+          <span className="text-lg text-muted-foreground">🍱 Articoli inclusi di prima: {p.combo_items.map((id) => menu.products.find((x) => x.id === id)?.name ?? "?").join(", ")}</span>
+          <button disabled={busy} onClick={() => rules({ combo: [] })} className={`${btn} bg-secondary`}>Togli</button>
         </div>
-              </div>
+      )}
       <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
       <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-xl">Prezzo totale del menu €<input value={cPrice} inputMode="decimal" onChange={(e) => setCPrice(e.target.value)} placeholder="—" className={`${box} w-28 text-center`} /></label>
         <button disabled={busy} onClick={() => { const v = cPrice.trim() === "" ? null : num(cPrice); if (v !== null && !(v >= 0)) { toast.error("Controlla il prezzo"); return; } void rules({ comboPrice: v }); }} className={`${btn} bg-primary text-primary-foreground`}>Salva prezzo</button>
-        <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €), articoli in omaggio.</span>
+        <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €).</span>
       </div>
     </div>
   );
