@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getKitchenFeatures, saveKitchenFeatures, type KitchenFeatures } from "@/lib/menu.functions";
 import { cleanKitchenFeatures, READY_SOUNDS, type ReadySound } from "@/lib/kitchen";
-import { playReadySound } from "@/lib/sounds";
+import { playSound } from "@/lib/sounds";
 
-const SOUND_LABEL: Record<ReadySound, string> = { campanello: "🛎️ Campanello", dingdong: "🎵 Din-don", trillo: "📳 Trillo", fanfara: "🎺 Fanfara", sirena: "🚨 Sirena", nessuno: "🔇 Nessuna" };
+const SOUND_LABEL: Record<ReadySound, string> = { campanello: "🛎️ Campanello", dingdong: "🎵 Din-don", trillo: "📳 Trillo", fanfara: "🎺 Fanfara", sirena: "🚨 Sirena", fischio: "🎶 Fischio", nessuno: "🔇 Nessuna" };
 import { Button } from "@/components/ui/button";
 
 const DEFAULT: KitchenFeatures = cleanKitchenFeatures({});
@@ -21,7 +21,25 @@ const labels: [keyof KitchenFeatures, string, string][] = [
   ["history", "📋 Storico ordini del giorno", "In cucina compare il pulsante per rivedere gli ordini di oggi."],
 ];
 
-/** Sezione di Admin: accende o spegne le funzioni extra della cucina. */
+/** Elenco di suonerie con ▶ per ascoltarle: una riga per «pronto» e una per «parzialmente pronto». */
+function SoundPicker({ title, hint, value, onChange }: { title: string; hint: string; value: ReadySound; onChange: (s: ReadySound) => void }) {
+  return <div className="rounded-2xl bg-secondary/40 p-4">
+    <p className="text-2xl font-bold">{title}</p>
+    <p className="mb-3 text-lg text-muted-foreground">{hint}</p>
+    <div className="flex flex-wrap gap-3">
+      {READY_SOUNDS.map((s) => (
+        <div key={s} className="flex">
+          <Button variant={value === s ? "default" : "secondary"} className="h-14 rounded-r-none px-5 text-xl" onClick={() => { onChange(s); playSound(s); }}>
+            {SOUND_LABEL[s]}
+          </Button>
+          {s !== "nessuno" && <Button variant="outline" aria-label={`Ascolta ${SOUND_LABEL[s]}`} className="h-14 rounded-l-none px-4 text-xl" onClick={() => playSound(s)}>▶</Button>}
+        </div>
+      ))}
+    </div>
+  </div>;
+}
+
+/** Sezione di Admin: accende o spegne le funzioni extra della cucina e sceglie le suonerie. */
 export function KitchenFeaturesSettings() {
   const { data: saved } = useQuery(kitchenFeaturesQueryOptions);
   const qc = useQueryClient();
@@ -44,20 +62,18 @@ export function KitchenFeaturesSettings() {
         </Button>
       </div>
     ))}
-    <div className="rounded-2xl bg-secondary/40 p-4">
-      <p className="text-2xl font-bold">🔔 Suoneria «ordine pronto»</p>
-      <p className="mb-3 text-lg text-muted-foreground">Suona sul tabellone clienti quando la cucina preme Pronto. Tocca ▶ per ascoltarla.</p>
-      <div className="flex flex-wrap gap-3">
-        {READY_SOUNDS.map((s) => (
-          <div key={s} className="flex">
-            <Button variant={draft.readySound === s ? "default" : "secondary"} className="h-14 rounded-r-none px-5 text-xl" onClick={() => { setMsg(""); setDraft({ ...draft, readySound: s }); playReadySound(s); }}>
-              {SOUND_LABEL[s]}
-            </Button>
-            {s !== "nessuno" && <Button variant="outline" aria-label={`Ascolta ${SOUND_LABEL[s]}`} className="h-14 rounded-l-none px-4 text-xl" onClick={() => playReadySound(s)}>▶</Button>}
-          </div>
-        ))}
-      </div>
-    </div>
+    <SoundPicker
+      title="🔔 Suoneria «ordine pronto»"
+      hint="Suona sul tabellone clienti quando la cucina preme Pronto. Tocca ▶ per ascoltarla."
+      value={draft.readySound}
+      onChange={(s) => { setMsg(""); setDraft({ ...draft, readySound: s }); }}
+    />
+    <SoundPicker
+      title="📣 Suoneria «parzialmente pronto»"
+      hint="Suona sul tabellone clienti quando la cucina manda un avviso come «Bevande pronte». Tocca ▶ per ascoltarla."
+      value={draft.partialSound}
+      onChange={(s) => { setMsg(""); setDraft({ ...draft, partialSound: s }); }}
+    />
     <div className="flex items-center gap-4"><Button className="h-14 px-8 text-xl" onClick={save}>Salva</Button>{msg && <span className="text-xl">{msg}</span>}</div>
   </div>;
 }
