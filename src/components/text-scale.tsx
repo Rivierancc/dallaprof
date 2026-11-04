@@ -14,7 +14,9 @@ export function useTextScale() {
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--text-scale", String(textScaleFactor(index)));
-    return () => root.style.removeProperty("--text-scale");
+    return () => {
+      root.style.removeProperty("--text-scale");
+    };
   }, [index]);
 
   const change = (next: number) => {
