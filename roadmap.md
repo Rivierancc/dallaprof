@@ -18,3 +18,4 @@
 - [x] Suoneria «parzialmente pronto» separata da quella «ordine pronto» (default: fischio) e fischio aggiunto all'elenco; provata con ordine reale: avviso al tabellone (fischio), Pronto (campanello), cambio e persistenza della scelta da Admin.
 - [ ] Da provare sul posto: schermo intero sul tablet vero, stampa Epson, incasso reale al POS.
 - [x] «Chiudi i piatti» esce solo dalla categoria: la lista «Categorie e piatti» resta aperta e la visuale non torna in cima; provato cliccando con la visuale in due posizioni diverse.
+- [x] Ingrandimento del testo in Gestione menu e Admin con quattro livelli (Normale, Grande, Molto grande, Enorme) ricordati sul dispositivo; provato cliccando: grandezza base 18,96 → 23,70 → 28,44 → 34,13 px, scelta salva dopo la ricarica, totem rimasto alla grandezza di fabbrica.

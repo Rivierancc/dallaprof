@@ -29,6 +29,7 @@ import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
+import { TextScaleToggle, useTextScale } from "@/components/text-scale";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/menu")({
@@ -79,6 +80,7 @@ function MenuEditor() {
   const [view, setView] = useState<View>("inline");
   const [jump, setJump] = useState(0);
   const [foldOpen, setFoldOpen] = useState(false);
+  const { index: textScale, change: changeTextScale } = useTextScale();
 
   // La scelta su dove mostrare i piatti resta in memoria sul dispositivo del locale.
   useEffect(() => {
@@ -387,6 +389,8 @@ function MenuEditor() {
       <p className="mb-4 text-2xl text-muted-foreground">
         Le modifiche si vedono subito sul totem e in cucina.
       </p>
+
+      <TextScaleToggle index={textScale} onChange={changeTextScale} />
 
       <ViewToggle view={view} onChange={changeView} />
 
