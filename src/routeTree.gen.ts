@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CassaRouteImport } from './routes/cassa'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
+import { Route as ManualeRouteImport } from './routes/manuale'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OrdineConfermatoIndexRouteImport } from './routes/ordine-confermato.index'
@@ -36,6 +37,11 @@ const CucinaRoute = CucinaRouteImport.update({
 const DisplayRoute = DisplayRouteImport.update({
   id: '/display',
   path: '/display',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualeRoute = ManualeRouteImport.update({
+  id: '/manuale',
+  path: '/manuale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
+  '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
+  '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin': typeof AdminIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/cassa': typeof CassaRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
+  '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/cassa'
     | '/cucina'
     | '/display'
+    | '/manuale'
     | '/menu'
     | '/ordine-confermato/$id'
     | '/admin/'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/cassa'
     | '/cucina'
     | '/display'
+    | '/manuale'
     | '/menu'
     | '/ordine-confermato/$id'
     | '/admin'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/cassa'
     | '/cucina'
     | '/display'
+    | '/manuale'
     | '/menu'
     | '/ordine-confermato/$id'
     | '/admin/'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   CassaRoute: typeof CassaRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
+  ManualeRoute: typeof ManualeRoute
   MenuRoute: typeof MenuRoute
   OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/display'
       fullPath: '/display'
       preLoaderRoute: typeof DisplayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manuale': {
+      id: '/manuale'
+      path: '/manuale'
+      fullPath: '/manuale'
+      preLoaderRoute: typeof ManualeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   CassaRoute: CassaRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
+  ManualeRoute: ManualeRoute,
   MenuRoute: MenuRoute,
   OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,
   AdminIndexRoute: AdminIndexRoute,

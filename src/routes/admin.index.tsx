@@ -39,6 +39,7 @@ function Admin() {
   const { index: textScale, change: changeTextScale } = useTextScale();
   return <main className="min-h-screen p-6">
     <header className="mb-6 flex flex-wrap items-center gap-4"><h1 className="mr-auto font-display text-7xl text-accent">Admin</h1>
+      <Button asChild variant="secondary"><Link to="/manuale">📖 Manuale</Link></Button>
       <Button asChild variant="secondary"><Link to="/menu">Gestione menu</Link></Button>
       <Button asChild variant="secondary"><Link to="/cassa">Cassa</Link></Button>
       <Button asChild variant="secondary"><Link to="/">Totem</Link></Button>
