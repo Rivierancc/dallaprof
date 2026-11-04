@@ -60,6 +60,7 @@ export type MenuCategory = {
   custom_title_en: string;
   custom_title_fr: string;
   custom_title_es: string;
+  strip: number;
 };
 
 export type CustomKind = "none" | "dolce" | "salato" | "entrambi";
@@ -129,7 +130,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
   const db = publishable();
   const [c, p, g, b] = await Promise.all([
     db.from("menu_categories")
-      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es")
+      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, strip")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
@@ -162,6 +163,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       custom_title_en: r.custom_title_en,
       custom_title_fr: r.custom_title_fr,
       custom_title_es: r.custom_title_es,
+      strip: Number(r.strip) || 0,
     })),
     ingredients: (g.data ?? []).map((r) => ({
       id: r.id,
@@ -371,6 +373,16 @@ export const reorderCategories = createServerFn({ method: "POST" })
       console.error("reorderCategories", failed.error);
       throw new Error(failed.error.message);
     }
+    return { ok: true as const };
+  });
+
+export const setCategoryStrip = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; strip: number }) => ({ id: String(d.id), strip: Math.max(0, Math.min(9, Math.trunc(Number(d.strip) || 0))) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_categories").update({ strip: data.strip }).eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true as const };
   });
 

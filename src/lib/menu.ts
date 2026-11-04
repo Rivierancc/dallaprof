@@ -66,6 +66,7 @@ export type Category = {
   custom_title_en: string;
   custom_title_fr: string;
   custom_title_es: string;
+  strip: number;
 };
 
 export type Ingredient = {
