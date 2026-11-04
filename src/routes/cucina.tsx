@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functions";
+import { setOrderKitchenInfo } from "@/lib/menu.functions";
+import { useKitchenFeatures } from "@/components/kitchen-features";
 import { gateFlags } from "@/lib/gate";
 import { itemNotes, type Order } from "@/lib/menu";
 import { loadPrinter, printTicket } from "@/lib/epson";
@@ -53,6 +55,11 @@ function Kitchen() {
   };
 
   const orders = useLiveOrders(["preparing", "ready"], () => beep());
+  const features = useKitchenFeatures();
+  const info = useServerFn(setOrderKitchenInfo);
+  const [showHistory, setShowHistory] = useState(false);
+  const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[] }) =>
+    info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
 
   const setStatus = (id: string, status: string) =>
     update({ data: { id, status } }).catch(() => router.invalidate());
@@ -76,6 +83,11 @@ function Kitchen() {
         >
           {sound ? "🔔 Suono attivo" : "🔇 Attiva suono"}
         </button>
+        {features.history && (
+          <button onClick={() => setShowHistory(!showHistory)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+            {showHistory ? "🍳 Ordini aperti" : "📋 Storico di oggi"}
+          </button>
+        )}
         <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           ← Totem
         </Link>
@@ -83,6 +95,7 @@ function Kitchen() {
           Esci
         </button>
       </header>
+      {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-5">
         {orders.map((o) => (
@@ -98,15 +111,24 @@ function Kitchen() {
               {new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
             </p>
             <ul className="my-4 flex-1 space-y-1 text-2xl font-bold">
-              {o.items.map((i) => (
-                <li key={i.id}>
+              {o.items.map((i) => {
+                const done = (o.checked_items ?? []).includes(i.id);
+                const toggle = () => saveInfo(o.id, { checked_items: done ? (o.checked_items ?? []).filter((x) => x !== i.id) : [...(o.checked_items ?? []), i.id] });
+                return (
+                <li key={i.id} className={features.checklist && done ? "text-muted-foreground line-through" : ""}>
+                  {features.checklist && (
+                    <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mr-2 inline-flex h-10 w-10 items-center justify-center rounded-lg border-4 align-middle ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
+                      {done ? "✓" : ""}
+                    </button>
+                  )}
                   {i.qty} × {i.name}
                   {itemNotes(i).length > 0 && (
                     <span className="block pl-8 text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
                   )}
                 </li>
-              ))}
+              );})}
             </ul>
+            {features.partial && o.status === "preparing" && <PartialNotes order={o} save={(n) => saveInfo(o.id, { partial_notes: n })} />}
             <button
               onClick={() => printTicket(loadPrinter(), o as Order).catch((e) => alert(`Stampa non riuscita: ${e.message}`))}
               className="tap mb-3 h-12 rounded-2xl bg-secondary text-xl font-bold"
@@ -125,6 +147,67 @@ function Kitchen() {
           </article>
         ))}
       </div>
+      </>}
     </main>
+  );
+}
+
+const QUICK = ["Bevande pronte", "Patatine pronte", "Panini pronti", "Dolce pronto"];
+
+function PartialNotes({ order, save }: { order: Order; save: (n: string[]) => void }) {
+  const [text, setText] = useState("");
+  const notes = order.partial_notes ?? [];
+  const add = (t: string) => { const v = t.trim(); if (v && !notes.includes(v)) save([...notes, v]); setText(""); };
+  return (
+    <div className="mb-3 rounded-2xl bg-muted/50 p-3">
+      <p className="mb-2 text-lg font-bold">📣 Al tabellone:</p>
+      {notes.map((n) => (
+        <span key={n} className="mb-2 mr-2 inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-lg font-bold text-accent-foreground">
+          {n}<button aria-label={`Togli ${n}`} onClick={() => save(notes.filter((x) => x !== n))}>✕</button>
+        </span>
+      ))}
+      <div className="flex flex-wrap gap-2">
+        {QUICK.filter((q) => !notes.includes(q)).map((q) => (
+          <button key={q} onClick={() => add(q)} className="tap rounded-xl bg-secondary px-3 py-2 text-base font-bold">+ {q}</button>
+        ))}
+      </div>
+      <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); add(text); }}>
+        <input value={text} maxLength={80} onChange={(e) => setText(e.target.value)} placeholder="Altro messaggio…" className="min-w-0 flex-1 rounded-xl bg-background px-3 py-2 text-lg" />
+        <button className="tap rounded-xl bg-primary px-4 text-lg font-bold text-primary-foreground">Invia</button>
+      </form>
+    </div>
+  );
+}
+
+const STATUS: Record<string, string> = { awaiting_payment: "Da pagare", preparing: "In preparazione", ready: "Pronto", done: "Consegnato", cancelled: "Annullato" };
+
+function History() {
+  const all = useLiveOrders(["awaiting_payment", "preparing", "ready", "done", "cancelled"]);
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const today = all.filter((o) => new Date(o.created_at) >= start).reverse();
+  const paid = today.filter((o) => o.status !== "cancelled" && o.status !== "awaiting_payment");
+  const total = paid.reduce((s, o) => s + Number(o.total), 0);
+  const time = (d: string) => new Date(d).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return (
+    <section>
+      <p className="mb-4 text-2xl">Oggi: <b>{paid.length}</b> ordini pagati · <b>€ {total.toFixed(2).replace(".", ",")}</b></p>
+      {today.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine oggi</p>}
+      <div className="space-y-3">
+        {today.map((o) => (
+          <article key={o.id} className="rounded-2xl bg-card p-4">
+            <div className="flex flex-wrap items-baseline gap-4">
+              <span className="font-display text-5xl">{String(o.order_number).padStart(2, "0")}</span>
+              <span className="text-xl text-muted-foreground">{time(o.created_at)}</span>
+              <span className="rounded-full bg-muted px-3 py-1 text-lg font-bold uppercase">{o.dine_option}</span>
+              <span className="rounded-full bg-secondary px-3 py-1 text-lg font-bold">{STATUS[o.status] ?? o.status}</span>
+              <span className="ml-auto text-2xl font-bold">€ {Number(o.total).toFixed(2).replace(".", ",")}</span>
+            </div>
+            <ul className="mt-2 text-xl">
+              {o.items.map((i) => <li key={i.id}>{i.qty} × {i.name}{itemNotes(i).length > 0 && <span className="text-accent"> · {itemNotes(i).join(" · ")}</span>}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
