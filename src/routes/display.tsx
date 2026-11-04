@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { NewsTicker } from "@/components/news-ticker";
 import { useKitchenFeatures } from "@/components/kitchen-features";
+import { Button } from "@/components/ui/button";
 import { audioReady, playSound, unlockAudio } from "@/lib/sounds";
 import { useEffect, useRef, useState } from "react";
 
@@ -29,10 +30,8 @@ function Display() {
   // Suoneria: il browser la tiene muta finché non si tocca lo schermo.
   const [soundOn, setSoundOn] = useState(false);
   useEffect(() => {
-    const unlock = () => { void unlockAudio().then((ok) => setSoundOn(ok || audioReady())); };
-    window.addEventListener("pointerdown", unlock);
-    window.addEventListener("keydown", unlock);
-    return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
+    const check = window.setInterval(() => setSoundOn(audioReady()), 1000);
+    return () => window.clearInterval(check);
   }, []);
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
@@ -40,7 +39,8 @@ function Display() {
   const seen = useRef<Set<string> | null>(null);
   useEffect(() => {
     const ids = new Set(ready.map((o) => o.id));
-    if (seen.current && [...ids].some((id) => !seen.current!.has(id))) playSound(readySound);
+    const previous = seen.current;
+    if (previous && [...ids].some((id) => !previous.has(id))) playSound(readySound);
     seen.current = ids;
   }, [ready, readySound]);
   // Avviso «parzialmente pronto»: suona la suoneria scelta per lui quando arriva
@@ -48,7 +48,8 @@ function Display() {
   const seenNotes = useRef<Set<string> | null>(null);
   useEffect(() => {
     const keys = new Set(prep.flatMap((o) => (o.partial_notes ?? []).map((n) => `${o.id}:${n}`)));
-    if (partial && seenNotes.current && [...keys].some((k) => !seenNotes.current!.has(k))) playSound(partialSound);
+    const previous = seenNotes.current;
+    if (partial && previous && [...keys].some((k) => !previous.has(k))) playSound(partialSound);
     seenNotes.current = keys;
   }, [prep, partial, partialSound]);
 
@@ -57,10 +58,10 @@ function Display() {
     <main className="relative grid min-h-0 flex-1 grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
       <div className="pointer-events-none absolute inset-x-0 top-4 z-30"><ThemeGreeting /></div>
       {!soundOn && (
-        <button type="button" onClick={() => { void unlockAudio().then((ok) => { setSoundOn(ok); if (ok) playSound(readySound); }); }}
-          className="tap absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-accent px-10 py-8 font-display text-5xl text-accent-foreground shadow-2xl">
+        <Button type="button" onClick={() => { void unlockAudio().then((ok) => { setSoundOn(ok); if (ok) playSound(readySound === "nessuno" ? "campanello" : readySound); }); }}
+          className="tap absolute left-1/2 top-1/2 z-40 h-auto w-max max-w-[90%] -translate-x-1/2 -translate-y-1/2 whitespace-normal rounded-lg px-6 py-6 text-center font-display text-3xl">
           🔔 Tocca per attivare la suoneria
-        </button>
+        </Button>
       )}
       <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
         ← Totem
