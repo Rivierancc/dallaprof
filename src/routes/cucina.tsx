@@ -7,7 +7,7 @@ import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functi
 import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { gateFlags } from "@/lib/gate";
-import { itemNotes, menuQueryOptions, type CartItem, type Order, type Product } from "@/lib/menu";
+import { itemNotes, menuQueryOptions, type CartItem, type Category, type Order, type Product } from "@/lib/menu";
 import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
 
@@ -132,7 +132,7 @@ function Kitchen() {
                 <button onClick={() => setSelList([])} className="tap ml-auto rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi tutte</button>
               </div>
               {picked.map((p) => (
-                <RecipePanel key={p.o.id + p.it.id} order={p.o.order_number} item={p.it} product={productOf(p.it)} shared={shared} close={() => toggleSel(p.o.id, p.it.id)} />
+                <RecipePanel split={splitMenu(p.it, productOf(p.it), menu?.products ?? [], menu?.categories ?? [])} key={p.o.id + p.it.id} order={p.o.order_number} item={p.it} product={productOf(p.it)} shared={shared} close={() => toggleSel(p.o.id, p.it.id)} />
               ))}
             </div>
           </div>
@@ -199,9 +199,11 @@ function Kitchen() {
                         {i.qty} × {i.name} 📖
                       </button>
                     ) : <>{i.qty} × {i.name}</>}
-                    {itemNotes(i).length > 0 && (
-                      <span className="block text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
-                    )}
+                    {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
+                      {m.dish.length > 0 && <span className="block text-xl font-bold text-accent">{m.dish.join(" · ")}</span>}
+                      {m.side.length > 0 && <span className="mt-1 block border-t-2 border-border pt-1 text-xl font-bold">🍟 {m.side.join(" · ")}</span>}
+                      {m.drink.length > 0 && <span className="mt-1 block border-t-2 border-border pt-1 text-xl font-bold">🥤 {m.drink.join(" · ")}</span>}
+                    </>; })()}
                     {features.delivery && gave && (
                       <span className="block text-xl font-bold text-success">✓ consegnato</span>
                     )}
@@ -300,7 +302,7 @@ function itemIngredients(item: CartItem, product: Product | undefined) {
   return all.filter((g) => !removed.includes(g));
 }
 
-function RecipePanel({ order, item, product, shared, close }: { order: number; item: CartItem; product: Product | undefined; shared: Set<string>; close: () => void }) {
+function RecipePanel({ split, order, item, product, shared, close }: { split: ReturnType<typeof splitMenu>; order: number; item: CartItem; product: Product | undefined; shared: Set<string>; close: () => void }) {
   const removed = (item.removed ?? []).map((r) => r.toLowerCase());
   const combo = product?.combo_items ?? [];
   const main = product?.ingredients ?? [];
@@ -328,10 +330,18 @@ function RecipePanel({ order, item, product, shared, close }: { order: number; i
       {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase()) && !onlyDesc.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
         <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
       ))}
-      {(item.extras ?? []).length > 0 && <>
-        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Aggiunte e scelte del cliente</h3>
-        <ul className="mb-5 space-y-2 text-3xl font-bold text-accent">{item.extras!.map((e) => <li key={e}>+ {e}</li>)}</ul>
+      {split.dishExtras.length > 0 && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Aggiunte e scelte sul piatto</h3>
+        <ul className="mb-5 space-y-2 text-3xl font-bold text-accent">{split.dishExtras.map((e) => <li key={e}>+ {e}</li>)}</ul>
       </>}
+      {split.side.length > 0 && <div className="mb-5 border-t-4 border-border pt-4">
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">🍟 Contorno e i suoi extra</h3>
+        <ul className="space-y-2 text-3xl font-bold">{split.side.map((e) => <li key={e}>• {e}</li>)}</ul>
+      </div>}
+      {split.drink.length > 0 && <div className="mb-5 border-t-4 border-border pt-4">
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">🥤 Bevanda</h3>
+        <ul className="space-y-2 text-3xl font-bold">{split.drink.map((e) => <li key={e}>• {e}</li>)}</ul>
+      </div>}
       {combo.length > 0 && <p className="mb-5 text-2xl font-bold">🍱 Menu combinato: vedi gli articoli inclusi nell'ordine</p>}
       {product?.recipe.trim() && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Note di preparazione</h3>
@@ -340,4 +350,26 @@ function RecipePanel({ order, item, product, shared, close }: { order: number; i
       {!product && <p className="text-2xl text-muted-foreground">Questo piatto non è più nel menu: valgono solo le modifiche scritte nell'ordine.</p>}
     </section>
   );
+}
+
+// Divide le note di un piatto/menu: modifiche al piatto, contorno (con extra del menu) e bevanda.
+function splitMenu(item: CartItem, product: Product | undefined, products: Product[], categories: Category[]) {
+  const drinkCats = new Set(categories.filter((c) => /bevand|bibit|drink|bere/i.test(c.name + " " + c.slug)).map((c) => c.id));
+  const isDrinkName = (n: string) => products.some((p) => p.name.toLowerCase() === n.toLowerCase() && drinkCats.has(p.category_id));
+  const comboGroups = new Set((product?.combo_groups ?? []).map((g) => g.name));
+  const dishExtraNames = new Set((product?.extras ?? []).map((e) => e.name));
+  const comboExtraNames = new Set((product?.combo_extras ?? []).map((e) => e.name).filter((n) => !dishExtraNames.has(n)));
+  const dishExtras: string[] = [], side: string[] = [], drink: string[] = [], sideExtras: string[] = [];
+  for (const e of item.extras ?? []) {
+    const k = e.indexOf(": ");
+    const group = k > 0 ? e.slice(0, k) : "";
+    const opt = k > 0 ? e.slice(k + 2) : e.replace(/^🍱 /, "");
+    if (group && comboGroups.has(group)) (isDrinkName(opt) || /bevand|bibit|drink/i.test(group) ? drink : side).push(opt);
+    else if (!group && e.startsWith("🍱 ")) (isDrinkName(opt) ? drink : side).push(opt);
+    else if (!group && comboExtraNames.has(e)) sideExtras.push(`+ ${e}`);
+    else dishExtras.push(e);
+  }
+  side.push(...sideExtras);
+  const dish = [...dishExtras.map((e) => `+ ${e}`), ...(item.removed ?? []).map((r) => `senza ${r}`)];
+  return { dish, dishExtras, side, drink };
 }
