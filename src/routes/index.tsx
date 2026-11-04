@@ -241,7 +241,7 @@ function Totem() {
                   <h3 className="font-display text-4xl leading-tight">{isOffers ? `🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
                   {descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
-                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(p.price)}</span>
+                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
             ))}
             {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
