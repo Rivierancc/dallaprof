@@ -3,7 +3,7 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { menuQueryOptions } from "@/lib/menu";
-import { setProductRules, type MenuProduct } from "@/lib/menu.functions";
+import { setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
 import type { ChoiceGroup, Suggest } from "@/lib/options";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -39,6 +39,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
 
   return (
     <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
+      <RecipeEditor p={p} />
       <section>
         <h3 className="mb-2 text-2xl font-bold">Quanti extra può aggiungere il cliente</h3>
         <div className="flex flex-wrap gap-2">
@@ -135,5 +136,25 @@ function GroupEditor({ g, disabled, onChange, onDelete }: { g: ChoiceGroup; disa
         <button disabled={disabled} onClick={add} className={`${btn} bg-primary text-primary-foreground`}>+ Opzione</button>
       </div>
     </div>
+  );
+}
+
+// Scheda ingredienti mostrata in cucina quando si tocca il piatto.
+function RecipeEditor({ p }: { p: MenuProduct }) {
+  const qc = useQueryClient();
+  const save = useServerFn(setProductRecipe);
+  const [text, setText] = useState(p.recipe);
+  const run = async (on: boolean, recipe: string) => {
+    try { await save({ data: { id: p.id, on, recipe } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Salvato"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
+  };
+  return (
+    <section>
+      <h3 className="mb-1 text-2xl font-bold">👨‍🍳 Ingredienti di preparazione in cucina</h3>
+      <p className="mb-3 text-lg text-muted-foreground">Se è acceso, in cucina toccando il piatto si apre il riquadro con ingredienti, modifiche del cliente e queste note.</p>
+      <button onClick={() => run(!p.recipe_on, text)} className={`${btn} mb-3 ${p.recipe_on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.recipe_on ? "Acceso" : "Spento"}</button>
+      <textarea value={text} maxLength={1000} rows={4} onChange={(e) => setText(e.target.value)} placeholder="Es. pane tostato, 180 g di carne, cheddar, insalata, pomodoro…" className={`${box} block w-full`} />
+      <button onClick={() => run(p.recipe_on, text)} className={`${btn} mt-2 bg-primary text-primary-foreground`}>Salva note</button>
+    </section>
   );
 }
