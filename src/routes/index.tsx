@@ -203,7 +203,7 @@ function Totem() {
     <main className="min-h-screen p-8 pb-36">
       
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
-        <h1 className="font-display text-8xl leading-none">Totem Burger</h1>
+        <span />
         <Button variant="ghost" onClick={() => setDineOption(null)} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
       </header>
 
@@ -214,11 +214,14 @@ function Totem() {
               <span className="glow relative z-10 font-display text-6xl text-accent">🍱 {(data?.offersTitle ?? "Menu in offerta").toUpperCase()}</span>
             </Button>
           )}
-          {categories.map((c: Category) => (
+          {categories.filter((c) => !c.strip).map((c: Category) => (
             <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl bg-card">
               {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
               <span className="glow relative z-10 font-display text-6xl text-accent">{c.name.toUpperCase()}</span>
             </Button>
+          ))}
+          {[...new Set(categories.map((c) => c.strip).filter(Boolean))].sort((a, b) => a - b).map((n) => (
+            <CategoryStrip key={n} cats={categories.filter((c) => c.strip === n)} onPick={setActiveCat} />
           ))}
         </div>
       ) : (
@@ -459,4 +462,27 @@ function KioskButton() {
     <Button variant="secondary" onClick={() => void enterKiosk()} className="tap">⛶ Attiva modalità chiosco</Button>
     {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
   </div>
+}
+
+function CategoryStrip({ cats, onPick }: { cats: Category[]; onPick: (id: string) => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [center, setCenter] = useState(0)
+  const update = () => {
+    const el = ref.current; if (!el) return
+    const mid = el.scrollLeft + el.clientWidth / 2
+    let best = 0, dist = Infinity
+    Array.from(el.children).forEach((ch, i) => { const c = ch as HTMLElement; const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < dist) { dist = d; best = i } })
+    setCenter(best)
+  }
+  useEffect(() => { update() }, [cats.length])
+  return (
+    <div ref={ref} onScroll={update} className="col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto px-[30%] py-4 [scrollbar-width:none]">
+      {cats.map((c, i) => (
+        <Button variant="ghost" key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl bg-card transition-all duration-300 ${i === center ? "h-64 w-[40%] border-4 border-accent" : "h-44 w-[28%] opacity-70"}`}>
+          {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
+          <span className={`glow relative z-10 font-display text-accent ${i === center ? "text-6xl" : "text-4xl"}`}>{c.name.toUpperCase()}</span>
+        </Button>
+      ))}
+    </div>
+  )
 }
