@@ -63,7 +63,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
     catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
     finally { setBusy(false); }
   };
-  const rules = (patch: { combo?: string[]; comboPrice?: number | null; comboGroups?: ChoiceGroup[]; comboExtras?: ChoiceOption[] }) => go(() => saveRules({ data: { id: p.id, maxExtras: p.max_extras, groups: p.choice_groups, combo: p.combo_items, comboPrice: p.combo_price, suggest: p.suggest, ...patch } }));
+  const rules = (patch: { combo?: string[]; comboPrice?: number | null; comboGroups?: ChoiceGroup[]; comboExtras?: ChoiceOption[]; comboAlts?: string[] }) => go(() => saveRules({ data: { id: p.id, maxExtras: p.max_extras, groups: p.choice_groups, combo: p.combo_items, comboPrice: p.combo_price, suggest: p.suggest, ...patch } }));
   return (
     <div className={`grid gap-4 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
       <div className="flex flex-wrap items-center gap-3">
@@ -83,6 +83,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
           <button disabled={busy} onClick={() => rules({ combo: [] })} className={`${btn} bg-secondary`}>Togli</button>
         </div>
       )}
+      <MenuAlts p={p} busy={busy} menu={menu} onChange={(a) => rules({ comboAlts: a })} />
       <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
       <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
       <div className="flex flex-wrap items-center gap-3">
@@ -179,5 +180,32 @@ function PlacePick({ value, disabled, onPick }: { value: Place; disabled: boolea
       <span className="font-bold">In cucina va con:</span>
       {(Object.keys(PLACES) as Place[]).map((k) => <button key={k} disabled={disabled} aria-pressed={value === k} onClick={() => onPick(k)} className={`${btn} ${value === k ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{PLACES[k]}</button>)}
     </div>
+  );
+}
+
+// Panini in alternativa al piatto principale: il cliente sceglie quale, con i suoi ingredienti ed extra.
+function MenuAlts({ p, busy, menu, onChange }: { p: MenuProduct; busy: boolean; menu: MenuData; onChange: (a: string[]) => void }) {
+  const list = p.combo_alts;
+  const nameOf = (id: string) => menu.products.find((x) => x.id === id)?.name ?? "?";
+  return (
+    <section>
+      <h3 className="mb-1 text-2xl font-bold">🍔 Piatto principale a scelta</h3>
+      <p className="mb-3 text-lg text-muted-foreground">Aggiungi i piatti che il cliente può prendere al posto di {p.name} nello stesso menu e allo stesso prezzo. Per ognuno può togliere i suoi ingredienti e aggiungere i suoi extra, come nel piatto singolo.</p>
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full bg-accent px-4 py-1 text-xl font-bold text-accent-foreground">{p.name}</span>
+        {list.map((id) => (
+          <span key={id} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">{nameOf(id)}
+            <button disabled={busy} onClick={() => onChange(list.filter((x) => x !== id))} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button></span>
+        ))}
+      </div>
+      <select value="" disabled={busy} onChange={(e) => e.target.value && onChange([...list, e.target.value])} className={`${box} mt-2 w-full`}>
+        <option value="">+ Aggiungi un piatto in alternativa…</option>
+        {menu.categories.map((c) => (
+          <optgroup key={c.id} label={c.name}>
+            {menu.products.filter((x) => x.category_id === c.id && x.id !== p.id && !list.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          </optgroup>
+        ))}
+      </select>
+    </section>
   );
 }
