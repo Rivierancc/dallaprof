@@ -102,4 +102,7 @@ export type Order = {
   total: number;
   status: string;
   created_at: string;
+  paid_at?: string | null;
+  partial_notes?: string[];
+  checked_items?: string[];
 };
