@@ -88,7 +88,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-xl">Prezzo totale del menu €<input value={cPrice} inputMode="decimal" onChange={(e) => setCPrice(e.target.value)} placeholder="—" className={`${box} w-28 text-center`} /></label>
         <button disabled={busy} onClick={() => { const v = cPrice.trim() === "" ? null : num(cPrice); if (v !== null && !(v >= 0)) { toast.error("Controlla il prezzo"); return; } void rules({ comboPrice: v }); }} className={`${btn} bg-primary text-primary-foreground`}>Salva prezzo</button>
-        <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €), articoli in omaggio.</span>
+        <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €).</span>
       </div>
     </div>
   );
