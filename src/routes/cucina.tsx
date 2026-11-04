@@ -266,7 +266,7 @@ function History() {
   );
 }
 
-function RecipePanel({ item, product, close }: { item: CartItem; product?: Product; close: () => void }) {
+function RecipePanel({ item, product, close }: { item: CartItem; product: Product | undefined; close: () => void }) {
   const removed = (item.removed ?? []).map((r) => r.toLowerCase());
   const combo = product?.combo_items ?? [];
   return (
