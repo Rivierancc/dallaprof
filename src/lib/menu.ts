@@ -41,6 +41,7 @@ export type Product = {
   max_extras: number;
   choice_groups: ChoiceGroup[];
   combo_items: string[];
+  combo_price: number | null;
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;

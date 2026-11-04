@@ -42,3 +42,10 @@ export function suggestPrice(normal: number, s: Suggest, spent: number) {
   if (s.price === null || spent < s.min) return normal;
   return Math.min(normal, s.price);
 }
+
+// Prezzo totale del menu combinato: null = stesso prezzo del piatto (articoli inclusi in omaggio).
+export const cleanComboPrice = (v: unknown): number | null =>
+  v === null || v === undefined || v === "" ? null : money(v);
+// Prezzo base: menu (se scelto e con prezzo proprio) oppure piatto singolo.
+export const basePrice = (single: number, comboPrice: number | null, asMenu: boolean) =>
+  asMenu && comboPrice !== null ? comboPrice : single;
