@@ -38,7 +38,7 @@ describe("cleanKitchenFeatures", () => {
   });
 
   it("rispetta lo spegnimento esplicito di ogni singola funzione", () => {
-    expect(cleanKitchenFeatures({ delivery: false, readySound: "campanello" })).toEqual({ partial: true, history: true, checklist: true, delivery: false });
+    expect(cleanKitchenFeatures({ delivery: false, readySound: "campanello" })).toEqual({ partial: true, history: true, checklist: true, delivery: false, readySound: "campanello" });
     expect(cleanKitchenFeatures({ checklist: false })).toEqual({ partial: true, history: true, checklist: false, delivery: true, readySound: "campanello" });
   });
 });
