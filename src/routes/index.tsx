@@ -233,9 +233,9 @@ function Totem() {
               </Button>
             )}
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
                 <Badge p={p} />
-                {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "⭐ " : ""}🍱 {menuName(p.name, p.combo_name)}</h3> : null}
+                {isOffers ? <h3 className={`shrink-0 font-display text-5xl leading-tight ${p.badge_on && p.badge_text ? "pr-32" : ""}`}>{p.combo_offer ? "⭐ " : ""}🍱 {menuName(p.name, p.combo_name)}</h3> : null}
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
