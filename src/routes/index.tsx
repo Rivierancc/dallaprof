@@ -193,7 +193,7 @@ function Totem() {
   )
 
   const OFFERS = "__offers"
-  const offerMenus = products.filter((p) => p.combo_offer && isCombo(p))
+  const offerMenus = products.filter((p) => isCombo(p) && !p.sold_out).sort((a, b) => Number(b.combo_offer) - Number(a.combo_offer))
   const cat = categories.find((c) => c.id === activeCat)
   const shown = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
   const isOffers = activeCat === OFFERS
@@ -238,7 +238,8 @@ function Totem() {
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  <h3 className="font-display text-4xl leading-tight">{isOffers ? `🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
+                  <h3 className="font-display text-4xl leading-tight">{isOffers ? `${p.combo_offer ? "⭐ " : ""}🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
+                  {isOffers && <p className="font-display text-3xl text-accent">🍔 {p.name}</p>}
                   {descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
                 <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
@@ -316,6 +317,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
           <h2 className="font-display text-7xl">{menuOn ? menuName(product.name, product.combo_name) : product.name}</h2>
+          {menuOn && <p className="mt-1 font-display text-4xl text-accent">🍔 {product.name}</p>}
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {hasMenuPrice && (
