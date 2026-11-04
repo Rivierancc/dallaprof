@@ -17,10 +17,10 @@ export function cleanGroups(v: unknown): ChoiceGroup[] {
   return (Array.isArray(v) ? v : []).slice(0, 8).map((g) => {
     const o = (g ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown };
     const options = (Array.isArray(o.options) ? o.options : []).slice(0, 20)
-      .map((x) => { const r = (x ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown }; const to = place(r.to); return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price), ...(to ? { to } : {}) }; })
+      .map((x) => { const r = (x ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown }; const to = place(r["to"]); return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price), ...(to ? { to } : {}) }; })
       .filter((x) => x.name);
     const max = int(o.max, 1, Math.max(1, options.length || 1));
-    const to = place(o.to);
+    const to = place(o["to"]);
     return { name: String(o.name ?? "").trim().slice(0, 40), min: int(o.min, 0, max), max, options, ...(to ? { to } : {}) };
   }).filter((g) => g.name);
 }
