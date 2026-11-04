@@ -239,8 +239,13 @@ function Totem() {
                 </div>
                 <div className="mt-4">
                   <h3 className="font-display text-4xl leading-tight">{isOffers ? `${p.combo_offer ? "⭐ " : ""}🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
-                  {isOffers && <p className="font-display text-3xl text-accent">🍔 {p.name}</p>}
-                  {descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
+                  {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d, i) => (
+                    <div key={d.id} className="mt-1">
+                      <p className="font-display text-3xl text-accent">{i ? "o " : ""}🍔 {d.name}</p>
+                      {descriptionFor(d, language) && <p className="line-clamp-2 text-lg text-muted-foreground">{descriptionFor(d, language)}</p>}
+                    </div>
+                  ))}
+                  {!isOffers && descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
                 <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
@@ -320,6 +325,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
+          <Button variant="secondary" onClick={onClose} className="tap float-right ml-4 rounded-full px-6 py-3 font-display text-3xl">✕ {t.exit}</Button>
           <h2 className="font-display text-7xl">{menuOn ? menuName(dish.name, product.combo_name) : product.name}</h2>
           {menuOn && <p className="mt-1 font-display text-4xl text-accent">🍔 {dish.name}</p>}
           {descriptionFor(dish, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(dish, language)}</p>}
