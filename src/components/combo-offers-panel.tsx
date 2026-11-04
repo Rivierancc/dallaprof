@@ -27,7 +27,7 @@ export function ComboOffersPanel() {
     <div className="mx-auto mt-6 max-w-5xl">
       <Fold title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
         <div className="grid gap-5">
-          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli gli articoli inclusi e il prezzo; se lo metti «In offerta» compare anche nella sezione speciale del totem.</p>
+          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; se lo metti «In offerta» compare anche nella sezione speciale del totem.</p>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome della sezione sul totem
               <input value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} placeholder="Menu in offerta" className={`${box} min-w-0 flex-1`} /></label>
