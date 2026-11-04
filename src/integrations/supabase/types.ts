@@ -217,6 +217,8 @@ export type Database = {
           name: string
           position: number
           price: number
+          recipe: string
+          recipe_on: boolean
           sold_out: boolean
           suggest: Json
         }
@@ -242,6 +244,8 @@ export type Database = {
           name: string
           position?: number
           price?: number
+          recipe?: string
+          recipe_on?: boolean
           sold_out?: boolean
           suggest?: Json
         }
@@ -267,6 +271,8 @@ export type Database = {
           name?: string
           position?: number
           price?: number
+          recipe?: string
+          recipe_on?: boolean
           sold_out?: boolean
           suggest?: Json
         }
