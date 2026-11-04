@@ -148,6 +148,13 @@
       "when": 1793473385196,
       "tag": "0020_product_choices_combo_suggest",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793783459382,
+      "tag": "0021_kitchen_partial_checklist",
+      "breakpoints": true
     }
   ]
 }
