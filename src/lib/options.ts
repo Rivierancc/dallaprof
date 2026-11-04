@@ -49,3 +49,5 @@ export const cleanComboPrice = (v: unknown): number | null =>
 // Prezzo base: menu (se scelto e con prezzo proprio) oppure piatto singolo.
 export const basePrice = (single: number, comboPrice: number | null, asMenu: boolean) =>
   asMenu && comboPrice !== null ? comboPrice : single;
+// Nome del menu in offerta: quello scelto dal personale, altrimenti «Menu» + nome del piatto.
+export const menuName = (dish: string, custom: string) => custom.trim() || `Menu ${dish}`;

@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
-import { basePrice, canAddExtra, groupsValid, suggestPrice } from "@/lib/options"
+import { basePrice, canAddExtra, groupsValid, menuName, suggestPrice } from "@/lib/options"
 import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -192,8 +192,11 @@ function Totem() {
     </main>
   )
 
+  const OFFERS = "__offers"
+  const offerMenus = products.filter((p) => p.combo_offer && p.combo_items.length > 0)
   const cat = categories.find((c) => c.id === activeCat)
-  const shown = activeCat? products.filter((p) => p.category_id === activeCat) : []
+  const shown = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
+  const isOffers = activeCat === OFFERS
 
   return (
     <main className="min-h-screen p-8 pb-36">
@@ -205,6 +208,11 @@ function Totem() {
 
       {activeCat === null? (
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+          {offerMenus.length > 0 && (
+            <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl border-4 border-accent bg-card">
+              <span className="glow relative z-10 font-display text-6xl text-accent">🍱 {(data?.offersTitle ?? "Menu in offerta").toUpperCase()}</span>
+            </Button>
+          )}
           {categories.map((c: Category) => (
             <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl bg-card">
               {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
@@ -214,7 +222,7 @@ function Totem() {
         </div>
       ) : (
         <>
-          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {cat?.name}</Button>
+          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? data?.offersTitle : cat?.name}</Button>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
               <Button variant="ghost" onClick={() => setCompose(cat)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
@@ -230,10 +238,10 @@ function Totem() {
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
+                  <h3 className="font-display text-4xl leading-tight">{isOffers ? `🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
                   {descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
-                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(p.price)}</span>
+                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
             ))}
             {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
@@ -245,7 +253,7 @@ function Totem() {
         <Customize key={custom.id} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
-          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: asMenu ? `Menu ${custom.name}` : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
+          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: asMenu ? menuName(custom.name, custom.combo_name) : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
           setCustom(null)
           if (offerPick) { setOfferPick(false); setShowSuggest(true) }
         }} />
@@ -305,7 +313,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
-          <h2 className="font-display text-7xl">{product.name}</h2>
+          <h2 className="font-display text-7xl">{combo.length > 0 && asMenu ? menuName(product.name, product.combo_name) : product.name}</h2>
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {hasMenuPrice && (

@@ -32,11 +32,8 @@ export function ProductRules({ p }: { p: MenuProduct }) {
   const groups = p.choice_groups;
   const setGroups = (g: ChoiceGroup[]) => run({ groups: g });
   const [gName, setGName] = useState("");
-  const others = menu.products.filter((x) => x.id !== p.id);
-  const catName = (id: string) => menu.categories.find((c) => c.id === id)?.name ?? "";
   const [sPrice, setSPrice] = useState(p.suggest.price === null ? "" : fmt(p.suggest.price));
   const [sMin, setSMin] = useState(fmt(p.suggest.min));
-  const [cPrice, setCPrice] = useState(p.combo_price === null ? "" : fmt(p.combo_price));
 
   return (
     <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
@@ -66,21 +63,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
         </div>
       </section>
 
-      <section>
-        <h3 className="mb-1 text-2xl font-bold">🍱 Menu combinato</h3>
-        <p className="mb-3 text-lg text-muted-foreground">Tocca gli articoli (di qualsiasi categoria) inclusi in questo piatto. Il cliente sceglie «Solo piatto» o «Menu». In cucina arrivano anche gli articoli inclusi.</p>
-        <div className="flex flex-wrap gap-2">
-          {others.map((x) => {
-            const on = p.combo_items.includes(x.id);
-            return <button key={x.id} disabled={busy} aria-pressed={on} onClick={() => run({ combo: on ? p.combo_items.filter((i) => i !== x.id) : [...p.combo_items, x.id] })} className={`${btn} ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "✓ " : "+ "}{x.name} <span className="text-base opacity-70">· {catName(x.category_id)}</span></button>;
-          })}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xl">Prezzo totale del menu €<input value={cPrice} inputMode="decimal" onChange={(e) => setCPrice(e.target.value)} placeholder="—" className={`${box} w-28 text-center`} /></label>
-          <button disabled={busy} onClick={() => { const v = cPrice.trim() === "" ? null : num(cPrice); if (v !== null && !(v >= 0)) { toast.error("Controlla il prezzo"); return; } void run({ comboPrice: v }, "Prezzo menu salvato"); }} className={`${btn} bg-primary text-primary-foreground`}>Salva prezzo menu</button>
-          <span className="text-lg text-muted-foreground">Vuoto = il menu costa come il piatto e gli articoli inclusi sono in omaggio ({fmt(p.price)} €).</span>
-        </div>
-      </section>
+      <p className="text-lg text-muted-foreground">🍱 Il menu combinato di questo piatto (articoli inclusi, prezzo, nome) si imposta nella sezione «🍱 Menu offerta» più in basso.</p>
 
       <section>
         <h3 className="mb-1 text-2xl font-bold">💡 Suggerisci prima di chiudere l'ordine</h3>

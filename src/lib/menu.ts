@@ -42,6 +42,8 @@ export type Product = {
   choice_groups: ChoiceGroup[];
   combo_items: string[];
   combo_price: number | null;
+  combo_offer: boolean;
+  combo_name: string;
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;

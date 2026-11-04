@@ -29,6 +29,7 @@ import { fileToSmallJpeg } from "@/lib/image";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
+import { ComboOffersPanel } from "@/components/combo-offers-panel";
 import { TextScaleToggle, useTextScale } from "@/components/text-scale";
 import { Button } from "@/components/ui/button";
 
@@ -474,6 +475,7 @@ function MenuEditor() {
         </div></Fold></div>
       )}
 
+      <ComboOffersPanel />
       <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>

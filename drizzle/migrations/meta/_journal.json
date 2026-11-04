@@ -176,6 +176,13 @@
       "when": 1793811805779,
       "tag": "0024_combo_price",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793813982867,
+      "tag": "0025_combo_offers",
+      "breakpoints": true
     }
   ]
 }
