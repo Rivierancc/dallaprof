@@ -123,7 +123,7 @@ function Kitchen() {
             {orders.filter((o) => !selOrders.includes(o)).map((o) => (
               <button key={o.id} onClick={() => setSelList([])} className={`tap block w-full rounded-2xl border-4 bg-card p-3 text-left ${o.status === "ready" ? "border-success" : "border-accent"}`}>
                 <span className="font-display text-5xl leading-none">{String(o.order_number).padStart(2, "0")}</span>
-                <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${itemTitle(i, productOf(i))}`).join(", ")}</span>
+                <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${itemTitle(i, dishOf(i))}`).join(", ")}</span>
               </button>
             ))}
           </aside>
@@ -199,9 +199,9 @@ function Kitchen() {
                   <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
                     {productOf(i)?.recipe_on !== false ? (
                       <button onClick={() => toggleSel(o.id, i.id)} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${isSel(o.id, i.id) ? "bg-accent px-2 text-accent-foreground" : ""}`}>
-                        {i.qty} × {itemTitle(i, productOf(i))} 📖
+                        {i.qty} × {itemTitle(i, dishOf(i))} 📖
                       </button>
-                    ) : <>{i.qty} × {itemTitle(i, productOf(i))}</>}
+                    ) : <>{i.qty} × {itemTitle(i, dishOf(i))}</>}
                     {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                       {m.dish.length > 0 && <span className="block text-xl font-bold text-accent">{m.dish.join(" · ")}</span>}
                       {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}

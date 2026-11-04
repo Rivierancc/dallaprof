@@ -20,4 +20,10 @@ describe("righe ordine in cucina", () => {
     expect(itemTitle({ id: "1", name: "Scientifico · Picasso", price: 1, qty: 1 }, picasso)).toBe("Scientifico · Picasso");
     expect(itemTitle({ id: "1", name: "Picasso", price: 1, qty: 1 }, picasso)).toBe("Picasso");
   });
+  it("in cucina il titolo riporta il panino davvero preso dal cliente", () => {
+    const wolf = p({ id: "w", name: "Woolf", category_id: "burger" });
+    const withWolf = { ...menu, products: [...menu.products, wolf] };
+    const l = orderLines({ id: "1", productId: "a", dishId: "w", name: "Scientifico", price: 9.9, qty: 1, extras: [], removed: [] }, withWolf);
+    expect(l.title).toBe("Scientifico · Woolf");
+  });
 });
