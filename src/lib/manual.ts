@@ -44,7 +44,7 @@ export const MANUAL: ManualSection[] = [
   ]},
   { id: "admin", title: "⚙️ Admin", entries: [
     { title: "Password e codici", where: "/admin → Password e codici", steps: ["Cambia il PIN del personale inserendo quello attuale e due volte il nuovo: gli altri dispositivi dovranno rientrare.", "Cambia il codice di uscita chiosco di questo dispositivo."] },
-    { title: "Ordine categorie", where: "/admin → Ordine categorie", steps: ["Sposta le categorie con ▲ ▼ e premi Salva ordine."] },
+    { title: "Ordine categorie e strisce", where: "/admin → Ordine categorie e strisce", steps: ["Sposta le categorie con ▲ ▼ e premi Salva ordine.", "Accanto a ogni categoria scegli «Striscia 1, 2…»: le categorie con lo stesso numero formano una riga che il cliente fa scorrere col dito; quella al centro diventa più grande. «Nessuna striscia» = riquadro normale."] },
     { title: "Temi delle ricorrenze", where: "/admin → Temi", steps: ["Per ogni tema: Spento, Automatico (tra due date ogni anno) o Sempre acceso.", "Scegli colori, decorazioni emoji e auguri in 4 lingue.", "Ricorda di aggiornare le date di Pasqua e Festa della mamma ogni anno."] },
     { title: "Logo e descrizione azienda", where: "/admin → Logo e descrizione", steps: ["Carica il logo (PNG), scegli forma (tonda, ovale, cuore), grandezza, zoom e posizione.", "Scrivi la descrizione e formattala: grandezza, grassetto, corsivo, allineamento, colore."] },
     { title: "Scritta in alto sul totem", where: "/admin → Scritta in alto", steps: ["Scrivi il testo, scegli colori, grandezza ed effetto (fisso, lampeggia, svanisce, scorre) e velocità."] },
