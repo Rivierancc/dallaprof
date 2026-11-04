@@ -12,6 +12,7 @@ import { CompanySettings } from "@/components/company-identity";
 import { BannerSettings } from "@/components/display-banner";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { DividerSettings } from "@/components/menu-divider";
+import { KitchenFeaturesSettings } from "@/components/kitchen-features";
 import { PasswordSettings } from "@/components/password-settings";
 
 export const Route = createFileRoute("/admin/")({
@@ -52,6 +53,7 @@ function Admin() {
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></div>
+      <div className="mx-auto mt-6 max-w-5xl"><Fold title="👨‍🍳 Funzioni cucina"><KitchenFeaturesSettings /></Fold></div>
     </div>
   </main>;
 }
