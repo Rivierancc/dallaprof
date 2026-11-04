@@ -7,7 +7,7 @@ import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functi
 import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { gateFlags } from "@/lib/gate";
-import { menuQueryOptions, type CartItem, type Category, type Order, type Product } from "@/lib/menu";
+import { itemNotes, menuQueryOptions, type CartItem, type Category, type Order, type Product } from "@/lib/menu";
 import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
 
