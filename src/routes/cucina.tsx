@@ -11,6 +11,7 @@ import { menuQueryOptions, type CartItem, type Category, type Order, type Produc
 import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
 import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
+import { OrderNumberSettings } from "@/components/order-number-settings";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -115,6 +116,7 @@ function Kitchen() {
           Esci
         </button>
       </header>
+      <div className="mb-6"><OrderNumberSettings /></div>
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
       {picked.length > 0 ? (
