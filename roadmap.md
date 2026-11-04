@@ -1,5 +1,5 @@
 # Intervento totem
-- [ ] Numerazione in Cucina e Admin: reset a 01, scelta prossimo numero, avviso e conferma, protezione personale e verifica.
+- [x] Numerazione in Cucina e Admin: reset a 01, scelta prossimo numero, avviso e conferma, protezione personale; sei prove automatiche superate, permessi verificati senza cambiare la numerazione reale.
 - [x] Pulsante di attivazione suoneria sul Display e ripresa dell'audio prima delle note; verifica del tocco e dell'audio nel browser.
 - [x] Spunta «consegnato» per ogni piatto in cucina, con conteggio «1/2 consegnati» e interruttore proprio in Admin; provata pagando un ordine in Cassa, segnando le consegne e ricaricando la pagina. Corretto anche il pannello Admin che mostrava «Acceso» anche quando la funzione era spenta (stesso difetto per linea tra i piatti e scritta in alto).
 - [x] Spostate le sei sezioni da Menu ad Admin; verificati accesso con PIN, apertura di ogni sezione e ritorno a Menu, senza errori. Impostazioni e protezioni invariate.
