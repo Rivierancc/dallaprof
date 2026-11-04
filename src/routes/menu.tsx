@@ -117,12 +117,10 @@ function MenuEditor() {
   const closeCategory = (id: string) => {
     const row = document.querySelector(`[data-cat="${id}"]`);
     const before = row?.getBoundingClientRect().top ?? 0;
-    console.log("DBG prima", { hasRow: !!row, before, scrollY: window.scrollY, height: document.documentElement.scrollHeight });
     setSel(null);
     requestAnimationFrame(() => {
       const after = document.querySelector(`[data-cat="${id}"]`)?.getBoundingClientRect().top ?? 0;
       const shift = after - before;
-      console.log("DBG dopo", { hasRow: !!document.querySelector(`[data-cat="${id}"]`), after, shift, scrollY: window.scrollY, height: document.documentElement.scrollHeight });
       if (Math.abs(shift) > 1) window.scrollTo({ top: window.scrollY + shift });
     });
   };
