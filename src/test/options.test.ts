@@ -15,3 +15,11 @@ describe("Combo menu price", () => {
   it("costs like the dish when no menu price is set (items free)", () => { expect(basePrice(8, null, true)).toBe(8); });
   it("empty menu price means none", () => { expect(cleanComboPrice("")).toBe(null); expect(cleanComboPrice("9,90")).toBe(9.9); });
 });
+
+describe("Offer menu name", () => {
+  it("uses the staff name when set, otherwise the main dish", async () => {
+    const { menuName } = await import("@/lib/options");
+    expect(menuName("Picasso", "Menu Studente")).toBe("Menu Studente");
+    expect(menuName("Picasso", "  ")).toBe("Menu Picasso");
+  });
+});
