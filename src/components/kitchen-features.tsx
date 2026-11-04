@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getKitchenFeatures, saveKitchenFeatures, type KitchenFeatures } from "@/lib/menu.functions";
-import { cleanKitchenFeatures } from "@/lib/kitchen";
+import { cleanKitchenFeatures, READY_SOUNDS, type ReadySound } from "@/lib/kitchen";
+import { playReadySound } from "@/lib/sounds";
+
+const SOUND_LABEL: Record<ReadySound, string> = { campanello: "🛎️ Campanello", dingdong: "🎵 Din-don", trillo: "📳 Trillo", fanfara: "🎺 Fanfara", sirena: "🚨 Sirena", nessuno: "🔇 Nessuna" };
 import { Button } from "@/components/ui/button";
 
 const DEFAULT: KitchenFeatures = cleanKitchenFeatures({});
@@ -41,6 +44,20 @@ export function KitchenFeaturesSettings() {
         </Button>
       </div>
     ))}
+    <div className="rounded-2xl bg-secondary/40 p-4">
+      <p className="text-2xl font-bold">🔔 Suoneria «ordine pronto»</p>
+      <p className="mb-3 text-lg text-muted-foreground">Suona sul tabellone clienti quando la cucina preme Pronto. Tocca ▶ per ascoltarla.</p>
+      <div className="flex flex-wrap gap-3">
+        {READY_SOUNDS.map((s) => (
+          <div key={s} className="flex">
+            <Button variant={draft.readySound === s ? "default" : "secondary"} className="h-14 rounded-r-none px-5 text-xl" onClick={() => { setMsg(""); setDraft({ ...draft, readySound: s }); playReadySound(s); }}>
+              {SOUND_LABEL[s]}
+            </Button>
+            {s !== "nessuno" && <Button variant="outline" aria-label={`Ascolta ${SOUND_LABEL[s]}`} className="h-14 rounded-l-none px-4 text-xl" onClick={() => playReadySound(s)}>▶</Button>}
+          </div>
+        ))}
+      </div>
+    </div>
     <div className="flex items-center gap-4"><Button className="h-14 px-8 text-xl" onClick={save}>Salva</Button>{msg && <span className="text-xl">{msg}</span>}</div>
   </div>;
 }
