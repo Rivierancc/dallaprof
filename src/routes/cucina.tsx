@@ -266,16 +266,22 @@ function History() {
   );
 }
 
+// Ingredienti letti dalla descrizione del piatto (separati da virgola).
+const descList = (d: string) => d.split(",").map((s) => s.trim()).filter(Boolean);
+
 function RecipePanel({ item, product, close }: { item: CartItem; product: Product | undefined; close: () => void }) {
   const removed = (item.removed ?? []).map((r) => r.toLowerCase());
   const combo = product?.combo_items ?? [];
+  const main = product?.ingredients ?? [];
+  const desc = product ? descList(product.description) : [];
+  const onlyDesc = desc.filter((g) => !main.some((m) => m.toLowerCase() === g.toLowerCase()));
   return (
     <section className="animate-pop rounded-3xl border-4 border-primary bg-card p-6">
       <div className="mb-4 flex items-start gap-4">
         <h2 className="mr-auto font-display text-6xl leading-none">{item.qty} × {item.name}</h2>
         <button onClick={close} className="tap rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi</button>
       </div>
-      {(product?.ingredients.length ?? 0) > 0 && <>
+      {main.length > 0 && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti</h3>
         <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
           {product!.ingredients.map((g) => removed.includes(g.toLowerCase())
@@ -283,7 +289,15 @@ function RecipePanel({ item, product, close }: { item: CartItem; product: Produc
             : <li key={g}>• {g}</li>)}
         </ul>
       </>}
-      {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
+      {onlyDesc.length > 0 && <>
+        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti (dalla descrizione)</h3>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
+          {onlyDesc.map((g) => removed.includes(g.toLowerCase())
+            ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
+            : <li key={g}>• {g}</li>)}
+        </ul>
+      </>}
+      {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase()) && !onlyDesc.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
         <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
       ))}
       {(item.extras ?? []).length > 0 && <>
