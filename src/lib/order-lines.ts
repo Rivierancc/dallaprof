@@ -7,6 +7,10 @@ export type MenuData = { products: Product[]; categories: Category[] };
 export const productOf = (i: CartItem, products: Product[]) =>
   products.find((p) => p.id === i.productId) ?? products.find((p) => p.name.toLowerCase() === i.name.toLowerCase());
 
+// Il piatto davvero preso dal cliente: nei menu con più piatti a scelta è quello segnato in dishId.
+export const chosenDish = (i: CartItem, products: Product[]) =>
+  (i.dishId ? products.find((p) => p.id === i.dishId) : undefined) ?? productOf(i, products);
+
 // Nome da mostrare: se il menu ha un nome suo, accanto c'è sempre il nome del piatto.
 export function itemTitle(i: CartItem, product: Product | undefined) {
   if (!product || i.name.toLowerCase().includes(product.name.toLowerCase())) return i.name;
@@ -42,5 +46,5 @@ export function splitMenu(item: CartItem, product: Product | undefined, products
 export function orderLines(i: CartItem, menu: MenuData | undefined) {
   const product = menu ? productOf(i, menu.products) : undefined;
   const m = splitMenu(i, product, menu?.products ?? [], menu?.categories ?? []);
-  return { title: itemTitle(i, product), ...m };
+  return { title: itemTitle(i, menu ? chosenDish(i, menu.products) : undefined), ...m };
 }

@@ -53,8 +53,8 @@ export const cleanComboPrice = (v: unknown): number | null =>
 // Prezzo base: menu (se scelto e con prezzo proprio) oppure piatto singolo.
 export const basePrice = (single: number, comboPrice: number | null, asMenu: boolean) =>
   asMenu && comboPrice !== null ? comboPrice : single;
-// Nome del menu in offerta: quello scelto dal personale, altrimenti «Menu» + nome del piatto.
-export const menuName = (dish: string, custom: string) => custom.trim() ? `${custom.trim()} · ${dish}` : `Menu ${dish}`;
+// Nome del menu in offerta: quello scelto dal personale, senza il nome del piatto accanto.
+export const menuName = (dish: string, custom: string) => custom.trim() ? custom.trim() : `Menu ${dish}`;
 // Extra a pagamento riservati al menu (es. bacon, salse).
 export const cleanExtras = (v: unknown): ChoiceOption[] =>
   cleanGroups([{ name: "x", max: 1, options: v }])[0]?.options ?? [];
