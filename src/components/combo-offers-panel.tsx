@@ -56,7 +56,6 @@ function ComboEditor({ p }: { p: MenuProduct }) {
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState(p.combo_name);
   const [cPrice, setCPrice] = useState(p.combo_price === null ? "" : fmt(p.combo_price));
-  const catName = (id: string) => menu.categories.find((c) => c.id === id)?.name ?? "";
   const go = async (f: () => Promise<unknown>, msg = "Salvato") => {
     setBusy(true);
     try { await f(); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success(msg); }
@@ -68,15 +67,13 @@ function ComboEditor({ p }: { p: MenuProduct }) {
     <div className={`grid gap-4 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
       <div className="flex flex-wrap items-center gap-3">
         <strong className="font-display text-3xl">🍱 {menuName(p.name, p.combo_name)}</strong>
-        <span className="text-lg text-muted-foreground">piatto principale: {p.name} · {catName(p.category_id)} · da solo {fmt(p.price)} €</span>
         <button disabled={busy} role="switch" aria-checked={p.combo_offer} onClick={() => go(() => saveOffer({ data: { id: p.id, on: !p.combo_offer, name } }))} className={`${btn} ml-auto ${p.combo_offer ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.combo_offer ? "⭐ In evidenza sul totem" : "☆ Metti in evidenza"}</button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome del menu
-          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={`Menu ${p.name}`} className={`${box} min-w-0 flex-1`} /></label>
+          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Es. Scientifico" className={`${box} min-w-0 flex-1`} /></label>
         <button disabled={busy} onClick={() => go(() => saveOffer({ data: { id: p.id, on: p.combo_offer, name } }), "Nome salvato")} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
       </div>
-      <p className="-mt-2 text-lg text-muted-foreground">Vuoto = si chiama «Menu {p.name}».</p>
       {p.combo_items.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3">
           <span className="text-lg text-muted-foreground">🍱 Articoli inclusi di prima: {p.combo_items.map((id) => menu.products.find((x) => x.id === id)?.name ?? "?").join(", ")}</span>
