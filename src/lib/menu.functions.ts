@@ -99,6 +99,8 @@ export type MenuProduct = {
   choice_groups: ChoiceGroup[];
   combo_items: string[];
   combo_price: number | null;
+  combo_offer: boolean;
+  combo_name: string;
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
@@ -118,17 +120,17 @@ const cleanExtras = (v: unknown): MenuExtra[] =>
     .filter((x) => x.name)
     .slice(0, 20);
 
-export type MenuData = { categories: MenuCategory[]; products: MenuProduct[]; ingredients: MenuIngredient[] };
+export type MenuData = { categories: MenuCategory[]; products: MenuProduct[]; ingredients: MenuIngredient[]; offersTitle: string };
 
 export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promise<MenuData> => {
   const db = publishable();
-  const [c, p, g] = await Promise.all([
+  const [c, p, g, b] = await Promise.all([
     db.from("menu_categories")
       .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, suggest, recipe_on, recipe")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, suggest, recipe_on, recipe")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -136,12 +138,14 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .order("kind", { ascending: true })
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
+    db.from("kiosk_banner").select("offers_title").eq("id", 1).maybeSingle(),
   ]);
   if (g.error) throw new Error(g.error.message);
   if (c.error) throw new Error(c.error.message);
   if (p.error) throw new Error(p.error.message);
   const urls = await sign([...(c.data ?? []), ...(p.data ?? [])].map((r) => r.image_path));
   return {
+    offersTitle: (b.data?.offers_title ?? "").trim() || "Menu in offerta",
     categories: (c.data ?? []).map((r) => ({
       id: r.id,
       slug: r.slug,
@@ -191,6 +195,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       choice_groups: cleanGroups(r.choice_groups),
       combo_items: cleanCombo(r.combo_items),
       combo_price: cleanComboPrice(r.combo_price),
+      combo_offer: !!r.combo_offer,
+      combo_name: r.combo_name ?? "",
       suggest: cleanSuggest(r.suggest),
       recipe_on: r.recipe_on !== false,
       recipe: r.recipe ?? "",
@@ -242,6 +248,25 @@ export const setProductRules = createServerFn({ method: "POST" })
     const supabase = await admin();
     const { id, ...row } = data;
     const { error } = await supabase.from("menu_products").update(row as never).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+// Menu in offerta: mostra il piatto come menu nella sezione dedicata del totem, con un nome a scelta.
+export const setComboOffer = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; on: boolean; name: string }) => ({ id: String(d.id), on: !!d.on, name: String(d.name ?? "").trim().slice(0, 60) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("menu_products").update({ combo_offer: data.on, combo_name: data.name }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setOffersTitle = createServerFn({ method: "POST" })
+  .inputValidator((d: { title: string }) => ({ title: String(d.title ?? "").trim().slice(0, 40) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").update({ offers_title: data.title || "Menu in offerta" }).eq("id", 1);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
