@@ -205,6 +205,8 @@ export type Database = {
           badge_text: string
           category_id: string
           choice_groups: Json
+          combo_extras: Json
+          combo_groups: Json
           combo_items: Json
           combo_name: string
           combo_offer: boolean
@@ -235,6 +237,8 @@ export type Database = {
           badge_text?: string
           category_id: string
           choice_groups?: Json
+          combo_extras?: Json
+          combo_groups?: Json
           combo_items?: Json
           combo_name?: string
           combo_offer?: boolean
@@ -265,6 +269,8 @@ export type Database = {
           badge_text?: string
           category_id?: string
           choice_groups?: Json
+          combo_extras?: Json
+          combo_groups?: Json
           combo_items?: Json
           combo_name?: string
           combo_offer?: boolean
