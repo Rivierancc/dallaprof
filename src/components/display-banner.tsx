@@ -22,11 +22,13 @@ export function useBanner(): Banner {
 
 /** Sezione di Gestione menu: modifica e salva la scritta per tutti i totem. */
 export function BannerSettings() {
-  const saved = useBanner();
+  const { data: saved } = useQuery(bannerQueryOptions);
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Banner | null>(null);
   const [msg, setMsg] = useState("");
-  useEffect(() => { if (!draft) setDraft(saved); }, [saved, draft]);
+  // Il modulo si riempie solo quando il database ha risposto: altrimenti i pulsanti
+  // restano fermi all'aspetto iniziale e mostrano uno stato diverso da quello salvato.
+  useEffect(() => { if (!draft && saved) setDraft({ ...DEFAULT, ...saved } as Banner); }, [saved, draft]);
   if (!draft) return null;
   const save = async () => {
     setMsg("Salvo…");

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getKitchenFeatures, saveKitchenFeatures, type KitchenFeatures } from "@/lib/menu.functions";
+import { cleanKitchenFeatures } from "@/lib/kitchen";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT: KitchenFeatures = { partial: true, history: true, checklist: true };
+const DEFAULT: KitchenFeatures = cleanKitchenFeatures({});
 export const kitchenFeaturesQueryOptions = queryOptions({ queryKey: ["kitchen-features"], queryFn: () => getKitchenFeatures(), staleTime: 10_000, refetchInterval: 30_000 });
 export function useKitchenFeatures(): KitchenFeatures {
   const { data } = useQuery(kitchenFeaturesQueryOptions);
@@ -13,16 +14,19 @@ export function useKitchenFeatures(): KitchenFeatures {
 const labels: [keyof KitchenFeatures, string, string][] = [
   ["partial", "📣 Avvisi «parzialmente pronto»", "La cucina può mandare al tabellone messaggi come «Bevande pronte»."],
   ["checklist", "✅ Spunta piatti preparati", "In cucina ogni piatto dell'ordine si può spuntare quando è pronto."],
+  ["delivery", "🚚 Spunta consegne parziali", "In cucina ogni piatto si può segnare come consegnato: «bevande consegnate», «patatine consegnate»."],
   ["history", "📋 Storico ordini del giorno", "In cucina compare il pulsante per rivedere gli ordini di oggi."],
 ];
 
 /** Sezione di Admin: accende o spegne le funzioni extra della cucina. */
 export function KitchenFeaturesSettings() {
-  const saved = useKitchenFeatures();
+  const { data: saved } = useQuery(kitchenFeaturesQueryOptions);
   const qc = useQueryClient();
   const [msg, setMsg] = useState("");
   const [draft, setDraft] = useState<KitchenFeatures | null>(null);
-  useEffect(() => { if (!draft) setDraft(saved); }, [saved, draft]);
+  // Il modulo si riempie solo quando il database ha risposto: altrimenti i pulsanti
+  // restano fermi all'aspetto iniziale e mostrano uno stato diverso da quello salvato.
+  useEffect(() => { if (!draft && saved) setDraft(saved); }, [saved, draft]);
   if (!draft) return null;
   const save = async () => {
     try { await saveKitchenFeatures({ data: draft }); await qc.invalidateQueries({ queryKey: ["kitchen-features"] }); setMsg("Salvato ✓"); }

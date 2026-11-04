@@ -4,6 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
 import { cleanCombo, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
+import { cleanKitchenFeatures, type KitchenFeatures } from "@/lib/kitchen";
 
 const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
@@ -712,17 +713,17 @@ export const getNews = createServerFn({ method: "GET" }).handler(async (): Promi
   return out.slice(0, 30);
 });
 
-// Funzioni cucina attivabili da Admin: avvisi parziali, storico, spunta piatti.
-export type KitchenFeatures = { partial: boolean; history: boolean; checklist: boolean };
+// Funzioni cucina attivabili da Admin: avvisi parziali, storico, spunta piatti, consegne.
+export type { KitchenFeatures } from "@/lib/kitchen";
+
 export const getKitchenFeatures = createServerFn({ method: "GET" }).handler(async (): Promise<KitchenFeatures> => {
   const { data, error } = await publishable().from("kiosk_banner").select("kitchen").eq("id", 1).maybeSingle();
   if (error) throw new Error(error.message);
-  const k = (data?.kitchen ?? {}) as Partial<KitchenFeatures>;
-  return { partial: k.partial !== false, history: k.history !== false, checklist: k.checklist !== false };
+  return cleanKitchenFeatures(data?.kitchen as Partial<KitchenFeatures> | null);
 });
 
 export const saveKitchenFeatures = createServerFn({ method: "POST" })
-  .inputValidator((d: KitchenFeatures) => ({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist }))
+  .inputValidator((d: KitchenFeatures) => ({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist, delivery: !!d.delivery }))
   .handler(async ({ data }) => {
     await staffOnly();
     const { error } = await (await admin()).from("kiosk_banner").update({ kitchen: data as never }).eq("id", 1);
@@ -731,16 +732,18 @@ export const saveKitchenFeatures = createServerFn({ method: "POST" })
   });
 
 export const setOrderKitchenInfo = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; partial_notes?: string[]; checked_items?: string[] }) => ({
+  .inputValidator((d: { id: string; partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) => ({
     id: String(d.id),
     partial_notes: d.partial_notes?.map((s) => String(s).trim().slice(0, 80)).filter(Boolean).slice(0, 10),
     checked_items: d.checked_items?.map(String).slice(0, 100),
+    delivered_items: d.delivered_items?.map(String).slice(0, 100),
   }))
   .handler(async ({ data }) => {
     await staffOnly();
     const patch: Record<string, unknown> = {};
     if (data.partial_notes) patch["partial_notes"] = data.partial_notes;
     if (data.checked_items) patch["checked_items"] = data.checked_items;
+    if (data.delivered_items) patch["delivered_items"] = data.delivered_items;
     const { error } = await (await admin()).from("orders").update(patch as never).eq("id", data.id).in("status", ["preparing", "ready"]);
     if (error) throw new Error(error.message);
     return { ok: true };

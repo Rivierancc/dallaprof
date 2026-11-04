@@ -58,7 +58,7 @@ function Kitchen() {
   const features = useKitchenFeatures();
   const info = useServerFn(setOrderKitchenInfo);
   const [showHistory, setShowHistory] = useState(false);
-  const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[] }) =>
+  const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) =>
     info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
 
   const setStatus = (id: string, status: string) =>
@@ -98,7 +98,10 @@ function Kitchen() {
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-5">
-        {orders.map((o) => (
+        {orders.map((o) => {
+          const delivered = o.delivered_items ?? [];
+          const allDelivered = o.items.length > 0 && delivered.length >= o.items.length;
+          return (
           <article
             key={o.id}
             className={`animate-pop flex flex-col rounded-3xl border-4 bg-card p-5 ${o.status === "ready" ? "border-success" : "border-accent"}`}
@@ -110,21 +113,41 @@ function Kitchen() {
             <p className="text-lg text-muted-foreground">
               {new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
             </p>
-            <ul className="my-4 flex-1 space-y-1 text-2xl font-bold">
+            {features.delivery && (
+              <p className={`text-xl font-bold ${allDelivered ? "text-success" : "text-muted-foreground"}`}>
+                🚚 {delivered.length}/{o.items.length} consegnati
+              </p>
+            )}
+            {features.checklist && features.delivery && (
+              <p className="text-base text-muted-foreground">✓ = preparato · 🚚 = consegnato</p>
+            )}
+            <ul className="my-4 flex-1 space-y-2 text-2xl font-bold">
               {o.items.map((i) => {
                 const done = (o.checked_items ?? []).includes(i.id);
+                const gave = delivered.includes(i.id);
                 const toggle = () => saveInfo(o.id, { checked_items: done ? (o.checked_items ?? []).filter((x) => x !== i.id) : [...(o.checked_items ?? []), i.id] });
+                const toggleDelivered = () => saveInfo(o.id, { delivered_items: gave ? delivered.filter((x) => x !== i.id) : [...delivered, i.id] });
                 return (
-                <li key={i.id} className={features.checklist && done ? "text-muted-foreground line-through" : ""}>
+                <li key={i.id} className="flex items-start gap-3">
                   {features.checklist && (
-                    <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mr-2 inline-flex h-10 w-10 items-center justify-center rounded-lg border-4 align-middle ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
+                    <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-4 text-xl ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
                       {done ? "✓" : ""}
                     </button>
                   )}
-                  {i.qty} × {i.name}
-                  {itemNotes(i).length > 0 && (
-                    <span className="block pl-8 text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
+                  {features.delivery && (
+                    <button onClick={toggleDelivered} aria-label={gave ? `Togli consegna di ${i.name}` : `Segna ${i.name} come consegnato`} className={`tap mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-4 text-xl ${gave ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground"}`}>
+                      {gave ? "🚚" : ""}
+                    </button>
                   )}
+                  <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
+                    {i.qty} × {i.name}
+                    {itemNotes(i).length > 0 && (
+                      <span className="block text-xl font-bold text-accent">{itemNotes(i).join(" · ")}</span>
+                    )}
+                    {features.delivery && gave && (
+                      <span className="block text-xl font-bold text-success">✓ consegnato</span>
+                    )}
+                  </span>
                 </li>
               );})}
             </ul>
@@ -140,12 +163,13 @@ function Kitchen() {
                 Pronto
               </button>
             ) : (
-              <button onClick={() => setStatus(o.id, "done")} className="tap h-20 rounded-2xl bg-secondary font-display text-5xl">
+              <button onClick={() => setStatus(o.id, "done")} className={`tap h-20 rounded-2xl font-display text-5xl ${features.delivery && allDelivered ? "bg-success text-success-foreground" : "bg-secondary"}`}>
                 Consegnato
               </button>
             )}
           </article>
-        ))}
+          );
+        })}
       </div>
       </>}
     </main>

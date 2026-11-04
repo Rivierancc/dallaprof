@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Spunta «consegnato» per ogni piatto in cucina, con conteggio «1/2 consegnati» e interruttore proprio in Admin; provata pagando un ordine in Cassa, segnando le consegne e ricaricando la pagina. Corretto anche il pannello Admin che mostrava «Acceso» anche quando la funzione era spenta (stesso difetto per linea tra i piatti e scritta in alto).
 - [x] Spostate le sei sezioni da Menu ad Admin; verificati accesso con PIN, apertura di ogni sezione e ritorno a Menu, senza errori. Impostazioni e protezioni invariate.
 - [x] Cambio PIN personale e codice locale uscita chiosco da Gestione menu; verificati rifiuto PIN attuale errato, nuovo accesso e uscita delle altre sessioni, salvataggio locale dopo ricarica; codici originali ripristinati dopo le prove.
 - [x] Spostamento e ingrandimento del logo dentro la forma; ripristino, salvataggio, rilettura e visualizzazione in home verificati dal pannello con PIN, preservando logo e descrizione.
