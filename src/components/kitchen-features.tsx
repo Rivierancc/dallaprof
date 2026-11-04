@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getKitchenFeatures, saveKitchenFeatures, type KitchenFeatures } from "@/lib/menu.functions";
+import { cleanKitchenFeatures } from "@/lib/kitchen";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT: KitchenFeatures = { partial: true, history: true, checklist: true };
+const DEFAULT: KitchenFeatures = cleanKitchenFeatures({});
 export const kitchenFeaturesQueryOptions = queryOptions({ queryKey: ["kitchen-features"], queryFn: () => getKitchenFeatures(), staleTime: 10_000, refetchInterval: 30_000 });
 export function useKitchenFeatures(): KitchenFeatures {
   const { data } = useQuery(kitchenFeaturesQueryOptions);
@@ -13,6 +14,7 @@ export function useKitchenFeatures(): KitchenFeatures {
 const labels: [keyof KitchenFeatures, string, string][] = [
   ["partial", "📣 Avvisi «parzialmente pronto»", "La cucina può mandare al tabellone messaggi come «Bevande pronte»."],
   ["checklist", "✅ Spunta piatti preparati", "In cucina ogni piatto dell'ordine si può spuntare quando è pronto."],
+  ["delivery", "🚚 Spunta consegne parziali", "In cucina ogni piatto si può segnare come consegnato: «bevande consegnate», «patatine consegnate»."],
   ["history", "📋 Storico ordini del giorno", "In cucina compare il pulsante per rivedere gli ordini di oggi."],
 ];
 

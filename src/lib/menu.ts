@@ -105,4 +105,5 @@ export type Order = {
   paid_at?: string | null;
   partial_notes?: string[];
   checked_items?: string[];
+  delivered_items?: string[];
 };
