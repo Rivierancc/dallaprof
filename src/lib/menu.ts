@@ -6,6 +6,7 @@ import { getMenu } from "@/lib/menu.functions";
 export type CartItem = {
   id: string;
   productId?: string;
+  dishId?: string; // panino scelto in alternativa dentro un menu
   name: string;
   price: number;
   qty: number;
@@ -46,6 +47,7 @@ export type Product = {
   combo_extras: { name: string; price: number; to?: "dish" | "side" | "drink" | undefined }[];
   combo_offer: boolean;
   combo_name: string;
+  combo_alts: string[];
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
