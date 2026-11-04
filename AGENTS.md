@@ -34,6 +34,5 @@
 - Staff settings panels must seed their editable draft only once the settings query has resolved (`if (!draft && data)`), never from the loading fallback; why: a draft seeded from the fallback shows staff a switch state that was never saved, so a panel can read "on" while the feature is off.
 - Every optional kitchen behaviour is its own flag in the `kiosk_banner.kitchen` JSON, normalised by cleanKitchenFeatures so a flag missing from older rows stays on; add new switches there and to the Admin panel rather than inventing new storage.
 - Each kitchen alert tone (ready, partially ready) is its own field in that JSON, while the notes live only in src/lib/sounds.ts; why: staff pick a tone per alert from Admin and every screen must play the same tune.
-- Staff text zoom is `--text-scale` multiplied into the root font-size clamp (styles.css), set by useTextScale per device; why: a wrapper zoom skips dropdowns, a fixed size breaks the screen clamp.
-
-- The user manual lives in src/lib/manual.ts (shown at /manuale, searchable, downloadable); update it and MANUAL_UPDATED with every user-visible change; why: the user asked for it to stay current.
+- Staff text zoom is `--text-scale` multiplied into the root font-size clamp (styles.css), per device; why: wrapper zoom skips dropdowns.
+- Update src/lib/manual.ts (+MANUAL_UPDATED) on every user-visible change; why: /manuale must stay current.
