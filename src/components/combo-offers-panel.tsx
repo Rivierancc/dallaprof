@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { menuQueryOptions } from "@/lib/menu";
 import { setComboOffer, setOffersTitle, setProductRules, type MenuProduct } from "@/lib/menu.functions";
-import { menuName, type ChoiceGroup, type ChoiceOption } from "@/lib/options";
+import { menuName, type ChoiceGroup, type ChoiceOption, type Place } from "@/lib/options";
 import { GroupEditor } from "@/components/product-rules";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -114,9 +114,12 @@ function MenuChoices({ p, busy, menu, onChange }: { p: MenuProduct; busy: boolea
       <p className="mb-3 text-lg text-muted-foreground">Valgono solo quando il cliente prende il menu. Scegli il nome e la categoria: entrano tutti i suoi prodotti; togli con la ✕ quelli non adatti. I prodotti esauriti spariscono da soli. Prezzo 0 = compreso; puoi mettere un supplemento.</p>
       <div className="grid gap-3">
         {groups.map((g, gi) => (
-          <GroupEditor key={g.name + gi} g={g} disabled={busy} menu={menu}
-            onChange={(ng) => onChange(groups.map((x, i) => (i === gi ? ng : x)))}
-            onDelete={() => onChange(groups.filter((_, i) => i !== gi))} />
+          <div key={g.name + gi} className="grid gap-2">
+            <PlacePick value={g.to ?? guessPlace(g, menu)} disabled={busy} onPick={(to) => onChange(groups.map((x, i) => (i === gi ? { ...x, to } : x)))} />
+            <GroupEditor g={g} disabled={busy} menu={menu}
+              onChange={(ng) => onChange(groups.map((x, i) => (i === gi ? { ...ng, to: x.to } : x)))}
+              onDelete={() => onChange(groups.filter((_, i) => i !== gi))} />
+          </div>
         ))}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -145,11 +148,12 @@ function MenuExtras({ p, busy, onChange }: { p: MenuProduct; busy: boolean; onCh
   return (
     <section>
       <h3 className="mb-1 text-2xl font-bold">➕ Extra a pagamento nel menu</h3>
-      <p className="mb-3 text-lg text-muted-foreground">Es. bacon, salse. Il cliente li vede insieme agli extra già impostati nelle Opzioni del piatto{p.extras.length ? ` (${p.extras.map((e) => e.name).join(", ")})` : ""}.</p>
+      <p className="mb-3 text-lg text-muted-foreground">Es. bacon, salse. Su ogni extra scegli se in cucina va col 🍔 panino o col 🍟 contorno (es. salsa per le patatine). Il cliente li vede insieme agli extra già impostati nelle Opzioni del piatto{p.extras.length ? ` (${p.extras.map((e) => e.name).join(", ")})` : ""}.</p>
       <div className="flex flex-wrap gap-2">
         {list.map((o) => (
           <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
             {o.name} · € {fmt(o.price)}
+            {(["dish", "side"] as const).map((t) => <button key={t} disabled={busy} aria-pressed={(o.to ?? "dish") === t} onClick={() => onChange(list.map((x) => (x.name === o.name ? { ...x, to: t } : x)))} className={`tap rounded-full px-3 py-1 text-base ${(o.to ?? "dish") === t ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{t === "dish" ? "🍔 Panino" : "🍟 Contorno"}</button>)}
             <button disabled={busy} onClick={() => onChange(list.filter((x) => x.name !== o.name))} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button>
           </span>
         ))}
@@ -161,5 +165,18 @@ function MenuExtras({ p, busy, onChange }: { p: MenuProduct; busy: boolean; onCh
         <button disabled={busy} onClick={add} className={`${btn} bg-primary text-primary-foreground`}>+ Extra</button>
       </div>
     </section>
+  );
+}
+
+const PLACES = { dish: "🍔 Panino", side: "🍟 Contorno", drink: "🥤 Bevanda" } as const;
+const guessPlace = (g: ChoiceGroup, menu: MenuData): Place =>
+  /bevand|bibit|drink/i.test(g.name) ? "drink" : g.options.some((o) => menu.products.some((x) => x.name === o.name)) ? "side" : "dish";
+// Con cosa va in cucina questa scelta del menu.
+function PlacePick({ value, disabled, onPick }: { value: Place; disabled: boolean; onPick: (p: Place) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xl">
+      <span className="font-bold">In cucina va con:</span>
+      {(Object.keys(PLACES) as Place[]).map((k) => <button key={k} disabled={disabled} aria-pressed={value === k} onClick={() => onPick(k)} className={`${btn} ${value === k ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{PLACES[k]}</button>)}
+    </div>
   );
 }

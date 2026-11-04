@@ -102,7 +102,7 @@ export type MenuProduct = {
   combo_offer: boolean;
   combo_name: string;
   combo_groups: ChoiceGroup[];
-  combo_extras: { name: string; price: number }[];
+  combo_extras: { name: string; price: number; to?: "dish" | "side" | "drink" | undefined }[];
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;

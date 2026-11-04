@@ -43,7 +43,7 @@ export type Product = {
   combo_items: string[];
   combo_price: number | null;
   combo_groups: ChoiceGroup[];
-  combo_extras: { name: string; price: number }[];
+  combo_extras: { name: string; price: number; to?: "dish" | "side" | "drink" | undefined }[];
   combo_offer: boolean;
   combo_name: string;
   suggest: Suggest;
