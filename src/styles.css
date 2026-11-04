@@ -29,6 +29,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-shared: var(--shared);
   --color-shared-foreground: var(--shared-foreground);
+  --color-kitchen-side: var(--kitchen-side);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-destructive: var(--destructive);
@@ -48,6 +49,7 @@
   --popover-foreground: oklch(0.97 0.02 85);
   --shared: oklch(0.55 0.2 255);
   --shared-foreground: oklch(0.98 0.01 85);
+  --kitchen-side: oklch(0.78 0.16 305);
   --primary: oklch(0.6 0.22 28);
   --primary-foreground: oklch(0.98 0.01 85);
   --secondary: oklch(0.3 0.03 40);

@@ -2,7 +2,7 @@
 export type ManualEntry = { title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "4 novembre 2026 (ore 21)";
+export const MANUAL_UPDATED = "4 novembre 2026 (ore 21:33)";
 
 export const MANUAL: ManualSection[] = [
   { id: "totem", title: "🍔 Totem clienti (pagina iniziale)", entries: [
@@ -25,7 +25,7 @@ export const MANUAL: ManualSection[] = [
     { title: "Lavorare gli ordini", where: "/cucina (serve il PIN)", steps: ["Gli ordini pagati arrivano in tempo reale con un suono.", "Premi «Pronto» quando è tutto pronto: il numero passa a «Pronto» sul tabellone.", "Premi «Consegnato» per chiuderlo."] },
     { title: "Avvisi «parzialmente pronto»", where: "Scheda ordine in cucina", steps: ["Tocca «+ Bevande pronte», «+ Patatine pronte»… o scrivi un testo libero.", "Il messaggio compare sul tabellone; la ✕ lo toglie. L'ordine resta aperto fino a «Pronto»."] },
     { title: "Spunta piatti preparati e consegnati", where: "Scheda ordine", steps: ["Quadratino ✅ accanto al piatto: lo segna come preparato.", "Quadratino 🚚: lo segna come consegnato; in alto si legge quanti sono consegnati."] },
-    { title: "Ingredienti di preparazione", where: "Scheda ordine → nome del piatto", steps: ["Tocca il nome di un piatto (📖) per aprire la scheda ingredienti.", "Gli ingredienti tolti dal cliente sono barrati in rosso con «SENZA».", "Puoi aprire più schede; «Apri tutti gli ingredienti» le apre tutte per un ordine.", "Gli ingredienti in comune fra le schede aperte sono evidenziati in blu 🔵.", "Nei menu: in alto il panino con i suoi extra; sotto una riga il contorno con le sue salse ed extra; sotto un'altra riga la bevanda. Con cosa va ogni cosa lo decidi in Menu offerta."] },
+    { title: "Ingredienti di preparazione", where: "Scheda ordine → nome del piatto", steps: ["Tocca il nome di un piatto (📖) per aprire la scheda ingredienti.", "Gli ingredienti tolti dal cliente sono barrati in rosso con «SENZA».", "Puoi aprire più schede; «Apri tutti gli ingredienti» le apre tutte per un ordine.", "Gli ingredienti in comune fra le schede aperte sono evidenziati in blu 🔵.", "Nei menu: prima tutti gli ingredienti del panino e le sue aggiunte; una riga blu separa il contorno, scritto in viola con le sue salse ed extra; una riga verde separa la bevanda, scritta in verde. Con cosa va ogni cosa lo decidi in Menu offerta."] },
     { title: "Storico del giorno", where: "Cucina → pulsante Storico", steps: ["Mostra tutti gli ordini di oggi con ora, stato, piatti e totale incassato."] },
   ]},
   { id: "display", title: "📺 Tabellone clienti", entries: [

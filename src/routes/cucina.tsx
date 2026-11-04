@@ -202,8 +202,8 @@ function Kitchen() {
                     ) : <>{i.qty} × {itemTitle(i, productOf(i))}</>}
                     {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                       {m.dish.length > 0 && <span className="block text-xl font-bold text-accent">{m.dish.join(" · ")}</span>}
-                      {m.side.length > 0 && <span className="mt-1 block border-t-2 border-border pt-1 text-xl font-bold">🍟 {m.side.join(" · ")}</span>}
-                      {m.drink.length > 0 && <span className="mt-1 block border-t-2 border-border pt-1 text-xl font-bold">🥤 {m.drink.join(" · ")}</span>}
+                      {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
+                      {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
                     </>; })()}
                     {features.delivery && gave && (
                       <span className="block text-xl font-bold text-success">✓ consegnato</span>
@@ -321,9 +321,9 @@ function RecipePanel({ split, order, item, product, shared, close }: { split: Re
         <h2 className="mr-auto font-display text-6xl leading-none"><span className="text-accent">#{String(order).padStart(2, "0")}</span> {item.qty} × {itemTitle(item, product)}</h2>
         <button onClick={close} className="tap rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi</button>
       </div>
-      {(main.length > 0 || split.dishExtras.length > 0) && <>
+      {main.length > 0 && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti del piatto</h3>
-        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">{main.map(row)}{split.dishExtras.map((e) => <li key={"x" + e} className="text-accent">+ {e}</li>)}</ul>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">{main.map(row)}</ul>
       </>}
       {onlyDesc.length > 0 && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti (dalla descrizione)</h3>
@@ -332,12 +332,15 @@ function RecipePanel({ split, order, item, product, shared, close }: { split: Re
       {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase()) && !onlyDesc.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
         <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
       ))}
-      {split.side.length > 0 && <div className="mb-5 border-t-4 border-border pt-4">
-        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">🍟 Contorno</h3>
+      {split.dishExtras.length > 0 && <ul className="mb-5 space-y-2 text-3xl font-bold text-accent">
+        {split.dishExtras.map((e) => <li key={e}>+ {e}</li>)}
+      </ul>}
+      {split.side.length > 0 && <div className="mb-5 border-t-4 border-shared pt-4 text-kitchen-side">
+        <h3 className="mb-2 text-2xl font-bold">🍟 Contorno</h3>
         <ul className="space-y-2 text-3xl font-bold">{split.side.map((e) => <li key={e}>• {e}</li>)}</ul>
       </div>}
-      {split.drink.length > 0 && <div className="mb-5 border-t-4 border-border pt-4">
-        <h3 className="mb-2 text-2xl font-bold text-muted-foreground">🥤 Bevanda</h3>
+      {split.drink.length > 0 && <div className="mb-5 border-t-4 border-success pt-4 text-success">
+        <h3 className="mb-2 text-2xl font-bold">🥤 Bevanda</h3>
         <ul className="space-y-2 text-3xl font-bold">{split.drink.map((e) => <li key={e}>• {e}</li>)}</ul>
       </div>}
       {combo.length > 0 && <p className="mb-5 text-2xl font-bold">🍱 Menu combinato: vedi gli articoli inclusi nell'ordine</p>}
