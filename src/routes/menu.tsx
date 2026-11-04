@@ -18,6 +18,7 @@ import {
   setFeatured,
   setBadge,
   setProductOptions,
+  setCategoryRecipe,
   setDescription,
   setTranslation,
   uploadMenuPhoto,
@@ -498,12 +499,35 @@ type ProductHandlers = {
 // La lista dei piatti di una categoria: la stessa sia sotto la categoria sia nella pagina a sé.
 function ProductsSection({ active, products, h }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers }) {
   const divider = useDivider();
+  const qc = useQueryClient();
+  const setRecipe = useServerFn(setCategoryRecipe);
+  const [busy, setBusy] = useState(false);
+  // Acceso se almeno un piatto ha la scheda ingredienti attiva: un tocco spegne tutto.
+  const anyOn = products.some((p) => p.recipe_on !== false);
+  const toggleAll = async () => {
+    setBusy(true);
+    try {
+      await setRecipe({ data: { categoryId: active.id, on: !anyOn } });
+      await qc.invalidateQueries({ queryKey: ["menu"] });
+      toast.success(anyOn ? "Scheda ingredienti spenta per tutta la categoria" : "Scheda ingredienti accesa per tutta la categoria");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-display text-4xl">{active.name} · {products.length} piatti</h3>
         <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
           + Nuovo piatto
+        </button>
+      </div>
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3">
+        <span className="text-xl font-bold">📖 Scheda ingredienti in cucina per tutta la categoria:</span>
+        <button disabled={busy} onClick={toggleAll} className={`tap rounded-xl px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>
+          {anyOn ? "Acceso · tocca per spegnere tutto" : "Spento · tocca per accendere tutto"}
         </button>
       </div>
       <ul className="space-y-3">

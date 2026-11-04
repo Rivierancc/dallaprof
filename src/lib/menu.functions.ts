@@ -253,6 +253,17 @@ export const setProductRecipe = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// Accende/spegne la scheda ingredienti in cucina per TUTTI i piatti di una categoria.
+export const setCategoryRecipe = createServerFn({ method: "POST" })
+  .inputValidator((d: { categoryId: string; on: boolean }) => ({ categoryId: String(d.categoryId), on: !!d.on }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { error } = await supabase.from("menu_products").update({ recipe_on: data.on }).eq("category_id", data.categoryId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 export const setSoldOut = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; soldOut: boolean }) => ({ id: String(d.id), soldOut: !!d.soldOut }))
   .handler(async ({ data }) => {
