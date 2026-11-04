@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_categories ADD COLUMN IF NOT EXISTS strip integer NOT NULL DEFAULT 0;

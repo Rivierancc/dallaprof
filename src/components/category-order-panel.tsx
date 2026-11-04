@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Fold } from "@/components/fold";
-import { reorderCategories, type MenuCategory } from "@/lib/menu.functions";
+import { reorderCategories, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
   const [cats, setCats] = useState(categories);
@@ -24,13 +24,23 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
     finally { setSaving(false); }
   };
 
+  const setStrip = async (id: string, strip: number) => {
+    try { await setCategoryStrip({ data: { id, strip } }); await refresh(); toast.success(strip ? `Messa nella striscia ${strip}` : "Tolta dalle strisce"); }
+    catch (e) { console.error(e); toast.error("Salvataggio non riuscito"); }
+  };
+
   return (
-    <Fold title="↕️ Ordine categorie" hint="1 = prima sul totem">
+    <Fold title="↕️ Ordine categorie e strisce" hint="1 = prima sul totem">
+      <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del totem. «Nessuna» = riquadri normali.</p>
       <ul className="space-y-2">
         {cats.map((c, i) => (
           <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-background/40 p-3">
             <span className="w-10 text-center font-display text-3xl text-accent">{i + 1}</span>
             <span className="min-w-0 flex-1 text-2xl font-bold">{c.name}</span>
+            <select value={c.strip} onChange={(e) => setStrip(c.id, Number(e.target.value))} aria-label={`Striscia di ${c.name}`} className="rounded-xl bg-secondary px-3 py-2 text-xl">
+              <option value={0}>Nessuna striscia</option>
+              {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Striscia {n}</option>)}
+            </select>
             <button onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Sposta su ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▲</button>
             <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} aria-label={`Sposta giù ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▼</button>
           </li>

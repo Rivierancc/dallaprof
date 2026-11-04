@@ -124,6 +124,7 @@ export type Database = {
           name: string
           position: number
           slug: string
+          strip: number
         }
         Insert: {
           active?: boolean
@@ -138,6 +139,7 @@ export type Database = {
           name: string
           position?: number
           slug: string
+          strip?: number
         }
         Update: {
           active?: boolean
@@ -152,6 +154,7 @@ export type Database = {
           name?: string
           position?: number
           slug?: string
+          strip?: number
         }
         Relationships: []
       }
