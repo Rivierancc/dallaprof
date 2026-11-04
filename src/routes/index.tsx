@@ -233,16 +233,17 @@ function Totem() {
               </Button>
             )}
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
-                <Badge p={p} />
+              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
+                <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
+                {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "⭐ " : ""}🍱 {menuName(p.name, p.combo_name)}</h3> : null}
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  <h3 className="font-display text-4xl leading-tight">{isOffers ? `${p.combo_offer ? "⭐ " : ""}🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
-                  {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d, i) => (
+                  {!isOffers && <h3 className="font-display text-4xl leading-tight">{p.name}</h3>}
+                  {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                     <div key={d.id} data-dish={d.id} className="mt-1">
-                      <p className="font-display text-3xl text-accent">{i ? "o " : ""}🍔 {d.name}</p>
+                      <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
                       {descriptionFor(d, language) && <p className="line-clamp-2 text-lg text-muted-foreground">{descriptionFor(d, language)}</p>}
                     </div>
                   ))}
@@ -441,10 +442,10 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
   )
 }
 
-function Badge({ p }: { p: Product }) {
+function Badge({ p, pos = "right-3 top-3" }: { p: Product; pos?: string }) {
   if (!p.badge_on || !p.badge_text) return null
   return (
-    <span className={`absolute right-3 top-3 z-10 -rotate-6 rounded-2xl rounded-br-none border-4 border-background bg-destructive px-4 py-2 font-display text-3xl uppercase leading-none text-destructive-foreground shadow-lg ${p.badge_blink ? "animate-badge" : ""}`}>
+    <span className={`absolute ${pos} z-10 -rotate-6 rounded-2xl rounded-br-none border-4 border-background bg-destructive px-4 py-2 font-display text-3xl uppercase leading-none text-destructive-foreground shadow-lg ${p.badge_blink ? "animate-badge" : ""}`}>
       {p.badge_text}
     </span>
   )
