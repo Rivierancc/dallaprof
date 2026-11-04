@@ -375,6 +375,7 @@ function MenuEditor() {
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
         <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/admin">Admin</Link></Button>
+        <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/manuale">📖 Manuale</Link></Button>
         <Link to="/cucina" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           Cucina
         </Link>
