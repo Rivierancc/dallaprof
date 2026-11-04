@@ -169,6 +169,13 @@
       "when": 1793785857929,
       "tag": "0023_product_kitchen_recipe",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793811805779,
+      "tag": "0024_combo_price",
+      "breakpoints": true
     }
   ]
 }

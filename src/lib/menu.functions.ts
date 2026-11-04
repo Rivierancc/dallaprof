@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
-import { cleanCombo, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
+import { cleanCombo, cleanComboPrice, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
 import { cleanKitchenFeatures, type KitchenFeatures } from "@/lib/kitchen";
 
 const BUCKET = "menu-photos";
@@ -98,6 +98,7 @@ export type MenuProduct = {
   max_extras: number;
   choice_groups: ChoiceGroup[];
   combo_items: string[];
+  combo_price: number | null;
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
@@ -127,7 +128,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, suggest, recipe_on, recipe")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, suggest, recipe_on, recipe")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -189,6 +190,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       max_extras: cleanMaxExtras(r.max_extras),
       choice_groups: cleanGroups(r.choice_groups),
       combo_items: cleanCombo(r.combo_items),
+      combo_price: cleanComboPrice(r.combo_price),
       suggest: cleanSuggest(r.suggest),
       recipe_on: r.recipe_on !== false,
       recipe: r.recipe ?? "",
@@ -227,7 +229,8 @@ export const setProductOptions = createServerFn({ method: "POST" })
   });
 
 export const setProductRules = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; maxExtras: number; groups: ChoiceGroup[]; combo: string[]; suggest: Suggest }) => ({
+  .inputValidator((d: { id: string; maxExtras: number; groups: ChoiceGroup[]; combo: string[]; comboPrice?: number | null; suggest: Suggest }) => ({
+    combo_price: cleanComboPrice(d.comboPrice),
     id: String(d.id),
     max_extras: cleanMaxExtras(d.maxExtras),
     choice_groups: cleanGroups(d.groups),
