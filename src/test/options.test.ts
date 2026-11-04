@@ -19,7 +19,7 @@ describe("Combo menu price", () => {
 describe("Offer menu name", () => {
   it("uses the staff name when set, otherwise the main dish", async () => {
     const { menuName } = await import("@/lib/options");
-    expect(menuName("Picasso", "Menu Studente")).toBe("Menu Studente");
+    expect(menuName("Picasso", "Menu Studente")).toBe("Menu Studente · Picasso");
     expect(menuName("Picasso", "  ")).toBe("Menu Picasso");
   });
 });
