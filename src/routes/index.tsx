@@ -36,6 +36,7 @@ function Totem() {
   const [activeCat, setActiveCat] = useState<string | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
   const [custom, setCustom] = useState<Product | null>(null)
+  const [startDish, setStartDish] = useState<string | null>(null)
   const [showCart, setShowCart] = useState(false)
   const [compose, setCompose] = useState<Category | null>(null)
   const lib = data?.ingredients ?? []
@@ -232,7 +233,7 @@ function Totem() {
               </Button>
             )}
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={() => setCustom(p)} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
+              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left">
                 <Badge p={p} />
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
@@ -240,7 +241,7 @@ function Totem() {
                 <div className="mt-4">
                   <h3 className="font-display text-4xl leading-tight">{isOffers ? `${p.combo_offer ? "⭐ " : ""}🍱 ${menuName(p.name, p.combo_name)}` : p.name}</h3>
                   {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d, i) => (
-                    <div key={d.id} className="mt-1">
+                    <div key={d.id} data-dish={d.id} className="mt-1">
                       <p className="font-display text-3xl text-accent">{i ? "o " : ""}🍔 {d.name}</p>
                       {descriptionFor(d, language) && <p className="line-clamp-2 text-lg text-muted-foreground">{descriptionFor(d, language)}</p>}
                     </div>
@@ -256,7 +257,7 @@ function Totem() {
       )}
 
       {custom && (
-        <Customize key={custom.id} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish) => {
+        <Customize key={custom.id} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
           setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, ...(asMenu && dish.id !== custom.id ? { dishId: dish.id } : {}), name: asMenu ? menuName(dish.name, custom.combo_name) : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
@@ -289,12 +290,12 @@ function Totem() {
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, all, lib, onClose, onAdd }: { product: Product; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product) => void }) {
+function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: Product; startDish?: string | null; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [removed, setRemoved] = useState<string[]>([])
   const [extras, setExtras] = useState<string[]>([])
-  const [dishId, setDishId] = useState(product.id)
+  const [dishId, setDishId] = useState(startDish ?? product.id)
   const ingredients = (all.find((x) => x.id === dishId) ?? product).ingredients.filter((g) => !ingredientOff(g, lib))
   const L = (n: string) => ingredientLabel(n, lib, language)
   const [picks, setPicks] = useState<Record<string, string[]>>({})
