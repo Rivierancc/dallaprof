@@ -23,3 +23,14 @@ describe("Offer menu name", () => {
     expect(menuName("Picasso", "  ")).toBe("Menu Picasso");
   });
 });
+
+import { cleanExtras, isCombo } from "@/lib/options";
+describe("menu con scelte", () => {
+  it("un menu con sole scelte (contorno/bevanda) è un menu", () => {
+    expect(isCombo({ combo_items: [], combo_groups: [{ name: "Bevanda", min: 1, max: 1, options: [{ name: "Acqua", price: 0 }] }] })).toBe(true);
+    expect(isCombo({ combo_items: [], combo_groups: [] })).toBe(false);
+  });
+  it("extra del menu tengono il prezzo", () => {
+    expect(cleanExtras([{ name: "Bacon", price: "1,5" }, { name: "" }])).toEqual([{ name: "Bacon", price: 1.5 }]);
+  });
+});
