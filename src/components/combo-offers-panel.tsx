@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { menuQueryOptions } from "@/lib/menu";
 import { setComboOffer, setOffersTitle, setProductRules, type MenuProduct } from "@/lib/menu.functions";
-import { menuName, type ChoiceGroup, type ChoiceOption } from "@/lib/options";
+import { menuName, type ChoiceGroup, type ChoiceOption, type Place } from "@/lib/options";
 import { GroupEditor } from "@/components/product-rules";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
