@@ -23,6 +23,7 @@ export type Database = {
           id: number
           kitchen: Json
           news: Json
+          offers_title: string
           settings: Json
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           id?: number
           kitchen?: Json
           news?: Json
+          offers_title?: string
           settings?: Json
           updated_at?: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           id?: number
           kitchen?: Json
           news?: Json
+          offers_title?: string
           settings?: Json
           updated_at?: string
         }
@@ -203,6 +206,8 @@ export type Database = {
           category_id: string
           choice_groups: Json
           combo_items: Json
+          combo_name: string
+          combo_offer: boolean
           combo_price: number | null
           description: string
           description_en: string
@@ -231,6 +236,8 @@ export type Database = {
           category_id: string
           choice_groups?: Json
           combo_items?: Json
+          combo_name?: string
+          combo_offer?: boolean
           combo_price?: number | null
           description?: string
           description_en?: string
@@ -259,6 +266,8 @@ export type Database = {
           category_id?: string
           choice_groups?: Json
           combo_items?: Json
+          combo_name?: string
+          combo_offer?: boolean
           combo_price?: number | null
           description?: string
           description_en?: string
