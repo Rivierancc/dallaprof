@@ -1,0 +1,1 @@
+ALTER TABLE public.menu_products ADD COLUMN IF NOT EXISTS combo_alts jsonb NOT NULL DEFAULT '[]'::jsonb;
