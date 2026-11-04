@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
-import { basePrice, canAddExtra, groupsValid, menuName, suggestPrice } from "@/lib/options"
+import { basePrice, canAddExtra, groupsValid, isCombo, menuName, suggestPrice } from "@/lib/options"
 import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -193,7 +193,7 @@ function Totem() {
   )
 
   const OFFERS = "__offers"
-  const offerMenus = products.filter((p) => p.combo_offer && p.combo_items.length > 0)
+  const offerMenus = products.filter((p) => p.combo_offer && isCombo(p))
   const cat = categories.find((c) => c.id === activeCat)
   const shown = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
   const isOffers = activeCat === OFFERS
@@ -289,19 +289,21 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
   const [removed, setRemoved] = useState<string[]>([])
   const [extras, setExtras] = useState<string[]>([])
   const ingredients = product.ingredients.filter((g) => !ingredientOff(g, lib))
-  const offers = product.extras.filter((e) => !ingredientOff(e.name, lib))
-  const chosen = offers.filter((e) => extras.includes(e.name))
   const L = (n: string) => ingredientLabel(n, lib, language)
   const [picks, setPicks] = useState<Record<string, string[]>>({})
-  const groups = product.choice_groups.map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib)) })).filter((g) => g.options.length)
-  const ok = groupsValid(groups, picks)
-  const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
   const combo = product.combo_items.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x)
   const comboLines = combo.map((x) => ({ name: `🍱 ${x.name}`, price: 0 }))
-  const hasMenuPrice = combo.length > 0 && product.combo_price !== null
+  const hasCombo = isCombo(product)
+  const hasMenuPrice = hasCombo && product.combo_price !== null
   const [asMenu, setAsMenu] = useState(true)
+  const menuOn = hasCombo && (!hasMenuPrice || asMenu)
+  const offers = [...product.extras, ...(menuOn ? product.combo_extras.filter((e) => !product.extras.some((x) => x.name === e.name)) : [])].filter((e) => !ingredientOff(e.name, lib))
+  const groups = [...(menuOn ? product.combo_groups : []), ...product.choice_groups].map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib)) })).filter((g) => g.options.length)
+  const ok = groupsValid(groups, picks)
+  const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
   const base = basePrice(p2(product), product.combo_price, hasMenuPrice && asMenu)
-  const lines = combo.length > 0 && (!hasMenuPrice || asMenu) ? comboLines : []
+  const lines = menuOn ? comboLines : []
+  const chosen = offers.filter((e) => extras.includes(e.name))
   const total = base + [...chosen, ...picked].reduce((s, e) => s + e.price, 0)
   const toggle = (g: { name: string; max: number }, o: string) => setPicks((cur) => {
     const list = cur[g.name] ?? []
@@ -313,7 +315,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
       <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
-          <h2 className="font-display text-7xl">{combo.length > 0 && asMenu ? menuName(product.name, product.combo_name) : product.name}</h2>
+          <h2 className="font-display text-7xl">{menuOn ? menuName(product.name, product.combo_name) : product.name}</h2>
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {hasMenuPrice && (
