@@ -242,10 +242,10 @@ function Totem() {
       )}
 
       {custom && (
-        <Customize key={custom.id} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed) => {
+        <Customize key={custom.id} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu) => {
           if (!dineOption) { setShowCart(false); return }
-          const price = Math.round((p2(custom) + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
-          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
+          const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
+          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, name: asMenu ? `Menu ${custom.name}` : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
           setCustom(null)
           if (offerPick) { setOfferPick(false); setShowSuggest(true) }
         }} />
@@ -275,7 +275,7 @@ function Totem() {
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, all, lib, onClose, onAdd }: { product: Product; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[]) => void }) {
+function Customize({ product, all, lib, onClose, onAdd }: { product: Product; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [removed, setRemoved] = useState<string[]>([])
@@ -290,7 +290,11 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
   const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
   const combo = product.combo_items.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x)
   const comboLines = combo.map((x) => ({ name: `🍱 ${x.name}`, price: 0 }))
-  const total = p2(product) + [...chosen, ...picked].reduce((s, e) => s + e.price, 0)
+  const hasMenuPrice = combo.length > 0 && product.combo_price !== null
+  const [asMenu, setAsMenu] = useState(true)
+  const base = basePrice(p2(product), product.combo_price, hasMenuPrice && asMenu)
+  const lines = combo.length > 0 && (!hasMenuPrice || asMenu) ? comboLines : []
+  const total = base + [...chosen, ...picked].reduce((s, e) => s + e.price, 0)
   const toggle = (g: { name: string; max: number }, o: string) => setPicks((cur) => {
     const list = cur[g.name] ?? []
     if (list.includes(o)) return { ...cur, [g.name]: list.filter((x) => x !== o) }
@@ -303,8 +307,13 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
         <div className="min-h-0 overflow-auto p-8">
           <h2 className="font-display text-7xl">{product.name}</h2>
           {descriptionFor(product, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(product, language)}</p>}
-          <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(product.price)}</p>
-          {combo.length > 0 && (
+          <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
+          {hasMenuPrice && (
+            <div className="mt-4 flex gap-3">
+              {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? `🍱 Menu · ${euro(product.combo_price ?? 0)}` : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
+            </div>
+          )}
+          {lines.length > 0 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">🍱 {t.includes}</h3>
               <ul className="mt-3 flex flex-wrap gap-3">{combo.map((x) => <li key={x.id} className="rounded-full bg-muted px-6 py-3 text-2xl font-bold">{x.name}</li>)}</ul>
@@ -353,7 +362,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...comboLines, ...picked, ...chosen], removed) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
+          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, hasMenuPrice && asMenu) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
           <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
         </div>
       </div>
