@@ -20,11 +20,13 @@ const labels: [keyof KitchenFeatures, string, string][] = [
 
 /** Sezione di Admin: accende o spegne le funzioni extra della cucina. */
 export function KitchenFeaturesSettings() {
-  const saved = useKitchenFeatures();
+  const { data: saved } = useQuery(kitchenFeaturesQueryOptions);
   const qc = useQueryClient();
   const [msg, setMsg] = useState("");
   const [draft, setDraft] = useState<KitchenFeatures | null>(null);
-  useEffect(() => { if (!draft) setDraft(saved); }, [saved, draft]);
+  // Il modulo si riempie solo quando il database ha risposto: altrimenti i pulsanti
+  // restano fermi all'aspetto iniziale e mostrano uno stato diverso da quello salvato.
+  useEffect(() => { if (!draft && saved) setDraft(saved); }, [saved, draft]);
   if (!draft) return null;
   const save = async () => {
     try { await saveKitchenFeatures({ data: draft }); await qc.invalidateQueries({ queryKey: ["kitchen-features"] }); setMsg("Salvato ✓"); }
