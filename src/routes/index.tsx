@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
-import { canAddExtra, groupsValid, suggestPrice } from "@/lib/options"
+import { basePrice, canAddExtra, groupsValid, suggestPrice } from "@/lib/options"
 import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
