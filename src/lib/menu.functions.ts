@@ -711,3 +711,37 @@ export const getNews = createServerFn({ method: "GET" }).handler(async (): Promi
   for (let i = 0; i < 10; i++) for (const l of lists) if (l[i]) out.push(l[i]!);
   return out.slice(0, 30);
 });
+
+// Funzioni cucina attivabili da Admin: avvisi parziali, storico, spunta piatti.
+export type KitchenFeatures = { partial: boolean; history: boolean; checklist: boolean };
+export const getKitchenFeatures = createServerFn({ method: "GET" }).handler(async (): Promise<KitchenFeatures> => {
+  const { data, error } = await publishable().from("kiosk_banner").select("kitchen").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  const k = (data?.kitchen ?? {}) as Partial<KitchenFeatures>;
+  return { partial: k.partial !== false, history: k.history !== false, checklist: k.checklist !== false };
+});
+
+export const saveKitchenFeatures = createServerFn({ method: "POST" })
+  .inputValidator((d: KitchenFeatures) => ({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").update({ kitchen: data as never }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setOrderKitchenInfo = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; partial_notes?: string[]; checked_items?: string[] }) => ({
+    id: String(d.id),
+    partial_notes: d.partial_notes?.map((s) => String(s).trim().slice(0, 80)).filter(Boolean).slice(0, 10),
+    checked_items: d.checked_items?.map(String).slice(0, 100),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const patch: Record<string, unknown> = {};
+    if (data.partial_notes) patch["partial_notes"] = data.partial_notes;
+    if (data.checked_items) patch["checked_items"] = data.checked_items;
+    const { error } = await (await admin()).from("orders").update(patch as never).eq("id", data.id).in("status", ["preparing", "ready"]);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

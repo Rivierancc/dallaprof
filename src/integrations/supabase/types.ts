@@ -21,6 +21,7 @@ export type Database = {
           company_style: Json
           divider: Json | null
           id: number
+          kitchen: Json
           news: Json
           settings: Json
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           company_style?: Json
           divider?: Json | null
           id?: number
+          kitchen?: Json
           news?: Json
           settings?: Json
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           company_style?: Json
           divider?: Json | null
           id?: number
+          kitchen?: Json
           news?: Json
           settings?: Json
           updated_at?: string
@@ -279,34 +282,40 @@ export type Database = {
       }
       orders: {
         Row: {
+          checked_items: Json
           created_at: string
           dine_option: string
           id: string
           items: Json
           order_number: number
           paid_at: string | null
+          partial_notes: Json
           payment_method: string | null
           status: string
           total: number
         }
         Insert: {
+          checked_items?: Json
           created_at?: string
           dine_option: string
           id?: string
           items?: Json
           order_number?: number
           paid_at?: string | null
+          partial_notes?: Json
           payment_method?: string | null
           status?: string
           total?: number
         }
         Update: {
+          checked_items?: Json
           created_at?: string
           dine_option?: string
           id?: string
           items?: Json
           order_number?: number
           paid_at?: string | null
+          partial_notes?: Json
           payment_method?: string | null
           status?: string
           total?: number

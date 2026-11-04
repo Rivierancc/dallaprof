@@ -3,6 +3,7 @@ import { ThemeGreeting } from "@/components/theme-layer";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { NewsTicker } from "@/components/news-ticker";
+import { useKitchenFeatures } from "@/components/kitchen-features";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -22,6 +23,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
+  const { partial } = useKitchenFeatures();
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
 
@@ -36,7 +38,12 @@ function Display() {
         <h2 className="mb-8 font-display text-8xl text-muted-foreground">In preparazione</h2>
         <div className="grid grid-cols-3 content-start gap-5">
           {prep.map((o) => (
-            <div key={o.id} className="rounded-3xl bg-card py-6 text-center font-display text-8xl">{pad(o.order_number)}</div>
+            <div key={o.id} className="rounded-3xl bg-card py-6 text-center">
+              <div className="font-display text-8xl">{pad(o.order_number)}</div>
+              {partial && (o.partial_notes ?? []).map((n, i) => (
+                <p key={i} className="animate-pop mx-2 mt-2 rounded-xl bg-accent px-2 py-1 text-xl font-bold text-accent-foreground">✓ {n}</p>
+              ))}
+            </div>
           ))}
         </div>
       </section>
