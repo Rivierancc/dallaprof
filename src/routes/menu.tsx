@@ -78,6 +78,7 @@ function MenuEditor() {
   const [sel, setSel] = useState<string | null>(null);
   const [view, setView] = useState<View>("inline");
   const [jump, setJump] = useState(0);
+  const [foldOpen, setFoldOpen] = useState(false);
 
   // La scelta su dove mostrare i piatti resta in memoria sul dispositivo del locale.
   useEffect(() => {
@@ -106,8 +107,22 @@ function MenuEditor() {
 
   const active = menu.categories.find((c) => c.id === sel) ?? null;
   const openCategory = (id: string) => {
+    setFoldOpen(true);
     setSel(id);
     setJump((n) => n + 1);
+  };
+
+  // «Chiudi i piatti» fa uscire solo da quella categoria: la lista resta aperta e
+  // la riga della categoria non si sposta dallo schermo.
+  const closeCategory = (id: string) => {
+    const row = document.querySelector(`[data-cat="${id}"]`);
+    const before = row?.getBoundingClientRect().top ?? 0;
+    setSel(null);
+    requestAnimationFrame(() => {
+      const after = document.querySelector(`[data-cat="${id}"]`)?.getBoundingClientRect().top ?? 0;
+      const shift = after - before;
+      if (Math.abs(shift) > 1) window.scrollTo({ top: window.scrollY + shift });
+    });
   };
   const productsOf = (id: string) => menu.products.filter((p) => p.category_id === id).sort((a, b) => a.position - b.position);
   const refresh = () => qc.invalidateQueries({ queryKey: ["menu"] });
@@ -398,14 +413,14 @@ function MenuEditor() {
           </div>
         </section>
       ) : (
-        <div className="mx-auto max-w-5xl"><Fold title="📂 Categorie e piatti" hint={`${cats.length}`} open={!!active}><div className="space-y-4">
+        <div className="mx-auto max-w-5xl"><Fold title="📂 Categorie e piatti" hint={`${cats.length}`} open={foldOpen || !!active} onToggle={setFoldOpen}><div className="space-y-4">
           <div className="flex items-center justify-end gap-4">
             <button onClick={addCategory} className="tap rounded-xl bg-primary px-5 py-3 text-xl font-bold text-primary-foreground">
               + Nuova
             </button>
           </div>
           {cats.map((c, i) => (
-            <div key={c.id} className="space-y-3">
+            <div key={c.id} data-cat={c.id} className="space-y-3">
               <div
                 draggable
                 onDragStart={() => setDragId(c.id)}
@@ -436,7 +451,7 @@ function MenuEditor() {
                     c={c}
                     count={productsOf(c.id).length}
                     selected={active?.id === c.id}
-                    onOpen={() => (active?.id === c.id ? setSel(null) : openCategory(c.id))}
+                    onOpen={() => (active?.id === c.id ? closeCategory(c.id) : openCategory(c.id))}
                     onRename={(name) => renameCategory(c, name)}
                     onPhoto={(file) => categoryPhoto(c, file)}
                     onDelete={() => removeCategory(c)}
