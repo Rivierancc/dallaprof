@@ -27,6 +27,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-shared: var(--shared);
+  --color-shared-foreground: var(--shared-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-destructive: var(--destructive);
@@ -44,6 +46,8 @@
   --card-foreground: oklch(0.97 0.02 85);
   --popover: oklch(0.23 0.03 40);
   --popover-foreground: oklch(0.97 0.02 85);
+  --shared: oklch(0.55 0.2 255);
+  --shared-foreground: oklch(0.98 0.01 85);
   --primary: oklch(0.6 0.22 28);
   --primary-foreground: oklch(0.98 0.01 85);
   --secondary: oklch(0.3 0.03 40);
