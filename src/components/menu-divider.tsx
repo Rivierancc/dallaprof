@@ -31,11 +31,13 @@ export function DividerView({ divider }: { divider: Divider }) {
 
 /** Sezione di Admin: sceglie come appare la linea tra i piatti in Gestione menu. */
 export function DividerSettings() {
-  const saved = useDivider();
+  const { data: saved } = useQuery(dividerQueryOptions);
   const qc = useQueryClient();
   const [draft, setDraft] = useState<Divider | null>(null);
   const [msg, setMsg] = useState("");
-  useEffect(() => { if (!draft) setDraft(saved); }, [saved, draft]);
+  // Il modulo si riempie solo quando il database ha risposto: altrimenti i pulsanti
+  // restano fermi all'aspetto iniziale e mostrano uno stato diverso da quello salvato.
+  useEffect(() => { if (!draft && saved) setDraft({ ...DEFAULT, ...saved } as Divider); }, [saved, draft]);
   if (!draft) return null;
   const set = (p: Partial<Divider>) => { setMsg(""); setDraft({ ...draft, ...p }); };
   const save = async () => {
