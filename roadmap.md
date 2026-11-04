@@ -19,3 +19,4 @@
 - [ ] Da provare sul posto: schermo intero sul tablet vero, stampa Epson, incasso reale al POS.
 - [x] «Chiudi i piatti» esce solo dalla categoria: la lista «Categorie e piatti» resta aperta e la visuale non torna in cima; provato cliccando con la visuale in due posizioni diverse.
 - [x] Ingrandimento del testo in Gestione menu e Admin con quattro livelli (Normale, Grande, Molto grande, Enorme) ricordati sul dispositivo; provato cliccando: grandezza base 18,96 → 23,70 → 28,44 → 34,13 px, scelta salva dopo la ricarica, totem rimasto alla grandezza di fabbrica.
+- [x] Card dei menu sul totem: tolta la vocetta «o» davanti ai piatti, nome del menu in cima alla card e più grande, titoli allineati; badge «Top» spostato sotto il titolo e colore al passaggio del mouse reso leggibile; provato aprendo la sezione Menu in offerta.
