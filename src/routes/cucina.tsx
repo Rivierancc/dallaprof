@@ -353,7 +353,7 @@ function splitMenu(item: CartItem, product: Product | undefined, products: Produ
   const drinkCats = new Set(categories.filter((c) => /bevand|bibit|drink|bere/i.test(c.name + " " + c.slug)).map((c) => c.id));
   const isDrinkName = (n: string) => products.some((p) => p.name.toLowerCase() === n.toLowerCase() && drinkCats.has(p.category_id));
   const comboGroups = new Set((product?.combo_groups ?? []).map((g) => g.name));
-  const dishExtras: string[] = [], side: string[] = [], drink: string[] = [], sideExtras: string[] = [];
+  const dishExtras: string[] = [], side: string[] = [], drink: string[] = [];
   for (const e of item.extras ?? []) {
     const k = e.indexOf(": ");
     const group = k > 0 ? e.slice(0, k) : "";
@@ -364,7 +364,6 @@ function splitMenu(item: CartItem, product: Product | undefined, products: Produ
     else if (!group && e.startsWith("🍱 ")) (isDrinkName(opt) ? drink : side).push(opt);
     else dishExtras.push(e);
   }
-  side.push(...sideExtras);
   const dish = [...dishExtras.map((e) => `+ ${e}`), ...(item.removed ?? []).map((r) => `senza ${r}`)];
   return { dish, dishExtras, side, drink };
 }
