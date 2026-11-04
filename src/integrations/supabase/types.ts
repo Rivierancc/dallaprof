@@ -203,6 +203,7 @@ export type Database = {
           category_id: string
           choice_groups: Json
           combo_items: Json
+          combo_price: number | null
           description: string
           description_en: string
           description_es: string
@@ -230,6 +231,7 @@ export type Database = {
           category_id: string
           choice_groups?: Json
           combo_items?: Json
+          combo_price?: number | null
           description?: string
           description_en?: string
           description_es?: string
@@ -257,6 +259,7 @@ export type Database = {
           category_id?: string
           choice_groups?: Json
           combo_items?: Json
+          combo_price?: number | null
           description?: string
           description_en?: string
           description_es?: string
