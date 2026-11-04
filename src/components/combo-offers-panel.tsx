@@ -27,7 +27,7 @@ export function ComboOffersPanel() {
     <div className="mx-auto mt-6 max-w-5xl">
       <Fold title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
         <div className="grid gap-5">
-          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; se lo metti «In offerta» compare anche nella sezione speciale del totem.</p>
+          <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; ogni menu compare da solo nella sezione speciale del totem; con «⭐ In evidenza» va in cima con la stellina.</p>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome della sezione sul totem
               <input value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} placeholder="Menu in offerta" className={`${box} min-w-0 flex-1`} /></label>
@@ -69,7 +69,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
       <div className="flex flex-wrap items-center gap-3">
         <strong className="font-display text-3xl">🍱 {menuName(p.name, p.combo_name)}</strong>
         <span className="text-lg text-muted-foreground">piatto principale: {p.name} · {catName(p.category_id)} · da solo {fmt(p.price)} €</span>
-        <button disabled={busy} role="switch" aria-checked={p.combo_offer} onClick={() => go(() => saveOffer({ data: { id: p.id, on: !p.combo_offer, name } }))} className={`${btn} ml-auto ${p.combo_offer ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.combo_offer ? "⭐ In offerta sul totem" : "Non in offerta"}</button>
+        <button disabled={busy} role="switch" aria-checked={p.combo_offer} onClick={() => go(() => saveOffer({ data: { id: p.id, on: !p.combo_offer, name } }))} className={`${btn} ml-auto ${p.combo_offer ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.combo_offer ? "⭐ In evidenza sul totem" : "☆ Metti in evidenza"}</button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome del menu
@@ -148,7 +148,8 @@ function MenuExtras({ p, busy, onChange }: { p: MenuProduct; busy: boolean; onCh
   return (
     <section>
       <h3 className="mb-1 text-2xl font-bold">➕ Extra a pagamento nel menu</h3>
-      <p className="mb-3 text-lg text-muted-foreground">Es. bacon, salse. Su ogni extra scegli se in cucina va col 🍔 panino o col 🍟 contorno (es. salsa per le patatine). Il cliente li vede insieme agli extra già impostati nelle Opzioni del piatto{p.extras.length ? ` (${p.extras.map((e) => e.name).join(", ")})` : ""}.</p>
+      <p className="mb-2 text-lg text-muted-foreground">Gli extra del panino restano uguali anche nel menu, li prendi dalle Opzioni del piatto. Qui aggiungi solo extra in più (es. salsa per le patatine → 🍟 Contorno).</p>
+      {p.extras.length > 0 && <p className="mb-3 rounded-xl bg-muted p-3 text-lg">🍔 Extra del panino, già presenti nel menu: <b>{p.extras.map((e) => `${e.name} € ${fmt(e.price)}`).join(" · ")}</b></p>}
       <div className="flex flex-wrap gap-2">
         {list.map((o) => (
           <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
