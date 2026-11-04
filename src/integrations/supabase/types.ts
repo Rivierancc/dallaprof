@@ -284,6 +284,7 @@ export type Database = {
         Row: {
           checked_items: Json
           created_at: string
+          delivered_items: Json
           dine_option: string
           id: string
           items: Json
@@ -297,6 +298,7 @@ export type Database = {
         Insert: {
           checked_items?: Json
           created_at?: string
+          delivered_items?: Json
           dine_option: string
           id?: string
           items?: Json
@@ -310,6 +312,7 @@ export type Database = {
         Update: {
           checked_items?: Json
           created_at?: string
+          delivered_items?: Json
           dine_option?: string
           id?: string
           items?: Json
