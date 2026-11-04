@@ -4,6 +4,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { NewsTicker } from "@/components/news-ticker";
 import { useKitchenFeatures } from "@/components/kitchen-features";
+import { playReadySound } from "@/lib/sounds";
+import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -23,9 +25,16 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
-  const { partial } = useKitchenFeatures();
+  const { partial, readySound } = useKitchenFeatures();
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
+  // Suona solo quando un ordine diventa pronto, non all'apertura della pagina.
+  const seen = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const ids = new Set(ready.map((o) => o.id));
+    if (seen.current && [...ids].some((id) => !seen.current!.has(id))) playReadySound(readySound);
+    seen.current = ids;
+  }, [ready, readySound]);
 
   return (
     <div className="flex h-screen flex-col">
