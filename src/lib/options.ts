@@ -1,6 +1,9 @@
 // Regole condivise tra pannello e totem: scelte obbligatorie, limite extra, menu combinati, suggeriti.
-export type ChoiceOption = { name: string; price: number };
-export type ChoiceGroup = { name: string; min: number; max: number; options: ChoiceOption[] };
+// to = con cosa va in cucina nei menu: panino, contorno o bevanda.
+export type Place = "dish" | "side" | "drink";
+export type ChoiceOption = { name: string; price: number; to?: Place };
+export type ChoiceGroup = { name: string; min: number; max: number; options: ChoiceOption[]; to?: Place };
+const place = (v: unknown): Place | undefined => (v === "dish" || v === "side" || v === "drink" ? v : undefined);
 // price = prezzo d'offerta (0 = omaggio, null = prezzo normale); min = spesa minima (0 = sempre).
 export type Suggest = { on: boolean; price: number | null; min: number };
 
@@ -14,10 +17,11 @@ export function cleanGroups(v: unknown): ChoiceGroup[] {
   return (Array.isArray(v) ? v : []).slice(0, 8).map((g) => {
     const o = (g ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown };
     const options = (Array.isArray(o.options) ? o.options : []).slice(0, 20)
-      .map((x) => { const r = (x ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown }; return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price) }; })
+      .map((x) => { const r = (x ?? {}) as { [k: string]: unknown; name?: unknown; price?: unknown; min?: unknown; max?: unknown; on?: unknown; options?: unknown }; const to = place(r.to); return { name: String(r.name ?? "").trim().slice(0, 40), price: money(r.price), ...(to ? { to } : {}) }; })
       .filter((x) => x.name);
     const max = int(o.max, 1, Math.max(1, options.length || 1));
-    return { name: String(o.name ?? "").trim().slice(0, 40), min: int(o.min, 0, max), max, options };
+    const to = place(o.to);
+    return { name: String(o.name ?? "").trim().slice(0, 40), min: int(o.min, 0, max), max, options, ...(to ? { to } : {}) };
   }).filter((g) => g.name);
 }
 

@@ -352,17 +352,23 @@ function RecipePanel({ split, order, item, product, shared, close }: { split: Re
 function splitMenu(item: CartItem, product: Product | undefined, products: Product[], categories: Category[]) {
   const drinkCats = new Set(categories.filter((c) => /bevand|bibit|drink|bere/i.test(c.name + " " + c.slug)).map((c) => c.id));
   const isDrinkName = (n: string) => products.some((p) => p.name.toLowerCase() === n.toLowerCase() && drinkCats.has(p.category_id));
-  const comboGroups = new Set((product?.combo_groups ?? []).map((g) => g.name));
+  const comboGroups = new Map((product?.combo_groups ?? []).map((g) => [g.name, g]));
+  const comboExtras = new Map((product?.combo_extras ?? []).filter((e) => !(product?.extras ?? []).some((x) => x.name === e.name)).map((e) => [e.name, e]));
   const dishExtras: string[] = [], side: string[] = [], drink: string[] = [];
   for (const e of item.extras ?? []) {
     const k = e.indexOf(": ");
     const group = k > 0 ? e.slice(0, k) : "";
     const opt = k > 0 ? e.slice(k + 2) : e.replace(/^🍱 /, "");
+    const g = group ? comboGroups.get(group) : undefined;
     const isProduct = products.some((p) => p.name.toLowerCase() === opt.toLowerCase());
-    // Le scelte del menu che sono prodotti (patatine, bibite) vanno a parte; salse ed extra restano sul panino.
-    if (group && comboGroups.has(group) && (isProduct || /bevand|bibit|drink/i.test(group))) (isDrinkName(opt) || /bevand|bibit|drink/i.test(group) ? drink : side).push(opt);
-    else if (!group && e.startsWith("🍱 ")) (isDrinkName(opt) ? drink : side).push(opt);
-    else dishExtras.push(e);
+    // Il personale decide in Menu offerta con cosa va ogni scelta/extra; senza indicazione si indovina.
+    const to = g ? (g.to ?? (isDrinkName(opt) || /bevand|bibit|drink/i.test(group) ? "drink" : isProduct ? "side" : "dish"))
+      : !group && e.startsWith("🍱 ") ? (isDrinkName(opt) ? "drink" : "side")
+      : !group ? (comboExtras.get(e)?.to ?? "dish") : "dish";
+    const label = g && to !== "dish" && !isProduct ? `${group}: ${opt}` : g ? opt : e;
+    if (to === "drink") drink.push(label);
+    else if (to === "side") side.push(g || e.startsWith("🍱 ") ? label : `+ ${label}`);
+    else dishExtras.push(g ? e : label);
   }
   const dish = [...dishExtras.map((e) => `+ ${e}`), ...(item.removed ?? []).map((r) => `senza ${r}`)];
   return { dish, dishExtras, side, drink };
