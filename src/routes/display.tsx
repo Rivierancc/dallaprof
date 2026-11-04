@@ -4,8 +4,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { NewsTicker } from "@/components/news-ticker";
 import { useKitchenFeatures } from "@/components/kitchen-features";
-import { playSound } from "@/lib/sounds";
-import { useEffect, useRef } from "react";
+import { audioReady, playSound, unlockAudio } from "@/lib/sounds";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -26,6 +26,14 @@ const pad = (n: number) => String(n).padStart(2, "0");
 function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
   const { partial, readySound, partialSound } = useKitchenFeatures();
+  // Suoneria: il browser la tiene muta finché non si tocca lo schermo.
+  const [soundOn, setSoundOn] = useState(false);
+  useEffect(() => {
+    const unlock = () => { void unlockAudio().then((ok) => setSoundOn(ok || audioReady())); };
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
+  }, []);
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
   // Suona solo quando un ordine diventa pronto, non all'apertura della pagina.
@@ -48,6 +56,12 @@ function Display() {
     <div className="flex h-screen flex-col">
     <main className="relative grid min-h-0 flex-1 grid-cols-2 portrait:grid-cols-1 portrait:grid-rows-2">
       <div className="pointer-events-none absolute inset-x-0 top-4 z-30"><ThemeGreeting /></div>
+      {!soundOn && (
+        <button type="button" onClick={() => { void unlockAudio().then((ok) => { setSoundOn(ok); if (ok) playSound(readySound); }); }}
+          className="tap absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-accent px-10 py-8 font-display text-5xl text-accent-foreground shadow-2xl">
+          🔔 Tocca per attivare la suoneria
+        </button>
+      )}
       <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
         ← Totem
       </Link>

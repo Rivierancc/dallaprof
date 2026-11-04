@@ -16,11 +16,34 @@ const TUNES: Record<Exclude<ReadySound, "nessuno">, Note[]> = {
 };
 
 let ctx: AudioContext | null = null;
+
+/** I browser tengono l'audio muto finché qualcuno non tocca la pagina: va chiamata dentro un tocco. */
+export async function unlockAudio(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    ctx ??= new AudioContext();
+    if (ctx.state !== "running") await ctx.resume();
+    // Un suono silenzioso sblocca anche Safari su tablet.
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    g.gain.value = 0.0001; o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.05);
+    return ctx.state === "running";
+  } catch { return false; }
+}
+
+export const audioReady = () => ctx?.state === "running";
+
 export function playSound(sound: ReadySound) {
   if (sound === "nessuno" || typeof window === "undefined") return;
   try {
     ctx ??= new AudioContext();
-    if (ctx.state === "suspended") void ctx.resume();
+    const c = ctx;
+    if (c.state !== "running") { void c.resume().then(() => schedule(c, sound)).catch(() => {}); return; }
+    schedule(c, sound);
+  } catch { /* audio non disponibile */ }
+}
+
+function schedule(ctx: AudioContext, sound: Exclude<ReadySound, "nessuno">) {
+  try {
     const t0 = ctx.currentTime + 0.02;
     for (const [f, s, d, type = "sine", endFreq] of TUNES[sound]) {
       const o = ctx.createOscillator(), g = ctx.createGain();

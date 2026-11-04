@@ -29,7 +29,7 @@ export const MANUAL: ManualSection[] = [
     { title: "Storico del giorno", where: "Cucina → pulsante Storico", steps: ["Mostra tutti gli ordini di oggi con ora, stato, piatti e totale incassato."] },
   ]},
   { id: "display", title: "📺 Tabellone clienti", entries: [
-    { title: "Tabellone", where: "/display (pubblico)", steps: ["Mostra i numeri «In preparazione» e «Pronto» e gli avvisi parziali.", "Suona quando un ordine è pronto o parzialmente pronto."], tips: ["Tocca lo schermo una volta dopo l'apertura, altrimenti il browser può tenerlo muto."] },
+    { title: "Tabellone", where: "/display (pubblico)", steps: ["Mostra i numeri «In preparazione» e «Pronto» e gli avvisi parziali.", "Suona quando un ordine è pronto o parzialmente pronto."], tips: ["All'apertura compare «🔔 Tocca per attivare la suoneria»: toccalo una volta (anche dopo ogni ricarica), altrimenti computer e tablet tengono il tabellone muto. Controlla anche che il volume del dispositivo sia alto."] },
   ]},
   { id: "menu", title: "📋 Gestione menu", entries: [
     { title: "Accesso", where: "/menu", steps: ["Inserisci il PIN del personale. L'accesso dura alcune ore su quel dispositivo."] },
