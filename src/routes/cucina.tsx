@@ -61,10 +61,20 @@ function Kitchen() {
   const [showHistory, setShowHistory] = useState(false);
   const { data: menu } = useQuery(menuQueryOptions);
   // Piatto toccato: apre il riquadro ingredienti accanto al suo ordine.
-  const [sel, setSel] = useState<{ o: string; i: string } | null>(null);
+  const [sel, setSelList] = useState<{ o: string; i: string }[]>([]);
   const productOf = (i: CartItem) => menu?.products.find((p) => p.id === i.productId) ?? menu?.products.find((p) => p.name.toLowerCase() === i.name.toLowerCase());
-  const selOrder = sel ? orders.find((o) => o.id === sel.o) : undefined;
-  const selItem = selOrder?.items.find((i) => i.id === sel?.i);
+  const isSel = (o: string, i: string) => sel.some((s) => s.o === o && s.i === i);
+  const toggleSel = (o: string, i: string) => setSelList(isSel(o, i) ? sel.filter((s) => !(s.o === o && s.i === i)) : [...sel, { o, i }]);
+  const picked = sel.flatMap((s) => {
+    const o = orders.find((x) => x.id === s.o);
+    const it = o?.items.find((x) => x.id === s.i);
+    return o && it ? [{ o, it }] : [];
+  });
+  const selOrders = orders.filter((o) => picked.some((p) => p.o.id === o.id));
+  // Ingredienti presenti in più piatti aperti: evidenziati in blu.
+  const counts = new Map<string, number>();
+  for (const p of picked) for (const g of new Set(itemIngredients(p.it, productOf(p.it)))) counts.set(g, (counts.get(g) ?? 0) + 1);
+  const shared = new Set([...counts].filter(([, n]) => n > 1).map(([g]) => g));
   const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) =>
     info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
 
@@ -104,19 +114,27 @@ function Kitchen() {
       </header>
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
-      {selOrder && selItem ? (
+      {picked.length > 0 ? (
         <div className="flex gap-5">
           <aside className="hidden w-1/6 shrink-0 space-y-3 lg:block">
-            {orders.filter((o) => o.id !== selOrder.id).map((o) => (
-              <button key={o.id} onClick={() => setSel(null)} className={`tap block w-full rounded-2xl border-4 bg-card p-3 text-left ${o.status === "ready" ? "border-success" : "border-accent"}`}>
+            {orders.filter((o) => !selOrders.includes(o)).map((o) => (
+              <button key={o.id} onClick={() => setSelList([])} className={`tap block w-full rounded-2xl border-4 bg-card p-3 text-left ${o.status === "ready" ? "border-success" : "border-accent"}`}>
                 <span className="font-display text-5xl leading-none">{String(o.order_number).padStart(2, "0")}</span>
                 <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}</span>
               </button>
             ))}
           </aside>
           <div className="grid min-w-0 flex-1 gap-5 md:grid-cols-[minmax(18rem,1fr)_2fr]">
-            {card(selOrder)}
-            <RecipePanel item={selItem} product={productOf(selItem)} close={() => setSel(null)} />
+            <div className="space-y-5">{selOrders.map((o) => card(o))}</div>
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                {shared.size > 0 && <p className="rounded-2xl bg-shared px-4 py-2 text-2xl font-bold text-shared-foreground">🔵 In blu: ingredienti in comune, preparali insieme</p>}
+                <button onClick={() => setSelList([])} className="tap ml-auto rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi tutte</button>
+              </div>
+              {picked.map((p) => (
+                <RecipePanel key={p.o.id + p.it.id} order={p.o.order_number} item={p.it} product={productOf(p.it)} shared={shared} close={() => toggleSel(p.o.id, p.it.id)} />
+              ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -151,6 +169,12 @@ function Kitchen() {
             {features.checklist && features.delivery && (
               <p className="text-base text-muted-foreground">✓ = preparato · 🚚 = consegnato</p>
             )}
+            {o.items.filter((i) => productOf(i)?.recipe_on !== false).length > 1 && (
+              <button onClick={() => {
+                const ids = o.items.filter((i) => productOf(i)?.recipe_on !== false).map((i) => ({ o: o.id, i: i.id }));
+                setSelList([...sel.filter((s) => s.o !== o.id), ...ids]);
+              }} className="tap mt-3 rounded-2xl bg-shared px-4 py-2 text-xl font-bold text-shared-foreground">📖 Apri tutti gli ingredienti</button>
+            )}
             <ul className="my-4 flex-1 space-y-2 text-2xl font-bold">
               {o.items.map((i) => {
                 const done = (o.checked_items ?? []).includes(i.id);
@@ -171,7 +195,7 @@ function Kitchen() {
                   )}
                   <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
                     {productOf(i)?.recipe_on !== false ? (
-                      <button onClick={() => setSel(sel?.i === i.id && sel.o === o.id ? null : { o: o.id, i: i.id })} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${sel?.i === i.id && sel.o === o.id ? "bg-accent px-2 text-accent-foreground" : ""}`}>
+                      <button onClick={() => toggleSel(o.id, i.id)} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${isSel(o.id, i.id) ? "bg-accent px-2 text-accent-foreground" : ""}`}>
                         {i.qty} × {i.name} 📖
                       </button>
                     ) : <>{i.qty} × {i.name}</>}
@@ -269,33 +293,37 @@ function History() {
 // Ingredienti letti dalla descrizione del piatto (separati da virgola).
 const descList = (d: string) => d.split(",").map((s) => s.trim()).filter(Boolean);
 
-function RecipePanel({ item, product, close }: { item: CartItem; product: Product | undefined; close: () => void }) {
+// Ingredienti effettivi (non tolti) di un piatto, in minuscolo, per trovare quelli in comune.
+function itemIngredients(item: CartItem, product: Product | undefined) {
+  const removed = (item.removed ?? []).map((r) => r.toLowerCase());
+  const all = [...(product?.ingredients ?? []), ...(product ? descList(product.description) : [])].map((g) => g.toLowerCase());
+  return all.filter((g) => !removed.includes(g));
+}
+
+function RecipePanel({ order, item, product, shared, close }: { order: number; item: CartItem; product: Product | undefined; shared: Set<string>; close: () => void }) {
   const removed = (item.removed ?? []).map((r) => r.toLowerCase());
   const combo = product?.combo_items ?? [];
   const main = product?.ingredients ?? [];
   const desc = product ? descList(product.description) : [];
   const onlyDesc = desc.filter((g) => !main.some((m) => m.toLowerCase() === g.toLowerCase()));
+  const row = (g: string) => removed.includes(g.toLowerCase())
+    ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
+    : shared.has(g.toLowerCase())
+      ? <li key={g} className="rounded-lg bg-shared px-2 text-shared-foreground">🔵 {g}</li>
+      : <li key={g}>• {g}</li>;
   return (
     <section className="animate-pop rounded-3xl border-4 border-primary bg-card p-6">
       <div className="mb-4 flex items-start gap-4">
-        <h2 className="mr-auto font-display text-6xl leading-none">{item.qty} × {item.name}</h2>
+        <h2 className="mr-auto font-display text-6xl leading-none"><span className="text-accent">#{String(order).padStart(2, "0")}</span> {item.qty} × {item.name}</h2>
         <button onClick={close} className="tap rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi</button>
       </div>
       {main.length > 0 && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti</h3>
-        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
-          {product!.ingredients.map((g) => removed.includes(g.toLowerCase())
-            ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
-            : <li key={g}>• {g}</li>)}
-        </ul>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">{main.map(row)}</ul>
       </>}
       {onlyDesc.length > 0 && <>
         <h3 className="mb-2 text-2xl font-bold text-muted-foreground">Ingredienti (dalla descrizione)</h3>
-        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">
-          {onlyDesc.map((g) => removed.includes(g.toLowerCase())
-            ? <li key={g} className="text-destructive line-through">✕ {g} <span className="text-xl no-underline">(SENZA)</span></li>
-            : <li key={g}>• {g}</li>)}
-        </ul>
+        <ul className="mb-5 grid gap-2 text-3xl font-bold sm:grid-cols-2">{onlyDesc.map(row)}</ul>
       </>}
       {(item.removed ?? []).filter((r) => !product?.ingredients.some((g) => g.toLowerCase() === r.toLowerCase()) && !onlyDesc.some((g) => g.toLowerCase() === r.toLowerCase())).map((r) => (
         <p key={r} className="mb-2 text-3xl font-bold text-destructive">✕ senza {r}</p>
