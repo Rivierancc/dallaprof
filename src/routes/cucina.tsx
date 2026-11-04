@@ -64,6 +64,8 @@ function Kitchen() {
   // Piatto toccato: apre il riquadro ingredienti accanto al suo ordine.
   const [sel, setSelList] = useState<{ o: string; i: string }[]>([]);
   const productOf = (i: CartItem) => menu?.products.find((p) => p.id === i.productId) ?? menu?.products.find((p) => p.name.toLowerCase() === i.name.toLowerCase());
+  // Nei menu con piatto a scelta: ingredienti e titolo del piatto preso dal cliente.
+  const dishOf = (i: CartItem) => (i.dishId && menu?.products.find((p) => p.id === i.dishId)) || productOf(i);
   const isSel = (o: string, i: string) => sel.some((s) => s.o === o && s.i === i);
   const toggleSel = (o: string, i: string) => setSelList(isSel(o, i) ? sel.filter((s) => !(s.o === o && s.i === i)) : [...sel, { o, i }]);
   const picked = sel.flatMap((s) => {
@@ -74,7 +76,7 @@ function Kitchen() {
   const selOrders = orders.filter((o) => picked.some((p) => p.o.id === o.id));
   // Ingredienti presenti in più piatti aperti: evidenziati in blu.
   const counts = new Map<string, number>();
-  for (const p of picked) for (const g of new Set(itemIngredients(p.it, productOf(p.it)))) counts.set(g, (counts.get(g) ?? 0) + 1);
+  for (const p of picked) for (const g of new Set(itemIngredients(p.it, dishOf(p.it)))) counts.set(g, (counts.get(g) ?? 0) + 1);
   const shared = new Set([...counts].filter(([, n]) => n > 1).map(([g]) => g));
   const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) =>
     info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
@@ -133,7 +135,7 @@ function Kitchen() {
                 <button onClick={() => setSelList([])} className="tap ml-auto rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi tutte</button>
               </div>
               {picked.map((p) => (
-                <RecipePanel split={splitMenu(p.it, productOf(p.it), menu?.products ?? [], menu?.categories ?? [])} key={p.o.id + p.it.id} order={p.o.order_number} item={p.it} product={productOf(p.it)} shared={shared} close={() => toggleSel(p.o.id, p.it.id)} />
+                <RecipePanel split={splitMenu(p.it, productOf(p.it), menu?.products ?? [], menu?.categories ?? [])} key={p.o.id + p.it.id} order={p.o.order_number} item={p.it} product={dishOf(p.it)} shared={shared} close={() => toggleSel(p.o.id, p.it.id)} />
               ))}
             </div>
           </div>
