@@ -4,7 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { NewsTicker } from "@/components/news-ticker";
 import { useKitchenFeatures } from "@/components/kitchen-features";
-import { playReadySound } from "@/lib/sounds";
+import { playSound } from "@/lib/sounds";
 import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/display")({
@@ -25,16 +25,24 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
-  const { partial, readySound } = useKitchenFeatures();
+  const { partial, readySound, partialSound } = useKitchenFeatures();
   const prep = orders.filter((o) => o.status === "preparing");
   const ready = orders.filter((o) => o.status === "ready").reverse();
   // Suona solo quando un ordine diventa pronto, non all'apertura della pagina.
   const seen = useRef<Set<string> | null>(null);
   useEffect(() => {
     const ids = new Set(ready.map((o) => o.id));
-    if (seen.current && [...ids].some((id) => !seen.current!.has(id))) playReadySound(readySound);
+    if (seen.current && [...ids].some((id) => !seen.current!.has(id))) playSound(readySound);
     seen.current = ids;
   }, [ready, readySound]);
+  // Avviso «parzialmente pronto»: suona la suoneria scelta per lui quando arriva
+  // una scritta nuova. Togliendo la scritta e rimettendola suona di nuovo.
+  const seenNotes = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const keys = new Set(prep.flatMap((o) => (o.partial_notes ?? []).map((n) => `${o.id}:${n}`)));
+    if (partial && seenNotes.current && [...keys].some((k) => !seenNotes.current!.has(k))) playSound(partialSound);
+    seenNotes.current = keys;
+  }, [prep, partial, partialSound]);
 
   return (
     <div className="flex h-screen flex-col">
