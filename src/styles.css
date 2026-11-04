@@ -68,8 +68,9 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  /* Tutto è misurato in rem: la dimensione base segue lo schermo (16px su 1080x1920). */
-  html { font-size: clamp(9px, min(100vw / 67.5, 100vh / 80), 22px); }
+  /* Tutto è misurato in rem: la dimensione base segue lo schermo (16px su 1080x1920).
+     --text-scale è l'ingrandimento scelto dal personale nei pannelli (1 = aspetto di fabbrica). */
+  html { font-size: calc(clamp(9px, min(100vw / 67.5, 100vh / 80), 22px) * var(--text-scale, 1)); }
   html, body { touch-action: manipulation; user-select: none; -webkit-tap-highlight-color: transparent; }
   body {
     background-color: var(--color-background);
