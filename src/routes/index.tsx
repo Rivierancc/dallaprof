@@ -298,7 +298,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
   const [asMenu, setAsMenu] = useState(true)
   const menuOn = hasCombo && (!hasMenuPrice || asMenu)
   const offers = [...product.extras, ...(menuOn ? product.combo_extras.filter((e) => !product.extras.some((x) => x.name === e.name)) : [])].filter((e) => !ingredientOff(e.name, lib))
-  const groups = [...(menuOn ? product.combo_groups : []), ...product.choice_groups].map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib)) })).filter((g) => g.options.length)
+  const groups = [...(menuOn ? product.combo_groups : []), ...product.choice_groups].map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib) && !all.some((x) => x.name === o.name && x.sold_out)) })).filter((g) => g.options.length)
   const ok = groupsValid(groups, picks)
   const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
   const base = basePrice(p2(product), product.combo_price, hasMenuPrice && asMenu)
@@ -372,7 +372,7 @@ function Customize({ product, all, lib, onClose, onAdd }: { product: Product; al
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, hasMenuPrice && asMenu) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
+          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, menuOn) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
           <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
         </div>
       </div>
