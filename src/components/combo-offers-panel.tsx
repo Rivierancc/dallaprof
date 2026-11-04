@@ -77,15 +77,12 @@ function ComboEditor({ p }: { p: MenuProduct }) {
         <button disabled={busy} onClick={() => go(() => saveOffer({ data: { id: p.id, on: p.combo_offer, name } }), "Nome salvato")} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
       </div>
       <p className="-mt-2 text-lg text-muted-foreground">Vuoto = si chiama «Menu {p.name}».</p>
-      <div>
-        <p className="mb-2 text-xl">Articoli inclusi (tocca per aggiungere o togliere):</p>
-        <div className="flex flex-wrap gap-2">
-          {menu.products.filter((x) => x.id !== p.id).map((x) => {
-            const on = p.combo_items.includes(x.id);
-            return <button key={x.id} disabled={busy} aria-pressed={on} onClick={() => rules({ combo: on ? p.combo_items.filter((i) => i !== x.id) : [...p.combo_items, x.id] })} className={`${btn} ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "✓ " : "+ "}{x.name} <span className="text-base opacity-70">· {catName(x.category_id)}</span></button>;
-          })}
+      {p.combo_items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-muted p-3">
+          <span className="text-lg text-muted-foreground">🍱 Articoli inclusi di prima: {p.combo_items.map((id) => menu.products.find((x) => x.id === id)?.name ?? "?").join(", ")}</span>
+          <button disabled={busy} onClick={() => rules({ combo: [] })} className={`${btn} bg-secondary`}>Togli</button>
         </div>
-              </div>
+      )}
       <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
       <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
       <div className="flex flex-wrap items-center gap-3">

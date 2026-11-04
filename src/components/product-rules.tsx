@@ -63,7 +63,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
         </div>
       </section>
 
-      <p className="text-lg text-muted-foreground">🍱 Il menu combinato di questo piatto (articoli inclusi, prezzo, nome) si imposta nella sezione «🍱 Menu offerta» più in basso.</p>
+      <p className="text-lg text-muted-foreground">🍱 Il menu di questo piatto (scelte dalle categorie, prezzo, nome) si imposta nella sezione «🍱 Menu offerta» più in basso.</p>
 
       <section>
         <h3 className="mb-1 text-2xl font-bold">💡 Suggerisci prima di chiudere l'ordine</h3>
