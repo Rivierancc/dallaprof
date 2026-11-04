@@ -1,5 +1,6 @@
 // Stampa diretta su Epson TM-m30III (ePOS-Print) dal browser della cassa, in rete locale.
-import { itemNotes, type Order } from "@/lib/menu";
+import type { Order } from "@/lib/menu";
+import { orderLines, type MenuData } from "@/lib/order-lines";
 
 const KEY = "epson-printer";
 export type PrinterCfg = { ip: string; https: boolean; auto: boolean };
@@ -16,13 +17,16 @@ export const savePrinter = (c: PrinterCfg) => localStorage.setItem(KEY, JSON.str
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function ticketXml(o: Order) {
+export function ticketXml(o: Order, menu?: MenuData) {
   const t = (s: string, attrs = "") => `<text${attrs}>${esc(s)}&#10;</text>`;
   const time = new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   const lines = o.items
     .map((i) => {
-      const notes = itemNotes(i).map((n) => t(`    ${n}`, ' width="1" height="1" em="false"')).join("");
-      return t(`${i.qty} x ${i.name}`, ' width="1" height="2" em="true"') + notes;
+      // Piatto con i suoi extra, poi contorno e bevanda separati da una riga.
+      const l = orderLines(i, menu);
+      const small = (n: string) => t(`    ${n}`, ' width="1" height="1" em="false"');
+      const block = (head: string, xs: string[]) => xs.length ? t("  ------------------------", ' width="1" height="1" em="false"') + t(`  ${head}`, ' width="1" height="1" em="true"') + xs.map(small).join("") : "";
+      return t(`${i.qty} x ${l.title}`, ' width="1" height="2" em="true"') + l.dish.map(small).join("") + block("CONTORNO", l.side) + block("BEVANDA", l.drink);
     })
     .join("");
   return `<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
@@ -38,10 +42,10 @@ ${lines}
 </epos-print>`;
 }
 
-export async function printTicket(cfg: PrinterCfg, o: Order) {
+export async function printTicket(cfg: PrinterCfg, o: Order, menu?: MenuData) {
   if (!cfg.ip) throw new Error("Stampante non impostata");
   const url = `${cfg.https ? "https" : "http"}://${cfg.ip}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
-  const body = `<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>${ticketXml(o)}</s:Body></s:Envelope>`;
+  const body = `<?xml version="1.0" encoding="utf-8"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>${ticketXml(o, menu)}</s:Body></s:Envelope>`;
   const r = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "text/xml; charset=utf-8", SOAPAction: '""' },

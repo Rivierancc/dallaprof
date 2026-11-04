@@ -7,9 +7,10 @@ import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functi
 import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { gateFlags } from "@/lib/gate";
-import { itemNotes, menuQueryOptions, type CartItem, type Category, type Order, type Product } from "@/lib/menu";
+import { menuQueryOptions, type CartItem, type Category, type Order, type Product } from "@/lib/menu";
 import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
+import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -120,7 +121,7 @@ function Kitchen() {
             {orders.filter((o) => !selOrders.includes(o)).map((o) => (
               <button key={o.id} onClick={() => setSelList([])} className={`tap block w-full rounded-2xl border-4 bg-card p-3 text-left ${o.status === "ready" ? "border-success" : "border-accent"}`}>
                 <span className="font-display text-5xl leading-none">{String(o.order_number).padStart(2, "0")}</span>
-                <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}</span>
+                <span className="block text-lg text-muted-foreground">{o.items.map((i) => `${i.qty}× ${itemTitle(i, productOf(i))}`).join(", ")}</span>
               </button>
             ))}
           </aside>
@@ -196,9 +197,9 @@ function Kitchen() {
                   <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
                     {productOf(i)?.recipe_on !== false ? (
                       <button onClick={() => toggleSel(o.id, i.id)} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${isSel(o.id, i.id) ? "bg-accent px-2 text-accent-foreground" : ""}`}>
-                        {i.qty} × {i.name} 📖
+                        {i.qty} × {itemTitle(i, productOf(i))} 📖
                       </button>
-                    ) : <>{i.qty} × {i.name}</>}
+                    ) : <>{i.qty} × {itemTitle(i, productOf(i))}</>}
                     {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                       {m.dish.length > 0 && <span className="block text-xl font-bold text-accent">{m.dish.join(" · ")}</span>}
                       {m.side.length > 0 && <span className="mt-1 block border-t-2 border-border pt-1 text-xl font-bold">🍟 {m.side.join(" · ")}</span>}
@@ -213,7 +214,7 @@ function Kitchen() {
             </ul>
             {features.partial && o.status === "preparing" && <PartialNotes order={o} save={(n) => saveInfo(o.id, { partial_notes: n })} />}
             <button
-              onClick={() => printTicket(loadPrinter(), o as Order).catch((e) => alert(`Stampa non riuscita: ${e.message}`))}
+              onClick={() => printTicket(loadPrinter(), o as Order, menu).catch((e) => alert(`Stampa non riuscita: ${e.message}`))}
               className="tap mb-3 h-12 rounded-2xl bg-secondary text-xl font-bold"
             >
               🖨️ Ristampa comanda
@@ -262,6 +263,7 @@ function PartialNotes({ order, save }: { order: Order; save: (n: string[]) => vo
 const STATUS: Record<string, string> = { awaiting_payment: "Da pagare", preparing: "In preparazione", ready: "Pronto", done: "Consegnato", cancelled: "Annullato" };
 
 function History() {
+  const { data: menu } = useQuery(menuQueryOptions);
   const all = useLiveOrders(["awaiting_payment", "preparing", "ready", "done", "cancelled"]);
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const today = all.filter((o) => new Date(o.created_at) >= start).reverse();
@@ -283,7 +285,7 @@ function History() {
               <span className="ml-auto text-2xl font-bold">€ {Number(o.total).toFixed(2).replace(".", ",")}</span>
             </div>
             <ul className="mt-2 text-xl">
-              {o.items.map((i) => <li key={i.id}>{i.qty} × {i.name}{itemNotes(i).length > 0 && <span className="text-accent"> · {itemNotes(i).join(" · ")}</span>}</li>)}
+              {o.items.map((i) => { const l = orderLines(i, menu); return <li key={i.id}>{i.qty} × {l.title}{l.dish.length > 0 && <span className="text-accent"> · {l.dish.join(" · ")}</span>}{l.side.length > 0 && <span> · 🍟 {l.side.join(" · ")}</span>}{l.drink.length > 0 && <span> · 🥤 {l.drink.join(" · ")}</span>}</li>; })}
             </ul>
           </article>
         ))}
@@ -316,7 +318,7 @@ function RecipePanel({ split, order, item, product, shared, close }: { split: Re
   return (
     <section className="animate-pop rounded-3xl border-4 border-primary bg-card p-6">
       <div className="mb-4 flex items-start gap-4">
-        <h2 className="mr-auto font-display text-6xl leading-none"><span className="text-accent">#{String(order).padStart(2, "0")}</span> {item.qty} × {item.name}</h2>
+        <h2 className="mr-auto font-display text-6xl leading-none"><span className="text-accent">#{String(order).padStart(2, "0")}</span> {item.qty} × {itemTitle(item, product)}</h2>
         <button onClick={close} className="tap rounded-2xl bg-secondary px-5 py-3 text-2xl font-bold">✕ Chiudi</button>
       </div>
       {(main.length > 0 || split.dishExtras.length > 0) && <>
@@ -346,30 +348,4 @@ function RecipePanel({ split, order, item, product, shared, close }: { split: Re
       {!product && <p className="text-2xl text-muted-foreground">Questo piatto non è più nel menu: valgono solo le modifiche scritte nell'ordine.</p>}
     </section>
   );
-}
-
-// Divide le note di un piatto/menu: modifiche al piatto, contorno (con extra del menu) e bevanda.
-function splitMenu(item: CartItem, product: Product | undefined, products: Product[], categories: Category[]) {
-  const drinkCats = new Set(categories.filter((c) => /bevand|bibit|drink|bere/i.test(c.name + " " + c.slug)).map((c) => c.id));
-  const isDrinkName = (n: string) => products.some((p) => p.name.toLowerCase() === n.toLowerCase() && drinkCats.has(p.category_id));
-  const comboGroups = new Map((product?.combo_groups ?? []).map((g) => [g.name, g]));
-  const comboExtras = new Map((product?.combo_extras ?? []).filter((e) => !(product?.extras ?? []).some((x) => x.name === e.name)).map((e) => [e.name, e]));
-  const dishExtras: string[] = [], side: string[] = [], drink: string[] = [];
-  for (const e of item.extras ?? []) {
-    const k = e.indexOf(": ");
-    const group = k > 0 ? e.slice(0, k) : "";
-    const opt = k > 0 ? e.slice(k + 2) : e.replace(/^🍱 /, "");
-    const g = group ? comboGroups.get(group) : undefined;
-    const isProduct = products.some((p) => p.name.toLowerCase() === opt.toLowerCase());
-    // Il personale decide in Menu offerta con cosa va ogni scelta/extra; senza indicazione si indovina.
-    const to = g ? (g.to ?? (isDrinkName(opt) || /bevand|bibit|drink/i.test(group) ? "drink" : isProduct ? "side" : "dish"))
-      : !group && e.startsWith("🍱 ") ? (isDrinkName(opt) ? "drink" : "side")
-      : !group ? (comboExtras.get(e)?.to ?? "dish") : "dish";
-    const label = g && to !== "dish" && !isProduct ? `${group}: ${opt}` : g ? opt : e;
-    if (to === "drink") drink.push(label);
-    else if (to === "side") side.push(g || e.startsWith("🍱 ") ? label : `+ ${label}`);
-    else dishExtras.push(g ? e : label);
-  }
-  const dish = [...dishExtras.map((e) => `+ ${e}`), ...(item.removed ?? []).map((r) => `senza ${r}`)];
-  return { dish, dishExtras, side, drink };
 }

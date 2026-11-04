@@ -2,7 +2,7 @@
 export type ManualEntry = { title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "4 novembre 2026 (sera)";
+export const MANUAL_UPDATED = "4 novembre 2026 (ore 21)";
 
 export const MANUAL: ManualSection[] = [
   { id: "totem", title: "🍔 Totem clienti (pagina iniziale)", entries: [
@@ -19,7 +19,7 @@ export const MANUAL: ManualSection[] = [
   ]},
   { id: "cassa", title: "💶 Cassa", entries: [
     { title: "Confermare un pagamento", where: "/cassa (serve il PIN)", steps: ["Trova l'ordine per numero.", "Tocca «Contanti» o «Carta» dopo aver incassato (anche col POS SumUp).", "Solo ora l'ordine passa in cucina e il cliente vede «Ordine in preparazione»."], tips: ["«Annulla» toglie un ordine non pagato."] },
-    { title: "Stampanti Epson", where: "/cassa → stampante", steps: ["Usa «Cerca stampanti» per trovarle sulla rete del locale.", "Scegli la stampante: lo scontrino si stampa da solo; la scelta resta su quel dispositivo."] },
+    { title: "Stampanti Epson", where: "/cassa → stampante", steps: ["Usa «Cerca stampanti» per trovarle sulla rete del locale.", "Scegli la stampante: lo scontrino si stampa da solo; la scelta resta su quel dispositivo.", "Sulla comanda il panino ha sotto i suoi extra; poi, separati da una riga, CONTORNO e BEVANDA. I menu col nome tuo riportano anche il nome del panino (es. «Scientifico · Picasso»)."] },
   ]},
   { id: "cucina", title: "👨‍🍳 Cucina", entries: [
     { title: "Lavorare gli ordini", where: "/cucina (serve il PIN)", steps: ["Gli ordini pagati arrivano in tempo reale con un suono.", "Premi «Pronto» quando è tutto pronto: il numero passa a «Pronto» sul tabellone.", "Premi «Consegnato» per chiuderlo."] },
