@@ -34,9 +34,19 @@ const renderPanel = (saved: unknown) => {
   );
 };
 
-const FULL = { partial: true, history: true, checklist: true, delivery: true, readySound: "campanello", partialSound: "fischio" };
+const FULL = { partial: true, history: true, checklist: true, delivery: true, displayTill: true, displayKitchen: true, readySound: "campanello", partialSound: "fischio" };
 
 describe("cleanKitchenFeatures", () => {
+  it("controlla la miniatura Cassa senza spegnere quella Cucina", () => {
+    const flags = cleanKitchenFeatures({ displayTill: false });
+    expect(flags.displayTill).toBe(false);
+    expect(flags.displayKitchen).toBe(true);
+  });
+  it("controlla la miniatura Cucina senza spegnere quella Cassa", () => {
+    const flags = cleanKitchenFeatures({ displayKitchen: false });
+    expect(flags.displayKitchen).toBe(false);
+    expect(flags.displayTill).toBe(true);
+  });
   it("accende tutto quando non c'è nulla di salvato", () => {
     expect(cleanKitchenFeatures(null)).toEqual({ ...FULL, readySound: "campanello" });
     expect(cleanKitchenFeatures({})).toEqual({ ...FULL, readySound: "campanello" });
@@ -53,6 +63,16 @@ describe("cleanKitchenFeatures", () => {
 });
 
 describe("Interruttori funzioni cucina in Admin", () => {
+  it("salva separatamente le due miniature", async () => {
+    vi.mocked(saveKitchenFeatures).mockClear();
+    renderPanel(FULL);
+    fireEvent.click(rowOf("📺 Miniatura Display in Cassa"));
+    fireEvent.click(screen.getByRole("button", { name: "Salva" }));
+    await waitFor(() => expect(saveKitchenFeatures).toHaveBeenCalled());
+    const sent = vi.mocked(saveKitchenFeatures).mock.calls.at(-1)?.[0].data;
+    expect(sent?.displayTill).toBe(false);
+    expect(sent?.displayKitchen).toBe(true);
+  });
   it("mostra lo stato salvato, anche quando una funzione è spenta", () => {
     renderPanel({ ...FULL, delivery: false });
     expect(rowOf("🚚 Spunta consegne parziali")).toHaveTextContent("Spento");

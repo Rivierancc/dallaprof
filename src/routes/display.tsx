@@ -7,6 +7,7 @@ import { useKitchenFeatures } from "@/components/kitchen-features";
 import { Button } from "@/components/ui/button";
 import { audioReady, playSound, unlockAudio } from "@/lib/sounds";
 import { useEffect, useRef, useState } from "react";
+import { DisplayBoard } from "@/components/display-board";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -21,8 +22,6 @@ export const Route = createFileRoute("/display")({
   }),
   component: Display,
 });
-
-const pad = (n: number) => String(n).padStart(2, "0");
 
 function Display() {
   const orders = useLiveOrders(["preparing", "ready"]);
@@ -66,29 +65,7 @@ function Display() {
       <Link to="/" className="tap absolute bottom-4 right-4 z-10 rounded-xl bg-secondary/70 px-4 py-2 text-lg font-bold text-muted-foreground">
         ← Totem
       </Link>
-      <section className="flex flex-col p-8">
-        <h2 className="mb-8 font-display text-8xl text-muted-foreground">In preparazione</h2>
-        <div className="grid grid-cols-3 content-start gap-5">
-          {prep.map((o) => (
-            <div key={o.id} className="rounded-3xl bg-card py-6 text-center">
-              <div className="font-display text-8xl">{pad(o.order_number)}</div>
-              {partial && (o.partial_notes ?? []).map((n, i) => (
-                <p key={i} className="animate-pop mx-2 mt-2 rounded-xl bg-accent px-2 py-1 text-xl font-bold text-accent-foreground">✓ {n}</p>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="flex flex-col bg-success p-8 text-success-foreground">
-        <h2 className="mb-8 font-display text-8xl">Pronto ✓</h2>
-        <div className="grid grid-cols-2 content-start gap-5">
-          {ready.map((o) => (
-            <div key={o.id} className="animate-pop rounded-3xl bg-background py-8 text-center font-display text-9xl text-success">
-              {pad(o.order_number)}
-            </div>
-          ))}
-        </div>
-      </section>
+      <DisplayBoard orders={orders} partial={partial} />
     </main>
     <NewsTicker />
     </div>

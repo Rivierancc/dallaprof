@@ -19,6 +19,8 @@ const labels: [keyof KitchenFeatures, string, string][] = [
   ["checklist", "✅ Spunta piatti preparati", "In cucina ogni piatto dell'ordine si può spuntare quando è pronto."],
   ["delivery", "🚚 Spunta consegne parziali", "In cucina ogni piatto si può segnare come consegnato: «bevande consegnate», «patatine consegnate»."],
   ["history", "📋 Storico ordini del giorno", "In cucina compare il pulsante per rivedere gli ordini di oggi."],
+  ["displayTill", "📺 Miniatura Display in Cassa", ""],
+  ["displayKitchen", "📺 Miniatura Display in Cucina", ""],
 ];
 
 /** Elenco di suonerie con ▶ per ascoltarle: una riga per «pronto» e una per «parzialmente pronto». */

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { loadPrinter, printTicket } from "@/lib/epson";
 import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
 import { OrderNumberSettings } from "@/components/order-number-settings";
+import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -91,8 +92,9 @@ function Kitchen() {
 
   return (
     <main className="min-h-screen p-6">
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-7xl text-accent">Cucina</h1>
+        <StaffFullscreenButton />
         <button
           onClick={() => {
             ctx.current ??= new AudioContext();
@@ -117,6 +119,7 @@ function Kitchen() {
         </button>
       </header>
       <div className="mb-6"><OrderNumberSettings /></div>
+      <StaffDisplayPreview page="cucina" />
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
       {picked.length > 0 ? (

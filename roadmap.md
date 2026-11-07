@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Miniatura Display configurabile separatamente per Cassa e Cucina da Admin; schermo intero senza password sulle due pagine; manuale aggiornato e 19 prove automatiche superate. Display verificato su computer e tablet senza errori; verifica nelle pagine sbloccate da completare con il PIN del personale.
 - [x] Numerazione in Cucina e Admin: reset a 01, scelta prossimo numero, avviso e conferma, protezione personale; sei prove automatiche superate, permessi verificati senza cambiare la numerazione reale.
 - [x] Pulsante di attivazione suoneria sul Display e ripresa dell'audio prima delle note; verifica del tocco e dell'audio nel browser.
 - [x] Spunta «consegnato» per ogni piatto in cucina, con conteggio «1/2 consegnati» e interruttore proprio in Admin; provata pagando un ordine in Cassa, segnando le consegne e ricaricando la pagina. Corretto anche il pannello Admin che mostrava «Acceso» anche quando la funzione era spenta (stesso difetto per linea tra i piatti e scritta in alto).

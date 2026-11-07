@@ -2,7 +2,7 @@
 export type ManualEntry = { title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "4 novembre 2026";
+export const MANUAL_UPDATED = "7 novembre 2026";
 
 export const MANUAL: ManualSection[] = [
   { id: "totem", title: "🍔 Totem clienti (pagina iniziale)", entries: [
@@ -14,6 +14,7 @@ export const MANUAL: ManualSection[] = [
     { title: "Fumetto sui piatti", where: "Schede dei piatti", steps: ["Il fumetto rosso (es. Vegano, Piccante) compare in alto a destra del piatto, fisso o lampeggiante."] },
   ]},
   { id: "chiosco", title: "⛶ Modalità chiosco", entries: [
+    { title: "Schermo intero per il personale", where: "Cassa e Cucina", steps: ["Tocca «Schermo intero» per ingrandire la pagina senza password.", "Tocca «Esci da schermo intero» per tornare alla finestra normale, senza password."], tips: ["L'accesso alla pagina e i comandi del personale restano protetti dal PIN. Nell'anteprima alcuni browser non consentono lo schermo intero: apri il sito direttamente sul dispositivo."] },
     { title: "Attivare il chiosco", where: "Totem (pulsante sotto l'orologio) oppure Admin", steps: ["Tocca «Attiva modalità chiosco»: lo schermo va a tutto schermo e il tasto destro è bloccato."] },
     { title: "Uscire dal chiosco", where: "Totem", steps: ["Tocca 5 volte di fila l'orologio in alto a sinistra (entro 2 secondi).", "Inserisci il codice di uscita (di fabbrica 1234).", "In alternativa: pulsante «Esci da chiosco» in Admin oppure tasto ESC."], tips: ["Il codice di uscita vale solo per quel dispositivo e si cambia in Admin → Password e codici."] },
   ]},
@@ -44,6 +45,7 @@ export const MANUAL: ManualSection[] = [
     { title: "Ingrandire il testo", where: "Gestione menu e Admin, sotto il titolo", steps: ["Scegli Normale, Grande, Molto grande o Enorme. Resta salvato sul dispositivo."] },
   ]},
   { id: "admin", title: "⚙️ Admin", entries: [
+    { title: "Miniatura del Display", where: "Admin → Funzioni cucina", steps: ["Accendi o spegni «Miniatura Display in Cassa» e «Miniatura Display in Cucina» separatamente, poi premi Salva.", "La miniatura mostra gli stessi numeri in preparazione, pronti e avvisi parziali del tabellone, aggiornati in tempo reale; non riproduce suonerie."], tips: ["Entrambe le miniature sono accese inizialmente."] },
     { title: "Password e codici", where: "/admin → Password e codici", steps: ["Cambia il PIN del personale inserendo quello attuale e due volte il nuovo: gli altri dispositivi dovranno rientrare.", "Cambia il codice di uscita chiosco di questo dispositivo."] },
     { title: "Ordine categorie e strisce", where: "/admin → Ordine categorie e strisce", steps: ["Sposta le categorie con ▲ ▼ e premi Salva ordine.", "Accanto a ogni categoria scegli «Striscia 1, 2…»: le categorie con lo stesso numero formano una riga che il cliente fa scorrere col dito; quella al centro diventa più grande. «Nessuna striscia» = riquadro normale."] },
     { title: "Temi delle ricorrenze", where: "/admin → Temi", steps: ["Per ogni tema: Spento, Automatico (tra due date ogni anno) o Sempre acceso.", "Scegli colori, decorazioni emoji e auguri in 4 lingue.", "Ricorda di aggiornare le date di Pasqua e Festa della mamma ogni anno."] },
