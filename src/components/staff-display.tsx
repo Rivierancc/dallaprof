@@ -17,7 +17,7 @@ export function StaffFullscreenButton() {
       title={fullscreen ? "Esci da schermo intero" : "Schermo intero"}
       onClick={() => { if (fullscreen) void exitKiosk(); else void enterKiosk(); }}
     >
-      {fullscreen ? <Minimize aria-hidden="true" className="size-5" /> : <Maximize aria-hidden="true" className="size-5" />}
+      {fullscreen ? <Minimize aria-hidden="true" className="size-4" /> : <Maximize aria-hidden="true" className="size-4" />}
       Schermo
     </StaffChip>
     {kioskError && <p role="alert" className="max-w-sm text-lg text-destructive">{kioskError}</p>}
