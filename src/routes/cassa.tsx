@@ -11,6 +11,7 @@ import { orderLines } from "@/lib/order-lines";
 import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
+import { StaffCrossLink } from "@/components/staff-nav";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
 export const Route = createFileRoute("/cassa")({
@@ -87,6 +88,7 @@ function Cassa() {
         <button onClick={() => setShowCfg(!showCfg)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </button>
+        <StaffCrossLink page="cassa" />
         <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">← Totem</Link>
         <button
           onClick={async () => {
