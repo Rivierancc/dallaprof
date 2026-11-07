@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
-import { kitchenStatus, lockKitchen, settleOrder } from "@/lib/kitchen.functions";
+import { kitchenStatus, lockKitchen, setOrderStatus, settleOrder } from "@/lib/kitchen.functions";
+import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { gateFlags } from "@/lib/gate";
 import { euro, menuQueryOptions, type Order } from "@/lib/menu";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,12 @@ import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
+import { KitchenBoard } from "@/components/kitchen-board";
+import { useKitchenFeatures } from "@/components/kitchen-features";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
+
+// La scelta «cucina accanto alla cassa» resta sul dispositivo.
+const SPLIT_KEY = "cassa-kitchen-split";
 
 export const Route = createFileRoute("/cassa")({
   loader: () => kitchenStatus(),
@@ -35,6 +41,18 @@ function Cassa() {
   const settle = useServerFn(settleOrder);
   const lock = useServerFn(lockKitchen);
   const orders = useLiveOrders(["awaiting_payment"]);
+  const kitchenOrders = useLiveOrders(["preparing", "ready"]);
+  const features = useKitchenFeatures();
+  const setKitchenStatus = useServerFn(setOrderStatus);
+  const kitchenInfo = useServerFn(setOrderKitchenInfo);
+  const [split, setSplit] = useState(false);
+  // La scelta salvata si legge solo nel browser (la pagina nasce anche sul server).
+  useEffect(() => setSplit(localStorage.getItem(SPLIT_KEY) === "1"), []);
+  const toggleSplit = () => {
+    const next = !split;
+    setSplit(next);
+    localStorage.setItem(SPLIT_KEY, next ? "1" : "0");
+  };
   const { data: menu } = useQuery(menuQueryOptions);
   const [cfg, setCfg] = useState<PrinterCfg>({ ip: "", https: true, auto: true });
   const [showCfg, setShowCfg] = useState(false);
@@ -88,6 +106,9 @@ function Cassa() {
         <StaffChip onClick={() => setShowCfg(!showCfg)} aria-expanded={showCfg} aria-label="Stampante Epson" tone={cfg.ip ? "success" : "secondary"}>
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </StaffChip>
+        <StaffChip onClick={toggleSplit} aria-expanded={split} aria-label={split ? "Nascondi la cucina" : "Mostra la cucina accanto alla cassa"} tone={split ? "success" : "secondary"}>
+          ▦ Cucina {split ? "✓" : ""}
+        </StaffChip>
         <StaffCrossLink page="cassa" />
         <Link to="/" className={staffChipClass}>← Totem</Link>
         <StaffChip
@@ -139,9 +160,11 @@ function Cassa() {
 
       {msg && <p className="mb-4 rounded-2xl bg-muted p-4 text-2xl font-bold">{msg}</p>}
       <StaffDisplayPreview page="cassa" />
+      <div className={split ? "grid gap-6 xl:grid-cols-2" : ""}>
+      <section>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine da incassare</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${split ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
         {orders.map((o) => (
           <article key={o.id} className="animate-pop flex flex-col rounded-3xl border-4 border-primary bg-card p-5">
             <div className="flex items-baseline justify-between">
@@ -174,6 +197,20 @@ function Cassa() {
             </button>
           </article>
         ))}
+      </div>
+      </section>
+      {split && (
+        <section className="rounded-3xl border-4 border-accent/40 p-4">
+          <h2 className="mb-4 font-display text-5xl text-accent">🍳 Cucina</h2>
+          <KitchenBoard
+            orders={kitchenOrders}
+            features={features}
+            compact
+            onStatus={(id, status) => setKitchenStatus({ data: { id, status } }).catch(() => router.invalidate())}
+            onInfo={(id, d) => kitchenInfo({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`))}
+          />
+        </section>
+      )}
       </div>
     </main>
   );

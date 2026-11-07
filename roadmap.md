@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Schermo diviso in Cassa: pulsantino «▦ Cucina» mostra il tabellone cucina accanto agli incassi (tabellone condiviso in kitchen-board.tsx, scelta ricordata sul dispositivo); manuale aggiornato, 78 prove automatiche superate, pagine senza errori. Prova della divisione nelle pagine sbloccate in attesa del PIN del personale.
 - [x] Tutti i comandi del personale in fila in alto come pulsantini identici (Cucina, Cassa, Admin), numerazione ordini aperta dal pulsantino «🔢 Numeri»; manuale aggiornato, 78 prove automatiche superate e fila verificata nel browser a due formati schermo.
 - [x] Pulsantino di scambio fra Cucina e Cassa: «💶 Cassa» in Cucina e «🍳 Cucina» in Cassa, manuale aggiornato e due prove automatiche superate.
 - [x] Miniatura spostabile, ridimensionabile e trasparente su Cucina e Cassa; regolazioni separate sul dispositivo, manuale aggiornato e nove prove automatiche superate. Pagine senza errori; prova delle miniature nelle pagine sbloccate in attesa del PIN del personale.
