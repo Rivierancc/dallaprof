@@ -82,23 +82,23 @@ function Cassa() {
 
   return (
     <main className="min-h-screen p-6">
-      <header className="mb-6 flex flex-wrap items-center gap-4">
+      <header className="mb-6 flex flex-wrap items-center gap-2">
         <h1 className="mr-auto font-display text-7xl text-accent">Cassa</h1>
         <StaffFullscreenButton />
-        <button onClick={() => setShowCfg(!showCfg)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+        <StaffChip onClick={() => setShowCfg(!showCfg)} aria-expanded={showCfg} aria-label="Stampante Epson" tone={cfg.ip ? "success" : "secondary"}>
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
-        </button>
+        </StaffChip>
         <StaffCrossLink page="cassa" />
-        <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">← Totem</Link>
-        <button
+        <Link to="/" className={staffChipClass}>← Totem</Link>
+        <StaffChip
           onClick={async () => {
             await lock({ data: gateFlags() });
             router.invalidate();
           }}
-          className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold"
+          aria-label="Esci"
         >
-          Esci
-        </button>
+          🚪 Esci
+        </StaffChip>
       </header>
 
       {showCfg && (

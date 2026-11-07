@@ -7,6 +7,7 @@ import { useKitchenFeatures } from "@/components/kitchen-features";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { Slider } from "@/components/ui/slider";
 import { cleanPreviewLayout, DEFAULT_PREVIEW_LAYOUT, fitPreviewLayout, previewLayoutKey, type PreviewLayout } from "@/lib/display-preview-layout";
+import { StaffChip } from "@/components/staff-nav";
 
 export function StaffFullscreenButton() {
   const { fullscreen, enterKiosk, exitKiosk, kioskError } = useCustomer();
