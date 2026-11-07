@@ -11,7 +11,7 @@ import { orderLines } from "@/lib/order-lines";
 import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
-import { StaffCrossLink } from "@/components/staff-nav";
+import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
 export const Route = createFileRoute("/cassa")({

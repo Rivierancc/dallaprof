@@ -13,7 +13,7 @@ import { loadPrinter, printTicket } from "@/lib/epson";
 import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
 import { OrderNumberSettings } from "@/components/order-number-settings";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
-import { StaffCrossLink } from "@/components/staff-nav";
+import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -96,7 +96,7 @@ function Kitchen() {
       <header className="mb-6 flex flex-wrap items-center gap-2">
         <h1 className="mr-auto font-display text-7xl text-accent">Cucina</h1>
         <StaffFullscreenButton />
-        <button
+        <StaffChip
           onClick={() => {
             ctx.current ??= new AudioContext();
             ctx.current.resume();
@@ -104,10 +104,10 @@ function Kitchen() {
             beep();
           }}
           aria-label={sound ? "Suono attivo" : "Attiva suono"}
-          className={`${staffChipBase} ${sound ? chipTones.success : chipTones.primary}`}
+          tone={sound ? "success" : "primary"}
         >
           {sound ? "🔔 Suono" : "🔇 Suono"}
-        </button>
+        </StaffChip>
         {features.history && (
           <StaffChip onClick={() => setShowHistory(!showHistory)} aria-label={showHistory ? "Ordini aperti" : "Storico di oggi"}>
             {showHistory ? "🍳 Aperti" : "📋 Storico"}
