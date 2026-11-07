@@ -44,7 +44,8 @@ function LivePreview({ page, partial }: { page: "cassa" | "cucina"; partial: boo
   }, [layout, loaded, page]);
   const start = (e: PointerEvent<HTMLButtonElement>, kind: "move" | "resize") => {
     if (e.button !== 0) return;
-    const next = fit({ ...layout, floating: true });
+    const rect = e.currentTarget.closest("section")?.getBoundingClientRect();
+    const next = fit({ ...layout, floating: true, ...(!layout.floating && rect ? { x: rect.left, y: rect.top } : {}) });
     setLayout(next);
     gesture.current = { kind, x: e.clientX, y: e.clientY, layout: next };
     e.currentTarget.setPointerCapture(e.pointerId);
