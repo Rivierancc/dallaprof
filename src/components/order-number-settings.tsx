@@ -30,7 +30,7 @@ export function OrderNumberSettings() {
     } catch (e) { setMessage(e instanceof Error ? e.message : "Numerazione non modificata"); }
     finally { setBusy(false); }
   };
-  return <div className="relative">
+  return <div className="relative z-50">
     {open && <button type="button" tabIndex={-1} aria-hidden="true" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />}
     <StaffChip aria-label="Numerazione ordini" aria-expanded={open} onClick={() => setOpen((v) => !v)}>🔢 Numeri</StaffChip>
     <div hidden={!open} className="absolute right-0 top-full z-50 mt-2 w-[26rem] max-w-[85vw] space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xl">
