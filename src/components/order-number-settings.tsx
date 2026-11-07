@@ -32,7 +32,7 @@ export function OrderNumberSettings() {
   };
   return <div className="relative z-50">
     {open && <button type="button" tabIndex={-1} aria-hidden="true" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />}
-    <StaffChip aria-label="Numerazione ordini" aria-expanded={open} onClick={() => setOpen((v) => !v)}>🔢 Numeri</StaffChip>
+    <StaffChip className="relative z-50" aria-label="Numerazione ordini" aria-expanded={open} onClick={() => setOpen((v) => !v)}>🔢 Numeri</StaffChip>
     <div hidden={!open} className="absolute right-0 top-full z-50 mt-2 w-[26rem] max-w-[85vw] space-y-3 rounded-2xl border border-border bg-card p-4 shadow-xl">
       <p className="text-xl">{isPending ? "Caricamento…" : error ? "Numerazione non disponibile" : `Prossimo numero: ${String(data).padStart(2, "0")}`}</p>
       <label className="flex flex-col gap-2 text-lg">Nuovo numero (1–99)
