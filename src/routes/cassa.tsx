@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { orderLines } from "@/lib/order-lines";
 import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
+import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
 export const Route = createFileRoute("/cassa")({
@@ -82,6 +83,7 @@ function Cassa() {
     <main className="min-h-screen p-6">
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <h1 className="mr-auto font-display text-7xl text-accent">Cassa</h1>
+        <StaffFullscreenButton />
         <button onClick={() => setShowCfg(!showCfg)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </button>
@@ -134,6 +136,7 @@ function Cassa() {
       )}
 
       {msg && <p className="mb-4 rounded-2xl bg-muted p-4 text-2xl font-bold">{msg}</p>}
+      <StaffDisplayPreview page="cassa" />
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine da incassare</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

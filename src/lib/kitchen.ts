@@ -9,6 +9,8 @@ export type KitchenFeatures = {
   history: boolean;
   checklist: boolean;
   delivery: boolean;
+  displayTill: boolean;
+  displayKitchen: boolean;
   readySound: ReadySound;
   partialSound: ReadySound;
 };
@@ -23,6 +25,8 @@ export const cleanKitchenFeatures = (k: Partial<KitchenFeatures> | null | undefi
   history: k?.history !== false,
   checklist: k?.checklist !== false,
   delivery: k?.delivery !== false,
+  displayTill: k?.displayTill !== false,
+  displayKitchen: k?.displayKitchen !== false,
   readySound: sound(k?.readySound, "campanello"),
   partialSound: sound(k?.partialSound, "fischio"),
 });

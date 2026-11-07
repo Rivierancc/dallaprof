@@ -797,7 +797,7 @@ export const getKitchenFeatures = createServerFn({ method: "GET" }).handler(asyn
 });
 
 export const saveKitchenFeatures = createServerFn({ method: "POST" })
-  .inputValidator((d: KitchenFeatures) => cleanKitchenFeatures({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist, delivery: !!d.delivery, readySound: d.readySound, partialSound: d.partialSound }))
+  .inputValidator((d: KitchenFeatures) => cleanKitchenFeatures({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist, delivery: !!d.delivery, displayTill: d.displayTill, displayKitchen: d.displayKitchen, readySound: d.readySound, partialSound: d.partialSound }))
   .handler(async ({ data }) => {
     await staffOnly();
     const { error } = await (await admin()).from("kiosk_banner").update({ kitchen: data as never }).eq("id", 1);
