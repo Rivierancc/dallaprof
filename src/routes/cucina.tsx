@@ -13,6 +13,7 @@ import { loadPrinter, printTicket } from "@/lib/epson";
 import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
 import { OrderNumberSettings } from "@/components/order-number-settings";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
+import { StaffCrossLink } from "@/components/staff-nav";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -111,9 +112,7 @@ function Kitchen() {
             {showHistory ? "🍳 Ordini aperti" : "📋 Storico di oggi"}
           </button>
         )}
-        <Link to="/cassa" className="tap rounded-xl bg-secondary px-4 py-2 text-lg font-bold">
-          💶 Cassa
-        </Link>
+        <StaffCrossLink page="cucina" />
         <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           ← Totem
         </Link>
