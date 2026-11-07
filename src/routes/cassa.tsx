@@ -196,6 +196,20 @@ function Cassa() {
           </article>
         ))}
       </div>
+      </section>
+      {split && (
+        <section className="rounded-3xl border-4 border-accent/40 p-4">
+          <h2 className="mb-4 font-display text-5xl text-accent">🍳 Cucina</h2>
+          <KitchenBoard
+            orders={kitchenOrders}
+            features={features}
+            compact
+            onStatus={(id, status) => setKitchenStatus({ data: { id, status } }).catch(() => router.invalidate())}
+            onInfo={(id, d) => kitchenInfo({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`))}
+          />
+        </section>
+      )}
+      </div>
     </main>
   );
 }
