@@ -87,6 +87,7 @@ function Cassa() {
         <button onClick={() => setShowCfg(!showCfg)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </button>
+        <Link to="/cucina" className="tap rounded-xl bg-secondary px-4 py-2 text-lg font-bold">🍳 Cucina</Link>
         <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">← Totem</Link>
         <button
           onClick={async () => {

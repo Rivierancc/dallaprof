@@ -111,6 +111,9 @@ function Kitchen() {
             {showHistory ? "🍳 Ordini aperti" : "📋 Storico di oggi"}
           </button>
         )}
+        <Link to="/cassa" className="tap rounded-xl bg-secondary px-4 py-2 text-lg font-bold">
+          💶 Cassa
+        </Link>
         <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
           ← Totem
         </Link>
