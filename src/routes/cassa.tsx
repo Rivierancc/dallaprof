@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
-import { kitchenStatus, lockKitchen, settleOrder } from "@/lib/kitchen.functions";
+import { kitchenStatus, lockKitchen, setOrderStatus, settleOrder } from "@/lib/kitchen.functions";
+import { setOrderKitchenInfo } from "@/lib/menu.functions";
 import { gateFlags } from "@/lib/gate";
 import { euro, menuQueryOptions, type Order } from "@/lib/menu";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,12 @@ import { Button } from "@/components/ui/button";
 import type { PaymentMethod } from "@/lib/customer";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
+import { KitchenBoard } from "@/components/kitchen-board";
+import { useKitchenFeatures } from "@/components/kitchen-features";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
+
+// La scelta «cucina accanto alla cassa» resta sul dispositivo.
+const SPLIT_KEY = "cassa-kitchen-split";
 
 export const Route = createFileRoute("/cassa")({
   loader: () => kitchenStatus(),
