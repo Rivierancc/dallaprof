@@ -2,7 +2,7 @@
 export type ManualEntry = { title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "7 novembre 2026";
+export const MANUAL_UPDATED = "8 novembre 2026";
 
 export const MANUAL: ManualSection[] = [
   { id: "totem", title: "🍔 Totem clienti (pagina iniziale)", entries: [
@@ -21,7 +21,8 @@ export const MANUAL: ManualSection[] = [
   { id: "cassa", title: "💶 Cassa", entries: [
     { title: "Confermare un pagamento", where: "/cassa (serve il PIN)", steps: ["Trova l'ordine per numero.", "Tocca «Contanti» o «Carta» dopo aver incassato (anche col POS SumUp).", "Solo ora l'ordine passa in cucina e il cliente vede «Ordine in preparazione»."], tips: ["«Annulla» toglie un ordine non pagato."] },
     { title: "Stampanti Epson", where: "/cassa → stampante", steps: ["Usa «Cerca stampanti» per trovarle sulla rete del locale.", "Scegli la stampante: lo scontrino si stampa da solo; la scelta resta su quel dispositivo.", "Sulla comanda il panino ha sotto i suoi extra; poi, separati da una riga, CONTORNO e BEVANDA. I menu col nome tuo riportano anche il nome del panino (es. «Scientifico · Picasso»)."] },
-    { title: "Pulsantini in alto", where: "Cassa → fila in alto", steps: ["Sotto il titolo «Cassa» tutti i comandi sono piccoli pulsantini uguali, in fila: «Schermo», «🖨️ Stampante», «🍳 Cucina», «← Totem», «🚪 Esci».", "Toccandone uno si apre la sua funzione; gli altri restano a portata di dito."] },
+    { title: "Pulsantini in alto", where: "Cassa → fila in alto", steps: ["Sotto il titolo «Cassa» tutti i comandi sono piccoli pulsantini uguali, in fila: «Schermo», «🖨️ Stampante», «▦ Cucina», «🍳 Cucina», «← Totem», «🚪 Esci».", "Toccandone uno si apre la sua funzione; gli altri restano a portata di dito."] },
+    { title: "Cucina accanto alla cassa", where: "Cassa → pulsantino ▦ Cucina", steps: ["Tocca «▦ Cucina»: lo schermo si divide e a destra compare il tabellone della cucina con gli ordini in preparazione e pronti.", "Da lì puoi spuntare piatti e consegne, aprire gli ingredienti (📖) e premere «Pronto» o «Consegnato», come in Cucina.", "Tocca di nuovo «▦ Cucina» per tornare alla sola cassa."], tips: ["La scelta resta ricordata su quel dispositivo. Su schermi stretti la cucina va sotto la cassa invece che a fianco."] },
     { title: "Andare in cucina", where: "Cassa → pulsantino 🍳 Cucina", steps: ["Tocca il pulsantino «🍳 Cucina» in alto per passare subito al tabellone cucina.", "Con «← Totem» torni alla pagina dei clienti."] },
   ]},
   { id: "cucina", title: "👨‍🍳 Cucina", entries: [
