@@ -104,6 +104,9 @@ function Cassa() {
         <StaffChip onClick={() => setShowCfg(!showCfg)} aria-expanded={showCfg} aria-label="Stampante Epson" tone={cfg.ip ? "success" : "secondary"}>
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </StaffChip>
+        <StaffChip onClick={toggleSplit} aria-expanded={split} aria-label={split ? "Nascondi la cucina" : "Mostra la cucina accanto alla cassa"} tone={split ? "success" : "secondary"}>
+          ▦ Cucina {split ? "✓" : ""}
+        </StaffChip>
         <StaffCrossLink page="cassa" />
         <Link to="/" className={staffChipClass}>← Totem</Link>
         <StaffChip
