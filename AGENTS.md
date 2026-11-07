@@ -35,4 +35,5 @@
 - Every optional kitchen behaviour is its own flag in the `kiosk_banner.kitchen` JSON, normalised by cleanKitchenFeatures so a flag missing from older rows stays on; add new switches there and to the Admin panel rather than inventing new storage.
 - Each kitchen alert tone (ready, partially ready) is its own field in that JSON, while the notes live only in src/lib/sounds.ts; why: staff pick a tone per alert from Admin and every screen must play the same tune.
 - Staff text zoom is `--text-scale` multiplied into the root font-size clamp (styles.css), per device; why: wrapper zoom skips dropdowns.
+- Staff page controls sit in one top row as identical compact chips built from StaffChip/StaffCrossLink (src/components/staff-nav.tsx); body-page action buttons may stay large for touch; why: staff asked for uniform small buttons and a single command row.
 - Update src/lib/manual.ts (+MANUAL_UPDATED) on every user-visible change; why: /manuale must stay current.
