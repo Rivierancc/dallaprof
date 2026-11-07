@@ -17,6 +17,14 @@ function panel() {
   return qc;
 }
 
+it("la numerazione si apre dal pulsantino e resta chiusa finché non lo tocchi", () => {
+  const qc = panel();
+  expect(screen.getByLabelText("Nuovo numero")).not.toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Numerazione ordini" }));
+  expect(screen.getByLabelText("Nuovo numero")).toBeVisible();
+  qc.clear();
+});
+
 it("annullare il reset non scrive la numerazione", async () => {
   panel();
   fireEvent.click(screen.getByRole("button", { name: "Reset a 01", hidden: true }));

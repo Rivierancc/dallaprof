@@ -52,7 +52,7 @@ function Admin() {
     {kioskError && <p role="alert" className="mt-6 text-2xl text-destructive">{kioskError}</p>}
     <div className="mt-6">
       <PasswordSettings />
-      <div className="mx-auto mt-6 max-w-5xl"><OrderNumberSettings /></div>
+      <div className="mt-6"><OrderNumberSettings /></div>
       <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       <ThemesPanel />
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></div>

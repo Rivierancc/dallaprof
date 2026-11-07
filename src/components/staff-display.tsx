@@ -7,14 +7,19 @@ import { useKitchenFeatures } from "@/components/kitchen-features";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { Slider } from "@/components/ui/slider";
 import { cleanPreviewLayout, DEFAULT_PREVIEW_LAYOUT, fitPreviewLayout, previewLayoutKey, type PreviewLayout } from "@/lib/display-preview-layout";
+import { StaffChip } from "@/components/staff-nav";
 
 export function StaffFullscreenButton() {
   const { fullscreen, enterKiosk, exitKiosk, kioskError } = useCustomer();
   return <div className="flex flex-col items-start gap-2">
-    <Button variant="secondary" className="tap h-auto whitespace-normal px-6 py-4 text-2xl font-bold" onClick={() => { if (fullscreen) void exitKiosk(); else void enterKiosk(); }}>
-      {fullscreen ? <Minimize aria-hidden="true" /> : <Maximize aria-hidden="true" />}
-      {fullscreen ? "Esci da schermo intero" : "Schermo intero"}
-    </Button>
+    <StaffChip
+      aria-label={fullscreen ? "Esci da schermo intero" : "Schermo intero"}
+      title={fullscreen ? "Esci da schermo intero" : "Schermo intero"}
+      onClick={() => { if (fullscreen) void exitKiosk(); else void enterKiosk(); }}
+    >
+      {fullscreen ? <Minimize aria-hidden="true" className="size-4" /> : <Maximize aria-hidden="true" className="size-4" />}
+      Schermo
+    </StaffChip>
     {kioskError && <p role="alert" className="max-w-sm text-lg text-destructive">{kioskError}</p>}
   </div>;
 }

@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Tutti i comandi del personale in fila in alto come pulsantini identici (Cucina, Cassa, Admin), numerazione ordini aperta dal pulsantino «🔢 Numeri»; manuale aggiornato, 78 prove automatiche superate e fila verificata nel browser a due formati schermo.
 - [x] Pulsantino di scambio fra Cucina e Cassa: «💶 Cassa» in Cucina e «🍳 Cucina» in Cassa, manuale aggiornato e due prove automatiche superate.
 - [x] Miniatura spostabile, ridimensionabile e trasparente su Cucina e Cassa; regolazioni separate sul dispositivo, manuale aggiornato e nove prove automatiche superate. Pagine senza errori; prova delle miniature nelle pagine sbloccate in attesa del PIN del personale.
 - [x] Miniatura Display configurabile separatamente per Cassa e Cucina da Admin; schermo intero senza password sulle due pagine; manuale aggiornato e 19 prove automatiche superate. Display verificato su computer e tablet senza errori; verifica nelle pagine sbloccate da completare con il PIN del personale.

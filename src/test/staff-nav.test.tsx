@@ -2,12 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
-    <a href={to}>{children}</a>
+  Link: ({ to, className, children }: { to: string; className?: string; children: React.ReactNode }) => (
+    <a href={to} className={className}>{children}</a>
   ),
 }));
 
-import { StaffCrossLink } from "@/components/staff-nav";
+import { StaffChip, StaffCrossLink } from "@/components/staff-nav";
 
 describe("Scambio rapido fra Cucina e Cassa", () => {
   it("dalla Cucina porta alla Cassa", () => {
@@ -22,5 +22,17 @@ describe("Scambio rapido fra Cucina e Cassa", () => {
     const link = screen.getByRole("link", { name: /Cucina/ });
     expect(link).toHaveAttribute("href", "/cucina");
     expect(screen.queryByRole("link", { name: /Cassa/ })).toBeNull();
+  });
+});
+
+describe("Pulsantini del personale", () => {
+  it("hanno tutti la stessa forma", () => {
+    render(<><StaffCrossLink page="cucina" /><StaffChip>tasto</StaffChip></>);
+    const link = screen.getByRole("link", { name: /Cassa/ });
+    const chip = screen.getByRole("button", { name: "tasto" });
+    for (const cls of ["rounded-xl", "px-4", "py-2", "text-lg"]) {
+      expect(chip.className).toContain(cls);
+      expect(link.className).toContain(cls);
+    }
   });
 });

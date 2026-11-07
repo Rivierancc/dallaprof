@@ -13,7 +13,7 @@ import { loadPrinter, printTicket } from "@/lib/epson";
 import { itemTitle, orderLines, splitMenu } from "@/lib/order-lines";
 import { OrderNumberSettings } from "@/components/order-number-settings";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
-import { StaffCrossLink } from "@/components/staff-nav";
+import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
@@ -93,34 +93,31 @@ function Kitchen() {
 
   return (
     <main className="min-h-screen p-6">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-7xl text-accent">Cucina</h1>
+      <header className="mb-6 flex flex-wrap items-center gap-2">
+        <h1 className="mr-auto font-display text-7xl text-accent">Cucina</h1>
         <StaffFullscreenButton />
-        <button
+        <StaffChip
           onClick={() => {
             ctx.current ??= new AudioContext();
             ctx.current.resume();
             setSound(true);
             beep();
           }}
-          className={`tap rounded-2xl px-6 py-4 text-2xl font-bold ${sound ? "bg-success text-success-foreground" : "bg-primary text-primary-foreground"}`}
+          aria-label={sound ? "Suono attivo" : "Attiva suono"}
+          tone={sound ? "success" : "primary"}
         >
-          {sound ? "🔔 Suono attivo" : "🔇 Attiva suono"}
-        </button>
+          {sound ? "🔔 Suono" : "🔇 Suono"}
+        </StaffChip>
         {features.history && (
-          <button onClick={() => setShowHistory(!showHistory)} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
-            {showHistory ? "🍳 Ordini aperti" : "📋 Storico di oggi"}
-          </button>
+          <StaffChip onClick={() => setShowHistory(!showHistory)} aria-label={showHistory ? "Ordini aperti" : "Storico di oggi"}>
+            {showHistory ? "🍳 Aperti" : "📋 Storico"}
+          </StaffChip>
         )}
+        <OrderNumberSettings />
         <StaffCrossLink page="cucina" />
-        <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
-          ← Totem
-        </Link>
-        <button onClick={logout} className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
-          Esci
-        </button>
+        <Link to="/" className={staffChipClass}>← Totem</Link>
+        <StaffChip onClick={logout} aria-label="Esci">🚪 Esci</StaffChip>
       </header>
-      <div className="mb-6"><OrderNumberSettings /></div>
       <StaffDisplayPreview page="cucina" />
       {showHistory && features.history ? <History /> : <>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine in attesa</p>}
