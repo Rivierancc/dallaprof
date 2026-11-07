@@ -158,9 +158,11 @@ function Cassa() {
 
       {msg && <p className="mb-4 rounded-2xl bg-muted p-4 text-2xl font-bold">{msg}</p>}
       <StaffDisplayPreview page="cassa" />
+      <div className={split ? "grid gap-6 xl:grid-cols-2" : ""}>
+      <section>
       {orders.length === 0 && <p className="text-3xl text-muted-foreground">Nessun ordine da incassare</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${split ? "" : "md:grid-cols-2 xl:grid-cols-3"}`}>
         {orders.map((o) => (
           <article key={o.id} className="animate-pop flex flex-col rounded-3xl border-4 border-primary bg-card p-5">
             <div className="flex items-baseline justify-between">
