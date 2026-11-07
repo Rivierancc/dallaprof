@@ -45,7 +45,9 @@ function Cassa() {
   const features = useKitchenFeatures();
   const setKitchenStatus = useServerFn(setOrderStatus);
   const kitchenInfo = useServerFn(setOrderKitchenInfo);
-  const [split, setSplit] = useState(() => localStorage.getItem(SPLIT_KEY) === "1");
+  const [split, setSplit] = useState(false);
+  // La scelta salvata si legge solo nel browser (la pagina nasce anche sul server).
+  useEffect(() => setSplit(localStorage.getItem(SPLIT_KEY) === "1"), []);
   const toggleSplit = () => {
     const next = !split;
     setSplit(next);
