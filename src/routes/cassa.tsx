@@ -41,6 +41,16 @@ function Cassa() {
   const settle = useServerFn(settleOrder);
   const lock = useServerFn(lockKitchen);
   const orders = useLiveOrders(["awaiting_payment"]);
+  const kitchenOrders = useLiveOrders(["preparing", "ready"]);
+  const features = useKitchenFeatures();
+  const setKitchenStatus = useServerFn(setOrderStatus);
+  const kitchenInfo = useServerFn(setOrderKitchenInfo);
+  const [split, setSplit] = useState(() => localStorage.getItem(SPLIT_KEY) === "1");
+  const toggleSplit = () => {
+    const next = !split;
+    setSplit(next);
+    localStorage.setItem(SPLIT_KEY, next ? "1" : "0");
+  };
   const { data: menu } = useQuery(menuQueryOptions);
   const [cfg, setCfg] = useState<PrinterCfg>({ ip: "", https: true, auto: true });
   const [showCfg, setShowCfg] = useState(false);
