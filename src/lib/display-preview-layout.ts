@@ -7,7 +7,7 @@ export function cleanPreviewLayout(value: unknown): PreviewLayout {
     const n = v[key];
     return typeof n === "number" && Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : Number(DEFAULT_PREVIEW_LAYOUT[key]);
   };
-  return { floating: v.floating === true, x: number("x", 0, 10000), y: number("y", 0, 10000), width: number("width", 280, 900), height: number("height", 200, 700), opacity: number("opacity", 20, 100) };
+  return { floating: v['floating'] === true, x: number("x", 0, 10000), y: number("y", 0, 10000), width: number("width", 280, 900), height: number("height", 200, 700), opacity: number("opacity", 20, 100) };
 }
 export function fitPreviewLayout(layout: PreviewLayout, width: number, height: number): PreviewLayout {
   const w = Math.min(layout.width, Math.max(0, width - 16));
