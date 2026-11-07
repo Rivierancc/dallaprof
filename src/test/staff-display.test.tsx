@@ -17,6 +17,7 @@ beforeEach(() => {
   state.fullscreen = false;
   state.features = { displayTill: true, displayKitchen: true, partial: true };
   state.orders = [];
+  localStorage.clear();
 });
 
 describe("Schermo intero personale", () => {
@@ -36,6 +37,17 @@ describe("Schermo intero personale", () => {
 });
 
 describe("Miniatura Display", () => {
+  it("salva le regolazioni e le rilegge solo nella pagina corretta", () => {
+    localStorage.setItem("staff-display-layout-cassa", JSON.stringify({ floating: true, x: 80, y: 90, width: 500, height: 320, opacity: 45 }));
+    const view = render(<StaffDisplayPreview page="cassa" />);
+    expect(JSON.parse(localStorage.getItem("staff-display-layout-cassa") || "{}")).toMatchObject({ x: 80, y: 90, width: 500, height: 320, opacity: 45 });
+    view.rerender(<StaffDisplayPreview page="cucina" />);
+    expect(JSON.parse(localStorage.getItem("staff-display-layout-cucina") || "{}")).toMatchObject({ floating: false, opacity: 100 });
+    fireEvent.click(screen.getByRole("button", { name: "Sposta miniatura" }));
+    expect(JSON.parse(localStorage.getItem("staff-display-layout-cucina") || "{}")).toMatchObject({ floating: true });
+    fireEvent.click(screen.getByRole("button", { name: "Ripristina miniatura" }));
+    expect(JSON.parse(localStorage.getItem("staff-display-layout-cucina") || "{}")).toMatchObject({ floating: false, opacity: 100 });
+  });
   it("rispetta le impostazioni separate delle due pagine", () => {
     state.features.displayTill = false;
     const view = render(<StaffDisplayPreview page="cassa" />);

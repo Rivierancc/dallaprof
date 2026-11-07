@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Miniatura spostabile, ridimensionabile e trasparente su Cucina e Cassa; regolazioni separate sul dispositivo, manuale aggiornato e nove prove automatiche superate. Pagine senza errori; prova delle miniature nelle pagine sbloccate in attesa del PIN del personale.
 - [x] Miniatura Display configurabile separatamente per Cassa e Cucina da Admin; schermo intero senza password sulle due pagine; manuale aggiornato e 19 prove automatiche superate. Display verificato su computer e tablet senza errori; verifica nelle pagine sbloccate da completare con il PIN del personale.
 - [x] Numerazione in Cucina e Admin: reset a 01, scelta prossimo numero, avviso e conferma, protezione personale; sei prove automatiche superate, permessi verificati senza cambiare la numerazione reale.
 - [x] Pulsante di attivazione suoneria sul Display e ripresa dell'audio prima delle note; verifica del tocco e dell'audio nel browser.
