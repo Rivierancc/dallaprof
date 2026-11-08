@@ -1,5 +1,5 @@
 # Intervento totem
-- [ ] Cuoricino Lovable via da tutto il progetto: icona dei preferiti/schermata Home sostituita col logo aziendale (favicon, icone 192/512, apple-touch, manifest) e badge «Edit with Lovable» nascosto sul sito pubblicato.
+- [x] Cuoricino Lovable via da tutto il progetto: icona dei preferiti/schermata Home sostituita col logo aziendale (favicon, icone 192/512, apple-touch, manifest; vecchia favicon.ico eliminata, collegamenti verificati nella pagina) e badge «Edit with Lovable» nascosto sul sito pubblicato; manuale aggiornato.
 - [x] Schermo diviso in Cassa: pulsantino «▦ Cucina» mostra il tabellone cucina accanto agli incassi (tabellone condiviso in kitchen-board.tsx, scelta ricordata sul dispositivo); manuale aggiornato, 78 prove automatiche superate, pagine senza errori. Prova della divisione nelle pagine sbloccate in attesa del PIN del personale.
 - [x] Tutti i comandi del personale in fila in alto come pulsantini identici (Cucina, Cassa, Admin), numerazione ordini aperta dal pulsantino «🔢 Numeri»; manuale aggiornato, 78 prove automatiche superate e fila verificata nel browser a due formati schermo.
 - [x] Pulsantino di scambio fra Cucina e Cassa: «💶 Cassa» in Cucina e «🍳 Cucina» in Cassa, manuale aggiornato e due prove automatiche superate.
