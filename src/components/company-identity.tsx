@@ -86,6 +86,7 @@ export function CompanySettings() {
       <Button variant="secondary" disabled={busy} onClick={() => input.current?.click()}><ImagePlus />{draft.logo ? "Cambia logo" : "Carica logo"}</Button>
       {draft.logo && <Button variant="outline" disabled={busy} onClick={() => { setFile(null); setDraft({ ...draft, logoPath: "", logo: "" }); setMessage(""); }}><Trash2 />Rimuovi logo</Button>}
     </div>
+    <p className="text-lg text-muted-foreground">Il logo diventa anche l'icona dell'app nei preferiti del browser e nella schermata Home del tablet: cambiandolo qui, l'icona si aggiorna da sola entro pochi minuti.</p>
     <div className="space-y-3">
       <p className="text-xl">Dimensione logo: {sizes[draft.style.logoSize - 1]}</p>
       <Slider aria-label="Dimensione logo" min={1} max={6} step={1} value={[draft.style.logoSize]} disabled={busy} onValueChange={([logoSize]) => { if (logoSize !== undefined) setStyle({ logoSize }); }} className="max-w-md py-4" />
