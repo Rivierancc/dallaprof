@@ -18,6 +18,7 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OrdineConfermatoIndexRouteImport } from './routes/ordine-confermato.index'
 import { Route as OrdineConfermatoIdRouteImport } from './routes/ordine-confermato.$id'
+import { Route as ApiPublicIconRouteImport } from './routes/api/public/icon'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const OrdineConfermatoIdRoute = OrdineConfermatoIdRouteImport.update({
   path: '/ordine-confermato/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIconRoute = ApiPublicIconRouteImport.update({
+  id: '/api/public/icon',
+  path: '/api/public/icon',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
   '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
+  '/api/public/icon': typeof ApiPublicIconRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin': typeof AdminIndexRoute
   '/ordine-confermato': typeof OrdineConfermatoIndexRoute
+  '/api/public/icon': typeof ApiPublicIconRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
   '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
+  '/api/public/icon': typeof ApiPublicIconRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/ordine-confermato/$id'
     | '/admin/'
     | '/ordine-confermato/'
+    | '/api/public/icon'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/ordine-confermato/$id'
     | '/admin'
     | '/ordine-confermato'
+    | '/api/public/icon'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/ordine-confermato/$id'
     | '/admin/'
     | '/ordine-confermato/'
+    | '/api/public/icon'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   OrdineConfermatoIndexRoute: typeof OrdineConfermatoIndexRoute
+  ApiPublicIconRoute: typeof ApiPublicIconRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdineConfermatoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/icon': {
+      id: '/api/public/icon'
+      path: '/api/public/icon'
+      fullPath: '/api/public/icon'
+      preLoaderRoute: typeof ApiPublicIconRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   OrdineConfermatoIndexRoute: OrdineConfermatoIndexRoute,
+  ApiPublicIconRoute: ApiPublicIconRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
