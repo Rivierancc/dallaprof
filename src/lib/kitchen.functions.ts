@@ -43,7 +43,7 @@ export const setOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireStaff } = await import("@/lib/staff.server");
     await requireStaff();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = await (await import("@/lib/venue.server")).venueAdmin();
     const { error } = await supabaseAdmin.from("orders").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -58,7 +58,7 @@ export const settleOrder = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { requireStaff } = await import("@/lib/staff.server");
     await requireStaff();
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = await (await import("@/lib/venue.server")).venueAdmin();
     const patch = data.paid
       ? { status: "preparing", paid_at: new Date().toISOString(), payment_method: data.method }
       : { status: "cancelled" };
@@ -82,12 +82,12 @@ export const changeStaffPin = createServerFn({ method: "POST" })
     await requireStaff();
     const credentials = await staffCredentials();
     if (!await matchesStaffPin(data.current, credentials)) throw new Error("PIN attuale errato");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = await (await import("@/lib/venue.server")).venueAdmin();
     const version = crypto.randomUUID();
-    const row = { id: 1, pin_hash: await hashPin(data.next), version, updated_at: new Date().toISOString() };
+    const row = { pin_hash: await hashPin(data.next), version, updated_at: new Date().toISOString() };
     // Compare the previous version so simultaneous changes cannot overwrite each other.
     const result = credentials
-      ? await supabaseAdmin.from("staff_credentials").update(row).eq("id", 1).eq("version", credentials.version).select("id")
+      ? await supabaseAdmin.from("staff_credentials").update(row).eq("version", credentials.version).select("id")
       : await supabaseAdmin.from("staff_credentials").insert(row).select("id");
     if (result.error || !result.data?.length) throw new Error("PIN non modificato. Riprova con il codice attuale.");
     const session = await useSession<{ unlocked?: boolean; version?: string }>(staffSessionConfig(data));

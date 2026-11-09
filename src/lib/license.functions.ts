@@ -1,6 +1,7 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { cleanDemo, cleanPublicLicense, PLANS } from "@/lib/license";
+import { slugFromPath, validSlug } from "@/lib/venue";
 
 type Flags = { secure?: boolean; partitioned?: boolean };
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -20,8 +21,11 @@ async function requireMaster() {
   if (!hash || s.data.master !== hash.slice(-16)) throw new Error("Accesso riservato");
 }
 
+const venueDb = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
+const venueId = createServerOnlyFn(async () => (await import("@/lib/venue.server")).currentVenueId());
+
 export const getLicenseState = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await (await admin()).rpc("license_state");
+  const { data, error } = await (await admin()).rpc("license_state_v", { v: await venueId() });
   if (error) throw new Error("Licenza non leggibile");
   return cleanPublicLicense(data);
 });
@@ -68,37 +72,88 @@ export const masterLogout = createServerFn({ method: "POST" })
 const FIELDS = ["business_name", "owner_email", "company_name", "vat", "address", "city", "sdi", "pec", "phone", "notes"] as const;
 export type LicenseRow = Record<(typeof FIELDS)[number], string> & { status: string; plan: string; expires_at: string | null; demo: ReturnType<typeof cleanDemo> };
 
-export const getLicense = createServerFn({ method: "GET" }).handler(async (): Promise<LicenseRow> => {
+export const getLicense = createServerFn({ method: "GET" })
+  .inputValidator((d: { venueId: string }) => ({ venueId: String(d.venueId) }))
+  .handler(async ({ data: q }): Promise<LicenseRow> => {
   await requireMaster();
-  const { data, error } = await (await admin()).from("license").select("*").eq("id", 1).single();
+  const { data, error } = await (await admin()).from("license").select("*").eq("venue_id", q.venueId).single();
   if (error) throw new Error(error.message);
   const out = Object.fromEntries(FIELDS.map((f) => [f, String(data[f] ?? "")])) as unknown as LicenseRow;
   return { ...out, status: data.status, plan: data.plan, expires_at: data.expires_at, demo: cleanDemo(data.demo) };
 });
 
 export const saveLicense = createServerFn({ method: "POST" })
-  .inputValidator((d: LicenseRow) => {
+  .inputValidator((d: LicenseRow & { venueId: string }) => {
     const row = Object.fromEntries(FIELDS.map((f) => [f, String(d[f] ?? "").trim().slice(0, f === "notes" ? 4000 : 200)])) as unknown as LicenseRow;
     if (!row.business_name) throw new Error("Il nome del locale è obbligatorio");
     if (!/^\S+@\S+\.\S+$/.test(row.owner_email)) throw new Error("Email del titolare non valida");
     const status = ["active", "demo", "expired"].includes(d.status) ? d.status : "demo";
     const plan = d.plan in PLANS ? d.plan : "prova";
     const expires_at = d.expires_at && /^\d{4}-\d{2}-\d{2}$/.test(d.expires_at) ? d.expires_at : null;
-    return { ...row, status, plan, expires_at, demo: cleanDemo(d.demo) };
+    return { row: { ...row, status, plan, expires_at, demo: cleanDemo(d.demo) }, venueId: String(d.venueId) };
   })
   .handler(async ({ data }) => {
     await requireMaster();
-    const { error } = await (await admin()).from("license").update({ ...data, updated_at: new Date().toISOString() }).eq("id", 1);
+    const { error } = await (await admin()).from("license").update({ ...data.row, updated_at: new Date().toISOString() }).eq("venue_id", data.venueId);
+    await (await admin()).from("venues").update({ name: data.row.business_name }).eq("id", data.venueId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 /** Usato da saveProduct: blocca nuovi piatti oltre il limite della demo. */
 export async function assertProductAllowed() {
-  const db = await admin();
-  const { data } = await db.rpc("license_state");
+  const db = await venueDb();
+  const { data } = await db.rpc("license_state_v", { v: await venueId() });
   const l = cleanPublicLicense(data);
   if (l.state !== "demo") return;
   const { count } = await db.from("menu_products").select("id", { count: "exact", head: true });
   if ((count ?? 0) >= l.demo.max_products) throw new Error("Hai raggiunto il limite della versione demo. Passa alla versione completa per piatti illimitati.");
 }
+
+export type VenueListItem = { id: string; slug: string; name: string; status: string; plan: string; expires_at: string | null; owner_email: string };
+
+export const listVenues = createServerFn({ method: "GET" }).handler(async (): Promise<VenueListItem[]> => {
+  await requireMaster();
+  const db = await admin();
+  const [{ data: venues, error }, { data: lic }] = await Promise.all([
+    db.from("venues").select("id, slug, name").order("created_at"),
+    db.from("license").select("venue_id, status, plan, expires_at, owner_email"),
+  ]);
+  if (error) throw new Error(error.message);
+  return (venues ?? []).map((v) => {
+    const l = (lic ?? []).find((x) => x.venue_id === v.id);
+    const expired = l?.status === "expired" || (!!l?.expires_at && l.expires_at < new Date().toISOString().slice(0, 10));
+    return { ...v, status: expired ? "expired" : l?.status ?? "expired", plan: l?.plan ?? "", expires_at: l?.expires_at ?? null, owner_email: l?.owner_email ?? "" };
+  });
+});
+
+export const createVenue = createServerFn({ method: "POST" })
+  .inputValidator((d: { slug: string; name: string; email: string; pin: string; status: string; plan: string; expires_at: string | null }) => {
+    const slug = String(d.slug ?? "").trim().toLowerCase();
+    if (!validSlug(slug) || slugFromPath("/" + slug) !== slug) throw new Error("Nome breve non valido: usa solo lettere minuscole, numeri e trattini (almeno 2), e non una parola già usata dall'app");
+    const name = String(d.name ?? "").trim().slice(0, 200);
+    if (!name) throw new Error("Il nome del locale è obbligatorio");
+    const email = String(d.email ?? "").trim().slice(0, 200);
+    if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Email del titolare non valida");
+    const pin = String(d.pin ?? "");
+    if (!/^\d{4,12}$/.test(pin)) throw new Error("Il PIN del personale deve avere da 4 a 12 cifre");
+    const status = ["active", "demo", "expired"].includes(d.status) ? d.status : "demo";
+    const plan = d.plan in PLANS ? d.plan : "prova";
+    const expires_at = d.expires_at && /^\d{4}-\d{2}-\d{2}$/.test(d.expires_at) ? d.expires_at : null;
+    return { slug, name, email, pin, status, plan, expires_at };
+  })
+  .handler(async ({ data }) => {
+    await requireMaster();
+    const db = await admin();
+    const { hashPin } = await import("@/lib/staff.server");
+    const { data: v, error } = await db.from("venues").insert({ slug: data.slug, name: data.name }).select("id").single();
+    if (error) throw new Error(error.code === "23505" ? "Questo nome breve è già usato da un altro locale" : error.message);
+    const rows = await Promise.all([
+      db.from("license").insert({ venue_id: v.id, business_name: data.name, owner_email: data.email, status: data.status, plan: data.plan, expires_at: data.expires_at }),
+      db.from("kiosk_banner").insert({ venue_id: v.id, offers_title: "Menu in offerta" }),
+      db.from("staff_credentials").insert({ venue_id: v.id, pin_hash: await hashPin(data.pin) }),
+    ]);
+    const bad = rows.find((r) => r.error);
+    if (bad?.error) { await db.from("venues").delete().eq("id", v.id); throw new Error(bad.error.message); }
+    return { id: v.id, slug: data.slug };
+  });

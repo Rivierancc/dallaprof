@@ -28,6 +28,7 @@ export type Database = {
           offers_title_tr: Json
           settings: Json
           updated_at: string
+          venue_id: string
         }
         Insert: {
           company_description?: string
@@ -42,6 +43,7 @@ export type Database = {
           offers_title_tr?: Json
           settings?: Json
           updated_at?: string
+          venue_id?: string
         }
         Update: {
           company_description?: string
@@ -56,8 +58,17 @@ export type Database = {
           offers_title_tr?: Json
           settings?: Json
           updated_at?: string
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kiosk_banner_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       kiosk_themes: {
         Row: {
@@ -77,6 +88,7 @@ export type Database = {
           position: number
           primary_color: string
           start_md: string
+          venue_id: string
         }
         Insert: {
           accent?: string
@@ -95,6 +107,7 @@ export type Database = {
           position?: number
           primary_color?: string
           start_md?: string
+          venue_id?: string
         }
         Update: {
           accent?: string
@@ -113,8 +126,17 @@ export type Database = {
           position?: number
           primary_color?: string
           start_md?: string
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "kiosk_themes_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       license: {
         Row: {
@@ -135,6 +157,7 @@ export type Database = {
           status: string
           updated_at: string
           vat: string
+          venue_id: string
         }
         Insert: {
           address?: string
@@ -154,6 +177,7 @@ export type Database = {
           status?: string
           updated_at?: string
           vat?: string
+          venue_id?: string
         }
         Update: {
           address?: string
@@ -173,8 +197,17 @@ export type Database = {
           status?: string
           updated_at?: string
           vat?: string
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "license_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_categories: {
         Row: {
@@ -194,6 +227,7 @@ export type Database = {
           position: number
           slug: string
           strip: number
+          venue_id: string
         }
         Insert: {
           active?: boolean
@@ -212,6 +246,7 @@ export type Database = {
           position?: number
           slug: string
           strip?: number
+          venue_id?: string
         }
         Update: {
           active?: boolean
@@ -230,8 +265,17 @@ export type Database = {
           position?: number
           slug?: string
           strip?: number
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_ingredients: {
         Row: {
@@ -248,6 +292,7 @@ export type Database = {
           name_fr: string
           position: number
           price: number
+          venue_id: string
         }
         Insert: {
           available?: boolean
@@ -263,6 +308,7 @@ export type Database = {
           name_fr?: string
           position?: number
           price?: number
+          venue_id?: string
         }
         Update: {
           available?: boolean
@@ -278,8 +324,17 @@ export type Database = {
           name_fr?: string
           position?: number
           price?: number
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_ingredients_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_products: {
         Row: {
@@ -316,6 +371,7 @@ export type Database = {
           recipe_on: boolean
           sold_out: boolean
           suggest: Json
+          venue_id: string
         }
         Insert: {
           active?: boolean
@@ -351,6 +407,7 @@ export type Database = {
           recipe_on?: boolean
           sold_out?: boolean
           suggest?: Json
+          venue_id?: string
         }
         Update: {
           active?: boolean
@@ -386,6 +443,7 @@ export type Database = {
           recipe_on?: boolean
           sold_out?: boolean
           suggest?: Json
+          venue_id?: string
         }
         Relationships: [
           {
@@ -393,6 +451,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_products_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
             referencedColumns: ["id"]
           },
         ]
@@ -411,6 +476,7 @@ export type Database = {
           payment_method: string | null
           status: string
           total: number
+          venue_id: string
         }
         Insert: {
           checked_items?: Json
@@ -425,6 +491,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           total?: number
+          venue_id?: string
         }
         Update: {
           checked_items?: Json
@@ -439,27 +506,71 @@ export type Database = {
           payment_method?: string | null
           status?: string
           total?: number
+          venue_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_credentials: {
         Row: {
           id: number
           pin_hash: string
           updated_at: string
+          venue_id: string
           version: string
         }
         Insert: {
-          id: number
+          id?: number
           pin_hash: string
           updated_at?: string
+          venue_id?: string
           version?: string
         }
         Update: {
           id?: number
           pin_hash?: string
           updated_at?: string
+          venue_id?: string
           version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_credentials_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          next_order: number
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          next_order?: number
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          next_order?: number
+          slug?: string
         }
         Relationships: []
       }
@@ -469,9 +580,16 @@ export type Database = {
     }
     Functions: {
       license_allows_orders: { Args: never; Returns: boolean }
+      license_allows_orders_v: { Args: { v: string }; Returns: boolean }
       license_state: { Args: never; Returns: Json }
+      license_state_v: { Args: { v: string }; Returns: Json }
       staff_next_order_number: { Args: never; Returns: number }
+      staff_next_order_number_v: { Args: { v: string }; Returns: number }
       staff_set_order_number: { Args: { next_number: number }; Returns: number }
+      staff_set_order_number_v: {
+        Args: { next_number: number; v: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

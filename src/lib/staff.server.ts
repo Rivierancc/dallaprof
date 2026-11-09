@@ -1,6 +1,8 @@
 import { useSession } from "@tanstack/react-start/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { validStaffVersion } from "@/lib/access";
+import { currentSlug } from "@/lib/venue.server";
+import { MAIN_VENUE } from "@/lib/venue";
 
 export type GateFlags = { secure?: boolean; partitioned?: boolean };
 export type StaffSession = { unlocked?: boolean; version?: string };
@@ -8,14 +10,14 @@ export function staffSessionConfig(flags: GateFlags = {}) {
   const password = process.env["SESSION_SECRET"];
   if (!password) throw new Error("Accesso personale non configurato");
   const partitioned = !!flags.secure && !!flags.partitioned;
-  return { password, name: "kitchen-gate", maxAge: 60 * 60 * 14,
+  return { password, name: `kitchen-gate-${currentSlug()}`, maxAge: 60 * 60 * 14,
     cookie: { httpOnly: true, secure: !!flags.secure, sameSite: partitioned ? "none" as const : "lax" as const,
       ...(partitioned ? { partitioned: true } : {}), path: "/" } };
 }
 
 export async function staffCredentials() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.from("staff_credentials").select("pin_hash,version").eq("id", 1).maybeSingle();
+  const { venueAdmin } = await import("@/lib/venue.server");
+  const { data, error } = await (await venueAdmin()).from("staff_credentials").select("pin_hash,version").maybeSingle();
   if (error) throw new Error("Impossibile verificare il PIN del personale");
   return data;
 }
@@ -43,6 +45,7 @@ export async function matchesStaffPin(pin: string, credentials: Awaited<ReturnTy
     const [salt] = credentials.pin_hash.split(":");
     return !!salt && equal(await hashPin(pin, salt), credentials.pin_hash);
   }
+  if (currentSlug() !== MAIN_VENUE) return false;
   const initial = process.env["KITCHEN_PIN"];
   if (!initial) throw new Error("PIN non configurato");
   return equal(pin, initial);

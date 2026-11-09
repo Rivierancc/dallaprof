@@ -232,6 +232,13 @@
       "when": 1794241508079,
       "tag": "0032_license_superadmin",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794246162344,
+      "tag": "0033_multi_venue",
+      "breakpoints": true
     }
   ]
 }

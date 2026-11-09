@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { getLicense, masterLogin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
+import { createVenue, getLicense, listVenues, masterLogin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { PLANS } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ function pwCheck(pw: string, again: string) {
 
 function SuperAdmin() {
   const st = Route.useLoaderData();
-  return st.unlocked ? <LicensePanel /> : <Login configured={st.configured} />;
+  return st.unlocked ? <Venues /> : <Login configured={st.configured} />;
 }
 
 function Login({ configured }: { configured: boolean }) {
@@ -62,11 +62,81 @@ function Login({ configured }: { configured: boolean }) {
   </main></div>;
 }
 
-function LicensePanel() {
+const STATUS: Record<string, [string, string]> = { active: ["Attivo", "bg-green-600"], demo: ["In prova", "bg-yellow-500"], expired: ["Scaduto", "bg-red-600"] };
+const PAGES: [string, string][] = [["", "Totem"], ["/cucina", "Cucina"], ["/cassa", "Cassa"], ["/display", "Tabellone"], ["/menu", "Menu"], ["/admin", "Admin"]];
+
+function Venues() {
+  const router = useRouter();
+  const list = useServerFn(listVenues); const logout = useServerFn(masterLogout);
+  const { data, refetch } = useQuery({ queryKey: ["venues"], queryFn: () => list() });
+  const [open, setOpen] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  if (open) return <LicensePanel venueId={open} onBack={() => { setOpen(null); void refetch(); }} />;
+  return <div className="superadmin-page"><main className="mx-auto flex max-w-4xl flex-col gap-6 p-6 pb-24">
+    <div className="flex items-center justify-between gap-4">
+      <h1 className="font-display text-6xl text-accent">I tuoi locali</h1>
+      <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button>
+    </div>
+    <Button onClick={() => setAdding(!adding)} className="h-14 self-start px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
+    {adding && <NewVenue onDone={(id) => { setAdding(false); void refetch(); setOpen(id); }} />}
+    {!data ? <p className="text-xl">Caricamento…</p> : <div className="grid gap-3">
+      {data.map((v) => { const [label, color] = STATUS[v.status] ?? STATUS["expired"]!; return (
+        <div key={v.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`rounded-full px-3 py-1 text-sm font-bold text-black ${color}`}>{label}</span>
+            <span className="font-display text-3xl">{v.name}</span>
+            <span className="text-muted-foreground">/{v.slug}</span>
+            <span className="ml-auto text-muted-foreground">{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
+            <Button size="sm" className="ml-auto" onClick={() => setOpen(v.id)}>Licenza e dati</Button>
+          </div>
+        </div>); })}
+    </div>}
+  </main></div>;
+}
+
+function NewVenue({ onDone }: { onDone: (id: string) => void }) {
+  const create = useServerFn(createVenue);
+  const [f, setF] = useState({ name: "", slug: "", email: "", pin: "", status: "demo", plan: "prova", expires_at: "" });
+  const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof f, v: string) => setF((o) => ({ ...o, [k]: v, ...(k === "name" && !o.slug ? {} : {}) }));
+  const auto = (name: string) => name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "").slice(0, 40);
+  const submit = async () => {
+    setErr(""); setBusy(true);
+    try { const r = await create({ data: { ...f, expires_at: f.expires_at || null } }); onDone(r.id); }
+    catch (e) { setErr(e instanceof Error ? e.message : "Errore"); }
+    finally { setBusy(false); }
+  };
+  const field = (k: keyof typeof f, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => <label className="flex flex-col gap-1 text-lg">{label}
+    <input value={f[k]} onChange={(e) => k === "name" ? setF((o) => ({ ...o, name: e.target.value, slug: o.slug && o.slug !== auto(o.name) ? o.slug : auto(e.target.value) })) : set(k, e.target.value)} className={input} {...extra} /></label>;
+  return <section className="grid gap-4 rounded-2xl bg-card p-5">
+    <h2 className="font-display text-4xl">Nuovo locale</h2>
+    {field("name", "Nome del locale *")}
+    {field("slug", "Nome breve per il link * (solo lettere minuscole, numeri, trattini)")}
+    {f.slug && <p className="text-muted-foreground">Totem: {typeof window !== "undefined" ? window.location.origin : ""}/{f.slug}</p>}
+    {field("email", "Email del titolare *", { type: "email" })}
+    {field("pin", "PIN del personale * (4–12 cifre, il titolare potrà cambiarlo)", { inputMode: "numeric" })}
+    <div className="grid gap-4 sm:grid-cols-3">
+      <label className="flex flex-col gap-1 text-lg">Stato
+        <select value={f.status} onChange={(e) => set("status", e.target.value)} className={input}>
+          <option value="demo">In prova (demo)</option><option value="active">Attivo</option><option value="expired">Scaduto</option></select></label>
+      <label className="flex flex-col gap-1 text-lg">Piano
+        <select value={f.plan} onChange={(e) => set("plan", e.target.value)} className={input}>
+          {Object.entries(PLANS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      {field("expires_at", "Scadenza", { type: "date" })}
+    </div>
+    {err && <p className="text-lg text-destructive">⚠️ {err}</p>}
+    <Button disabled={busy} onClick={submit} className="h-14 text-xl">{busy ? "Creazione…" : "Crea locale"}</Button>
+  </section>;
+}
+
+function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void }) {
   const router = useRouter(); const qc = useQueryClient();
   const load = useServerFn(getLicense); const save = useServerFn(saveLicense);
   const logout = useServerFn(masterLogout); const login = useServerFn(masterLogin);
-  const { data } = useQuery({ queryKey: ["license-full"], queryFn: () => load() });
+  const { data } = useQuery({ queryKey: ["license-full", venueId], queryFn: () => load({ data: { venueId } }) });
   const [d, setD] = useState<LicenseRow | null>(null);
   const [msg, setMsg] = useState(""); const [oldPw, setOldPw] = useState(""); const [newPw, setNewPw] = useState(""); const [newPw2, setNewPw2] = useState("");
   if (!d && data) setD(data);
@@ -77,7 +147,7 @@ function LicensePanel() {
   </label>;
   const doSave = async () => {
     setMsg("");
-    try { await save({ data: d }); setMsg("✅ Salvato"); qc.invalidateQueries({ queryKey: ["license"] }); }
+    try { await save({ data: { ...d, venueId } }); setMsg("✅ Salvato"); qc.invalidateQueries({ queryKey: ["license"] }); }
     catch (e) { setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); }
   };
   const changePw = async () => {
@@ -88,7 +158,8 @@ function LicensePanel() {
   return <div className="superadmin-page"><main className="mx-auto flex max-w-3xl flex-col gap-8 p-6 pb-24">
     <div className="flex items-center justify-between gap-4">
       <h1 className="font-display text-6xl text-accent">Licenza del locale</h1>
-      <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button>
+      <div className="flex gap-2"><Button variant="secondary" onClick={onBack}>← Elenco locali</Button>
+      <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button></div>
     </div>
 
     <section className="grid gap-4 rounded-2xl bg-card p-5">
