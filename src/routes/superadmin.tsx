@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
-import { PLANS } from "@/lib/license";
+import { MODES, PLANS, cleanMode } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
 import { Button } from "@/components/ui/button";
 
@@ -91,7 +91,7 @@ function Venues() {
             <span className={`rounded-full px-3 py-1 text-sm font-bold text-black ${color}`}>{label}</span>
             <span className="font-display text-3xl">{v.name}</span>
             <span className="text-muted-foreground">/{v.slug}</span>
-            <span className="ml-auto text-muted-foreground"><span className={v.plan === "perpetua" ? "rounded bg-blue-600 px-2 text-white" : ""}>{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}</span>{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
+            <span className="ml-auto text-muted-foreground"><span className="mr-2 rounded bg-secondary px-2">{MODES[cleanMode(v.mode)]}</span><span className={v.plan === "perpetua" ? "rounded bg-blue-600 px-2 text-white" : ""}>{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}</span>{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
@@ -184,6 +184,10 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
         <button type="button" onClick={() => { set("plan", "perpetua"); set("expires_at", null); set("status", "active"); }}
           className={`rounded-xl px-5 py-3 text-lg font-bold ${d.plan === "perpetua" ? "bg-blue-600 text-white ring-4 ring-blue-300" : "bg-secondary text-secondary-foreground"}`}>♾️ Perpetua (nessuna scadenza)</button>
       </div>
+      <div className="grid gap-2"><span className="text-lg">Modalità del locale (la decidi solo tu)</span>
+        <div className="flex flex-wrap gap-3">{Object.entries(MODES).map(([k, v]) => (
+          <button key={k} type="button" onClick={() => set("mode", k)} aria-pressed={cleanMode(d.mode) === k}
+            className={`rounded-xl px-5 py-3 text-lg font-bold ${cleanMode(d.mode) === k ? "bg-primary text-primary-foreground ring-4 ring-ring" : "bg-secondary text-secondary-foreground"}`}>{v}</button>))}</div></div>
       <p className="text-muted-foreground">Superata la data di scadenza il locale passa automaticamente a «Scaduto».</p>
     </section>
 

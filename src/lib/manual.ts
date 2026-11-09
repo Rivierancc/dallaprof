@@ -2,7 +2,7 @@
 export type ManualEntry = { title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "9 novembre 2026";
+export const MANUAL_UPDATED = "10 novembre 2026";
 
 export const MANUAL: ManualSection[] = [
   { id: "totem", title: "🍔 Totem clienti (pagina iniziale)", entries: [
