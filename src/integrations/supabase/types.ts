@@ -22,6 +22,7 @@ export type Database = {
           divider: Json | null
           id: number
           kitchen: Json
+          languages: Json
           news: Json
           offers_title: string
           settings: Json
@@ -34,6 +35,7 @@ export type Database = {
           divider?: Json | null
           id?: number
           kitchen?: Json
+          languages?: Json
           news?: Json
           offers_title?: string
           settings?: Json
@@ -46,6 +48,7 @@ export type Database = {
           divider?: Json | null
           id?: number
           kitchen?: Json
+          languages?: Json
           news?: Json
           offers_title?: string
           settings?: Json
@@ -116,6 +119,8 @@ export type Database = {
           custom_kind: string
           custom_price: number
           custom_title: string
+          custom_title_ar: string
+          custom_title_de: string
           custom_title_en: string
           custom_title_es: string
           custom_title_fr: string
@@ -131,6 +136,8 @@ export type Database = {
           custom_kind?: string
           custom_price?: number
           custom_title?: string
+          custom_title_ar?: string
+          custom_title_de?: string
           custom_title_en?: string
           custom_title_es?: string
           custom_title_fr?: string
@@ -146,6 +153,8 @@ export type Database = {
           custom_kind?: string
           custom_price?: number
           custom_title?: string
+          custom_title_ar?: string
+          custom_title_de?: string
           custom_title_en?: string
           custom_title_es?: string
           custom_title_fr?: string
@@ -166,6 +175,8 @@ export type Database = {
           id: string
           kind: string
           name: string
+          name_ar: string
+          name_de: string
           name_en: string
           name_es: string
           name_fr: string
@@ -179,6 +190,8 @@ export type Database = {
           id?: string
           kind?: string
           name: string
+          name_ar?: string
+          name_de?: string
           name_en?: string
           name_es?: string
           name_fr?: string
@@ -192,6 +205,8 @@ export type Database = {
           id?: string
           kind?: string
           name?: string
+          name_ar?: string
+          name_de?: string
           name_en?: string
           name_es?: string
           name_fr?: string
@@ -216,6 +231,8 @@ export type Database = {
           combo_offer: boolean
           combo_price: number | null
           description: string
+          description_ar: string
+          description_de: string
           description_en: string
           description_es: string
           description_fr: string
@@ -249,6 +266,8 @@ export type Database = {
           combo_offer?: boolean
           combo_price?: number | null
           description?: string
+          description_ar?: string
+          description_de?: string
           description_en?: string
           description_es?: string
           description_fr?: string
@@ -282,6 +301,8 @@ export type Database = {
           combo_offer?: boolean
           combo_price?: number | null
           description?: string
+          description_ar?: string
+          description_de?: string
           description_en?: string
           description_es?: string
           description_fr?: string
