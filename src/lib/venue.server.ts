@@ -44,11 +44,11 @@ export function scoped<T extends object>(db: T, vid: string): T {
         const qb = (target as unknown as { from: (t: string) => Record<string, (...a: unknown[]) => { eq: (c: string, v: string) => unknown }> }).from(table);
         if (UNSCOPED.has(table)) return qb;
         return {
-          select: (...a: unknown[]) => qb.select!(...a).eq("venue_id", vid),
-          update: (...a: unknown[]) => qb.update!(...a).eq("venue_id", vid),
-          delete: (...a: unknown[]) => qb.delete!(...a).eq("venue_id", vid),
-          insert: (rows: Row | Row[], opts?: unknown) => qb.insert!(withVenue(rows, vid), opts),
-          upsert: (rows: Row | Row[], opts?: Row) => qb.upsert!(withVenue(rows, vid), opts ?? (SINGLETON.has(table) ? { onConflict: "venue_id" } : undefined)),
+          select: (...a: unknown[]) => qb["select"]!(...a).eq("venue_id", vid),
+          update: (...a: unknown[]) => qb["update"]!(...a).eq("venue_id", vid),
+          delete: (...a: unknown[]) => qb["delete"]!(...a).eq("venue_id", vid),
+          insert: (rows: Row | Row[], opts?: unknown) => qb["insert"]!(withVenue(rows, vid), opts),
+          upsert: (rows: Row | Row[], opts?: Row) => qb["upsert"]!(withVenue(rows, vid), opts ?? (SINGLETON.has(table) ? { onConflict: "venue_id" } : undefined)),
         };
       };
     },
