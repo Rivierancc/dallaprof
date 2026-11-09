@@ -128,6 +128,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Icona della scheda del browser: logo del locale aperto (sigla nel link).
+  useEffect(() => {
+    const seg = window.location.pathname.split("/")[1] ?? "";
+    const href = `/api/public/icon?v=${encodeURIComponent(seg)}`;
+    document.querySelectorAll<HTMLLinkElement>('link[rel="icon"],link[rel="apple-touch-icon"]').forEach((l) => {
+      if (l.getAttribute("href") !== href) l.setAttribute("href", href);
+    });
+  });
 
   return (
     <QueryClientProvider client={queryClient}>
