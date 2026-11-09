@@ -23,6 +23,7 @@ export type Database = {
           id: number
           kitchen: Json
           languages: Json
+          loyalty: Json
           news: Json
           offers_title: string
           offers_title_tr: Json
@@ -38,6 +39,7 @@ export type Database = {
           id?: number
           kitchen?: Json
           languages?: Json
+          loyalty?: Json
           news?: Json
           offers_title?: string
           offers_title_tr?: Json
@@ -53,6 +55,7 @@ export type Database = {
           id?: number
           kitchen?: Json
           languages?: Json
+          loyalty?: Json
           news?: Json
           offers_title?: string
           offers_title_tr?: Json
@@ -466,8 +469,11 @@ export type Database = {
         Row: {
           checked_items: Json
           created_at: string
+          customer_id: string | null
+          customer_name: string
           delivered_items: Json
           dine_option: string
+          discount: number
           id: string
           items: Json
           order_number: number
@@ -481,8 +487,11 @@ export type Database = {
         Insert: {
           checked_items?: Json
           created_at?: string
+          customer_id?: string | null
+          customer_name?: string
           delivered_items?: Json
           dine_option: string
+          discount?: number
           id?: string
           items?: Json
           order_number?: number
@@ -496,8 +505,11 @@ export type Database = {
         Update: {
           checked_items?: Json
           created_at?: string
+          customer_id?: string | null
+          customer_name?: string
           delivered_items?: Json
           dine_option?: string
+          discount?: number
           id?: string
           items?: Json
           order_number?: number
@@ -509,6 +521,13 @@ export type Database = {
           venue_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "venue_customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_venue_id_fkey"
             columns: ["venue_id"]
@@ -545,6 +564,47 @@ export type Database = {
             foreignKeyName: "staff_credentials_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_customers: {
+        Row: {
+          birth_day: number | null
+          birth_month: number | null
+          consent_at: string
+          created_at: string
+          id: string
+          name: string
+          phone: string
+          venue_id: string
+        }
+        Insert: {
+          birth_day?: number | null
+          birth_month?: number | null
+          consent_at?: string
+          created_at?: string
+          id?: string
+          name: string
+          phone: string
+          venue_id: string
+        }
+        Update: {
+          birth_day?: number | null
+          birth_month?: number | null
+          consent_at?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_customers_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
           },
