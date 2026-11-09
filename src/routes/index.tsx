@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions, type Category, type CartItem, type Product, type Ingredient, euro, ingredientLabel, ingredientOff, customIngredients } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
+import { licenseQueryOptions, realOrders } from "@/lib/license"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,22 @@ export const Route = createFileRoute("/")({
 })
 
 function Totem() {
+  const { data: license } = useQuery(licenseQueryOptions)
+  if (license?.state === "expired") return (
+    <main className="grid min-h-dvh place-items-center p-10 text-center">
+      <div><p className="font-display text-7xl text-accent">Sistema momentaneamente non disponibile</p>
+      <p className="mt-6 text-3xl text-muted-foreground">Contattare il gestore</p></div>
+    </main>
+  )
+  return <>
+    {license?.state === "demo" && license.demo.badge && <div className="pointer-events-none fixed bottom-3 left-3 z-50 rounded-full bg-accent px-4 py-1 font-display text-xl text-accent-foreground">Modalità dimostrativa</div>}
+    <TotemMain simulate={!!license && !realOrders(license)} />
+  </>
+}
+
+function TotemMain({ simulate }: { simulate: boolean }) {
   const { data, isLoading } = useQuery(menuQueryOptions)
+  const [demoDone, setDemoDone] = useState(false)
   const queryClient = useQueryClient()
   const { language, orderType: dineOption, setOrderType: setDineOption } = useCustomer()
   const t = copy[language]
@@ -61,11 +77,13 @@ function Totem() {
     mutationFn: async (method: PaymentMethod) => {
       setOrderError("")
       const payload = orderPayload(dineOption, priced, method)
+      if (simulate) return null
       const { data: order, error } = await supabase.from("orders").insert(payload).select("id, order_number").single()
       if (error) throw error
       return order
     },
     onSuccess: (order) => {
+      if (!order) { setCart([]); setSuggestSeen(false); setShowCart(false); setDemoDone(true); return }
       queryClient.invalidateQueries({ queryKey: ["orders"] })
       try { localStorage.setItem("last_order_id", order.id) } catch { /* Navigation also carries the order ID. */ }
       setCart([])
@@ -76,6 +94,14 @@ function Totem() {
   })
 
   if (isLoading) return <div className="grid min-h-screen place-items-center font-display text-6xl text-muted-foreground">{t.loading}</div>
+
+  if (demoDone) return (
+    <main className="grid min-h-dvh place-items-center p-10 text-center">
+      <div><p className="font-display text-7xl text-accent">Versione dimostrativa</p>
+      <p className="mt-6 text-3xl">Ordine di prova completato senza invio alla cassa.</p>
+      <Button onClick={() => { setDemoDone(false); setDineOption(null) }} className="tap mt-10 h-24 rounded-2xl px-12 font-display text-4xl">OK</Button></div>
+    </main>
+  )
 
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">

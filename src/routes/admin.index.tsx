@@ -17,6 +17,7 @@ import { PasswordSettings } from "@/components/password-settings";
 import { TextScaleToggle, useTextScale } from "@/components/text-scale";
 import { LanguageSettings } from "@/components/language-settings";
 import { OrderNumberSettings } from "@/components/order-number-settings";
+import { LicenseSummary } from "@/components/license-summary";
 
 export const Route = createFileRoute("/admin/")({
   loader: async ({ context }) => {
@@ -46,6 +47,7 @@ function Admin() {
       <Button asChild variant="secondary"><Link to="/cassa">Cassa</Link></Button>
       <Button asChild variant="secondary"><Link to="/">Totem</Link></Button>
     </header>
+    <LicenseSummary />
     <TextScaleToggle index={textScale} onChange={changeTextScale} />
     <Button className="h-auto whitespace-normal p-8 font-display text-5xl" onClick={async () => {
       if (fullscreen) await exitKiosk(); else if (await enterKiosk()) await navigate({ to: "/" });

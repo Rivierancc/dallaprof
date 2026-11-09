@@ -116,6 +116,66 @@ export type Database = {
         }
         Relationships: []
       }
+      license: {
+        Row: {
+          address: string
+          business_name: string
+          city: string
+          company_name: string
+          demo: Json
+          expires_at: string | null
+          id: number
+          master_hash: string | null
+          notes: string
+          owner_email: string
+          pec: string
+          phone: string
+          plan: string
+          sdi: string
+          status: string
+          updated_at: string
+          vat: string
+        }
+        Insert: {
+          address?: string
+          business_name?: string
+          city?: string
+          company_name?: string
+          demo?: Json
+          expires_at?: string | null
+          id?: number
+          master_hash?: string | null
+          notes?: string
+          owner_email?: string
+          pec?: string
+          phone?: string
+          plan?: string
+          sdi?: string
+          status?: string
+          updated_at?: string
+          vat?: string
+        }
+        Update: {
+          address?: string
+          business_name?: string
+          city?: string
+          company_name?: string
+          demo?: Json
+          expires_at?: string | null
+          id?: number
+          master_hash?: string | null
+          notes?: string
+          owner_email?: string
+          pec?: string
+          phone?: string
+          plan?: string
+          sdi?: string
+          status?: string
+          updated_at?: string
+          vat?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean
@@ -408,6 +468,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      license_allows_orders: { Args: never; Returns: boolean }
+      license_state: { Args: never; Returns: Json }
       staff_next_order_number: { Args: never; Returns: number }
       staff_set_order_number: { Args: { next_number: number }; Returns: number }
     }
