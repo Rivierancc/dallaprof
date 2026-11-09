@@ -80,7 +80,7 @@ function Venues() {
     <Button onClick={() => setAdding(!adding)} className="h-14 self-start px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
     {adding && <NewVenue onDone={(id) => { setAdding(false); void refetch(); setOpen(id); }} />}
     {!data ? <p className="text-xl">Caricamento…</p> : <div className="grid gap-3">
-      {data.map((v) => { const [label, color] = STATUS[v.status] ?? STATUS.expired!; return (
+      {data.map((v) => { const [label, color] = STATUS[v.status] ?? STATUS["expired"]!; return (
         <div key={v.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className={`rounded-full px-3 py-1 text-sm font-bold text-black ${color}`}>{label}</span>
