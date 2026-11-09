@@ -37,11 +37,11 @@ function Totem() {
   )
   return <>
     {license?.state === "demo" && license.demo.badge && <div className="pointer-events-none fixed bottom-3 left-3 z-50 rounded-full bg-accent px-4 py-1 font-display text-xl text-accent-foreground">Modalità dimostrativa</div>}
-    <TotemMain simulate={!!license && !realOrders(license)} />
+    <TotemMain simulate={!!license && !realOrders(license)} limit={license?.state === "demo" ? license.demo.max_products : null} />
   </>
 }
 
-function TotemMain({ simulate }: { simulate: boolean }) {
+function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | null }) {
   const { data, isLoading } = useQuery(menuQueryOptions)
   const [demoDone, setDemoDone] = useState(false)
   const queryClient = useQueryClient()
@@ -58,7 +58,14 @@ function TotemMain({ simulate }: { simulate: boolean }) {
   const lib = data?.ingredients ?? []
 
   const categories = data?.categories?? []
-  const products = useMemo(() => (data?.products?? []).filter((p) =>!p.sold_out), [data])
+  const products = useMemo(() => {
+    const all = data?.products ?? []
+    if (limit == null) return all.filter((p) => !p.sold_out)
+    // Demo: solo i primi N piatti, nell'ordine delle categorie
+    const catPos = new Map((data?.categories ?? []).map((c, i) => [c.id, i]))
+    const allowed = new Set([...all].sort((a, b) => (catPos.get(a.category_id) ?? 999) - (catPos.get(b.category_id) ?? 999)).slice(0, limit).map((p) => p.id))
+    return all.filter((p) => !p.sold_out && allowed.has(p.id))
+  }, [data, limit])
   const featured = useMemo(() => products.filter((p) => p.is_featured).slice(0, 3), [products])
   const [suggestSeen, setSuggestSeen] = useState(false)
   const [offerPick, setOfferPick] = useState(false)
