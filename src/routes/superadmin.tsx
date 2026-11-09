@@ -146,7 +146,7 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
   const [msg, setMsg] = useState("");
   if (!d && data) setD(data);
   if (!d) return <div className="superadmin-page"><main className="p-10 text-2xl">Caricamento…</main></div>;
-  const set = (k: keyof LicenseRow, v: unknown) => setD({ ...d, [k]: v } as LicenseRow);
+  const set = (k: keyof LicenseRow, v: unknown) => setD((o) => ({ ...(o ?? d), [k]: v } as LicenseRow));
   const text = (k: keyof LicenseRow, label: string, req = false) => <label className="flex flex-col gap-1 text-lg">
     <span>{label}{req && " *"}</span><input value={String(d[k] ?? "")} onChange={(e) => set(k, e.target.value)} className={input} />
   </label>;
