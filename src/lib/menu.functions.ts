@@ -447,6 +447,7 @@ export const saveProduct = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       return { id: data.id };
     }
+    await (await import("@/lib/license.functions")).assertProductAllowed();
     const { data: row, error } = await supabase
       .from("menu_products")
       .insert({
