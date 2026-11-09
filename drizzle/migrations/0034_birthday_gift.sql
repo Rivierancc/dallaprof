@@ -1,0 +1,1 @@
+ALTER TABLE public.venue_customers ADD COLUMN IF NOT EXISTS birthday_gift jsonb;
