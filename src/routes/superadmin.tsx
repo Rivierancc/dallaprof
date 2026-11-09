@@ -169,10 +169,10 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="flex flex-col gap-1 text-lg">Stato licenza *
           <select value={d.status} onChange={(e) => set("status", e.target.value)} className={input}>
-            <option value="demo">In prova (demo)</option><option value="active">Attivo (abbonamento)</option><option value="expired">Scaduto</option>
+            <option value="demo">In prova (demo)</option><option value="active">Attivo (abbonamento)</option><option value="expired" disabled={d.plan === "perpetua"}>Scaduto{d.plan === "perpetua" ? " (non con Perpetua)" : ""}</option>
           </select></label>
         <label className="flex flex-col gap-1 text-lg">Tipo di piano *
-          <select value={d.plan} onChange={(e) => set("plan", e.target.value)} className={input}>
+          <select value={d.plan} onChange={(e) => { set("plan", e.target.value); if (e.target.value === "perpetua") { set("expires_at", null); if (d.status === "expired") set("status", "active"); } }} className={input}>
             {Object.entries(PLANS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></label>
         <label className="flex flex-col gap-1 text-lg">Data di scadenza
