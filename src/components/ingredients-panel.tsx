@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
+import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, setCategoryNameTr, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
 import { Fold } from "@/components/fold";
+import { TranslationsEditor } from "@/components/translations-editor";
 import { Button } from "@/components/ui/button";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -102,6 +103,7 @@ function CategoryCustom({ c, refresh }: { c: MenuCategory; refresh: () => Promis
         Prezzo base €
         <input aria-label="Prezzo base" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onBlur={() => save(c.custom_kind)} className={`${field} w-24 text-center`} />
       </label>
+      <div className="w-full"><TranslationsEditor label={`🌍 Nome «${c.name}» nelle altre lingue`} value={c.name_tr} onSave={async (tr) => { await setCategoryNameTr({ data: { id: c.id, tr } }); await refresh(); }} /></div>
       <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2">
         {([
           ["custom_title", "Titolo italiano", "Crea la tua piadina"],

@@ -468,6 +468,7 @@ function KioskButton() {
 }
 
 function CategoryStrip({ cats, onPick }: { cats: Category[]; onPick: (id: string) => void }) {
+  const { language } = useCustomer()
   const ref = useRef<HTMLDivElement>(null)
   const [center, setCenter] = useState(0)
   const update = () => {

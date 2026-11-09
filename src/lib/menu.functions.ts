@@ -63,6 +63,7 @@ export type MenuCategory = {
   custom_title_es: string;
   custom_title_de: string;
   custom_title_ar: string;
+  name_tr: Translations;
   strip: number;
 };
 
