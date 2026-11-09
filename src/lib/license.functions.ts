@@ -63,7 +63,7 @@ export const masterLogin = createServerFn({ method: "POST" })
 
 export const masterLogout = createServerFn({ method: "POST" })
   .inputValidator((d: Flags) => ({ secure: !!d.secure, partitioned: !!d.partitioned }))
-  .handler(async ({ data }) => { (await useSession(await masterConfig(data))).clear(); return { ok: true }; });
+  .handler(async ({ data }) => { await (await useSession(await masterConfig(data))).clear(); return { ok: true }; });
 
 const FIELDS = ["business_name", "owner_email", "company_name", "vat", "address", "city", "sdi", "pec", "phone", "notes"] as const;
 export type LicenseRow = Record<(typeof FIELDS)[number], string> & { status: string; plan: string; expires_at: string | null; demo: ReturnType<typeof cleanDemo> };
