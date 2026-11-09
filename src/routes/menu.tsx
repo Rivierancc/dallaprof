@@ -510,7 +510,7 @@ type ProductHandlers = {
   photo: (p: MenuProduct, file: File) => Promise<unknown>;
   remove: (p: MenuProduct) => Promise<unknown>;
   move: (p: MenuProduct, dir: -1 | 1) => void;
-  translate: (p: MenuProduct, language: "EN" | "FR" | "ES", description: string) => Promise<unknown>;
+  translate: (p: MenuProduct, language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
   describe: (p: MenuProduct, description: string) => Promise<unknown>;
   options: (p: MenuProduct, ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   feature: (p: MenuProduct, v: boolean) => Promise<unknown>;
@@ -708,7 +708,7 @@ function ProductRow({
   onTranslation,
 }: {
   p: MenuProduct;
-  onTranslation: (language: "EN" | "FR" | "ES", description: string) => Promise<unknown>;
+  onTranslation: (language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
   onDescription: (d: string) => Promise<unknown>;
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
@@ -813,7 +813,7 @@ function ProductRow({
         className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
       />
       <div className="grid w-full basis-full gap-3 md:grid-cols-3">
-        {(["EN", "FR", "ES"] as const).map((language) => <TranslationField key={language} language={language} value={language === "EN" ? p.description_en : language === "FR" ? p.description_fr : p.description_es} onSave={(text) => run(() => onTranslation(language, text))} />)}
+        {(["EN", "FR", "ES", "DE", "AR"] as const).map((language) => <TranslationField key={language} language={language} value={({ EN: p.description_en, FR: p.description_fr, ES: p.description_es, DE: p.description_de, AR: p.description_ar })[language]} onSave={(text) => run(() => onTranslation(language, text))} />)}
       </div>
       <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
@@ -915,7 +915,7 @@ function OptionsEditor({
   );
 }
 
-function TranslationField({ language, value, onSave }: { language: "EN" | "FR" | "ES"; value: string; onSave: (text: string) => Promise<unknown> }) {
+function TranslationField({ language, value, onSave }: { language: "EN" | "FR" | "ES" | "DE" | "AR"; value: string; onSave: (text: string) => Promise<unknown> }) {
   const [text, setText] = useState(value);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
