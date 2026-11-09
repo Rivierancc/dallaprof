@@ -470,7 +470,6 @@ export type Database = {
           checked_items: Json
           created_at: string
           customer_id: string | null
-          customer_name: string
           delivered_items: Json
           dine_option: string
           discount: number
@@ -488,7 +487,6 @@ export type Database = {
           checked_items?: Json
           created_at?: string
           customer_id?: string | null
-          customer_name?: string
           delivered_items?: Json
           dine_option: string
           discount?: number
@@ -506,7 +504,6 @@ export type Database = {
           checked_items?: Json
           created_at?: string
           customer_id?: string | null
-          customer_name?: string
           delivered_items?: Json
           dine_option?: string
           discount?: number
