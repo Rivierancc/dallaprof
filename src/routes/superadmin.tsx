@@ -71,13 +71,18 @@ function Venues() {
   const { data, refetch } = useQuery({ queryKey: ["venues"], queryFn: () => list() });
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  if (pwOpen) return <MasterPassword onBack={() => setPwOpen(false)} />;
   if (open) return <LicensePanel venueId={open} onBack={() => { setOpen(null); void refetch(); }} />;
   return <div className="superadmin-page"><main className="mx-auto flex max-w-4xl flex-col gap-6 p-6 pb-24">
     <div className="flex items-center justify-between gap-4">
       <h1 className="font-display text-6xl text-accent">I tuoi locali</h1>
       <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button>
     </div>
-    <Button onClick={() => setAdding(!adding)} className="h-14 self-start px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
+    <div className="flex flex-wrap gap-3">
+      <Button onClick={() => setAdding(!adding)} className="h-14 px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
+      <Button variant="secondary" onClick={() => setPwOpen(true)} className="h-14 px-8 text-xl">🔑 La mia password</Button>
+    </div>
     {adding && <NewVenue onDone={(id) => { setAdding(false); void refetch(); setOpen(id); }} />}
     {!data ? <p className="text-xl">Caricamento…</p> : <div className="grid gap-3">
       {data.map((v) => { const [label, color] = STATUS[v.status] ?? STATUS["expired"]!; return (
@@ -92,7 +97,6 @@ function Venues() {
             {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
             <Button size="sm" className="ml-auto" onClick={() => setOpen(v.id)}>Licenza e dati</Button>
           </div>
-          <PinReset venueId={v.id} />
         </div>); })}
     </div>}
   </main></div>;
@@ -136,10 +140,10 @@ function NewVenue({ onDone }: { onDone: (id: string) => void }) {
 function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void }) {
   const router = useRouter(); const qc = useQueryClient();
   const load = useServerFn(getLicense); const save = useServerFn(saveLicense);
-  const logout = useServerFn(masterLogout); const login = useServerFn(masterLogin);
+  const logout = useServerFn(masterLogout);
   const { data } = useQuery({ queryKey: ["license-full", venueId], queryFn: () => load({ data: { venueId } }) });
   const [d, setD] = useState<LicenseRow | null>(null);
-  const [msg, setMsg] = useState(""); const [oldPw, setOldPw] = useState(""); const [newPw, setNewPw] = useState(""); const [newPw2, setNewPw2] = useState("");
+  const [msg, setMsg] = useState("");
   if (!d && data) setD(data);
   if (!d) return <div className="superadmin-page"><main className="p-10 text-2xl">Caricamento…</main></div>;
   const set = (k: keyof LicenseRow, v: unknown) => setD({ ...d, [k]: v } as LicenseRow);
@@ -150,11 +154,6 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
     setMsg("");
     try { await save({ data: { ...d, venueId } }); setMsg("✅ Salvato"); qc.invalidateQueries({ queryKey: ["license"] }); }
     catch (e) { setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); }
-  };
-  const changePw = async () => {
-    const c = pwCheck(newPw, newPw2); if (c) return setMsg("⚠️ " + c);
-    const r = await login({ data: { password: oldPw, newPassword: newPw, ...gateFlags() } });
-    setMsg(r.ok ? "✅ Password Master cambiata" : "⚠️ " + r.reason); if (r.ok) { setOldPw(""); setNewPw(""); setNewPw2(""); }
   };
   return <div className="superadmin-page"><main className="mx-auto flex max-w-3xl flex-col gap-8 p-6 pb-24">
     <div className="flex items-center justify-between gap-4">
@@ -210,13 +209,37 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
       {msg && <span className="rounded-xl bg-card px-4 py-2 text-lg">{msg}</span>}
     </div>
 
+    <section className="grid gap-3 rounded-2xl bg-card p-5">
+      <h2 className="font-display text-4xl">PIN del personale</h2>
+      <p className="text-muted-foreground">Serve per entrare in Cucina, Cassa, Menu e Admin di questo locale. Il titolare può cambiarlo anche da solo.</p>
+      <PinReset venueId={venueId} />
+    </section>
+  </main></div>;
+}
+
+function MasterPassword({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const login = useServerFn(masterLogin); const logout = useServerFn(masterLogout);
+  const [oldPw, setOldPw] = useState(""); const [newPw, setNewPw] = useState(""); const [newPw2, setNewPw2] = useState(""); const [msg, setMsg] = useState("");
+  const changePw = async () => {
+    const c = pwCheck(newPw, newPw2); if (c) return setMsg("⚠️ " + c);
+    const r = await login({ data: { password: oldPw, newPassword: newPw, ...gateFlags() } }).catch(() => ({ ok: false, reason: "Errore" }));
+    setMsg(r.ok ? "✅ Password cambiata" : "⚠️ " + r.reason); if (r.ok) { setOldPw(""); setNewPw(""); setNewPw2(""); }
+  };
+  return <div className="superadmin-page"><main className="mx-auto flex max-w-xl flex-col gap-6 p-6 pb-24">
+    <div className="flex items-center justify-between gap-4">
+      <h1 className="font-display text-6xl text-accent">La mia password</h1>
+      <div className="flex gap-2"><Button variant="secondary" onClick={onBack}>← Elenco locali</Button>
+        <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button></div>
+    </div>
     <section className="grid gap-4 rounded-2xl bg-card p-5">
-      <h2 className="font-display text-4xl">Cambia password Master</h2>
+      <p className="text-lg text-muted-foreground">È la password con cui entri in quest'area riservata. Vale per tutti i locali ed è diversa dal PIN del personale.</p>
       <PwInput value={oldPw} onChange={setOldPw} placeholder="Password attuale" auto="current-password" />
       <PwInput value={newPw} onChange={setNewPw} placeholder="Nuova password (min. 8)" auto="new-password" />
       <PwInput value={newPw2} onChange={setNewPw2} placeholder="Ripeti la nuova password" auto="new-password" />
       {newPw2 && <p className="text-lg">{newPw === newPw2 ? "✅ Le password coincidono" : "❌ Le password non coincidono"}</p>}
-      <Button variant="secondary" onClick={changePw}>Cambia password</Button>
+      <Button onClick={changePw} className="h-14 text-xl">Cambia password</Button>
+      {msg && <p className="rounded-xl bg-background px-4 py-2 text-lg">{msg}</p>}
     </section>
   </main></div>;
 }
@@ -225,8 +248,7 @@ function PinReset({ venueId }: { venueId: string }) {
   const reset = useServerFn(resetVenuePin);
   const [pin, setPin] = useState(""); const [show, setShow] = useState(false);
   const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
-  return <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-    <span className="text-lg">PIN del personale:</span>
+  return <div className="flex flex-wrap items-center gap-2">
     <input aria-label="Nuovo PIN del personale" type={show ? "text" : "password"} inputMode="numeric" maxLength={12} placeholder="Nuovo PIN"
       value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setMsg(""); }} className={`${input} w-40`} />
     <button type="button" aria-label="Mostra o nascondi PIN" onClick={() => setShow(!show)} className="text-2xl">👁️</button>
