@@ -27,6 +27,7 @@ export type Database = {
           news: Json
           offers_title: string
           offers_title_tr: Json
+          restaurant: Json
           settings: Json
           updated_at: string
           venue_id: string
@@ -43,6 +44,7 @@ export type Database = {
           news?: Json
           offers_title?: string
           offers_title_tr?: Json
+          restaurant?: Json
           settings?: Json
           updated_at?: string
           venue_id?: string
@@ -59,6 +61,7 @@ export type Database = {
           news?: Json
           offers_title?: string
           offers_title_tr?: Json
+          restaurant?: Json
           settings?: Json
           updated_at?: string
           venue_id?: string
@@ -530,6 +533,44 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_tablets: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          pin_hash: string
+          position: number
+          venue_id: string
+          waiter: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          pin_hash: string
+          position?: number
+          venue_id: string
+          waiter?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          pin_hash?: string
+          position?: number
+          venue_id?: string
+          waiter?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tablets_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"

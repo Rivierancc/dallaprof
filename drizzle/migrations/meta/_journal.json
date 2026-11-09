@@ -253,6 +253,13 @@
       "when": 1794266695771,
       "tag": "0035_venue_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794266941947,
+      "tag": "0036_restaurant_settings",
+      "breakpoints": true
     }
   ]
 }
