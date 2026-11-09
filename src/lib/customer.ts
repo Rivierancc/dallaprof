@@ -33,7 +33,7 @@ export const cleanTranslations = (v: unknown): Translations => {
 };
 /** Testo nella lingua del cliente; se manca la traduzione resta l'italiano. */
 export const translatedFor = (italian: string, tr: Translations | undefined, language: Language) =>
-  (language === "IT" ? "" : tr?.[language]?.trim()) || italian;
+  (language === "IT" ? "" : tr?.[language as Exclude<Language, "IT">]?.trim()) || italian;
 export const customTitleFor = (category: { name: string; custom_title?: string; custom_title_en?: string; custom_title_fr?: string; custom_title_es?: string; custom_title_de?: string; custom_title_ar?: string }, language: Language) => {
   const translated = ({ IT: category.custom_title, EN: category.custom_title_en, FR: category.custom_title_fr, ES: category.custom_title_es, DE: category.custom_title_de, AR: category.custom_title_ar })[language];
   const fallback = { IT: "Componi il tuo piatto", EN: "Create your own dish", FR: "Composez votre plat", ES: "Crea tu plato", DE: "Stell dein Gericht zusammen", AR: "اصنع طبقك" };
