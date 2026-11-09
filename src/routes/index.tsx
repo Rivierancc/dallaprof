@@ -57,7 +57,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [compose, setCompose] = useState<Category | null>(null)
   const lib = data?.ingredients ?? []
 
-  const categories = data?.categories?? []
+  const categories = (data?.categories ?? []).filter((c) => limit == null || (data?.products ?? []).some((p) => p.category_id === c.id && products.some((x) => x.id === p.id)))
   const products = useMemo(() => {
     const all = data?.products ?? []
     if (limit == null) return all.filter((p) => !p.sold_out)
