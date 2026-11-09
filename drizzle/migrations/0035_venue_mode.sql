@@ -1,0 +1,2 @@
+ALTER TABLE public.license ADD COLUMN IF NOT EXISTS mode text NOT NULL DEFAULT 'fast_food';
+ALTER TABLE public.license ADD CONSTRAINT license_mode_check CHECK (mode IN ('fast_food','restaurant','both'));

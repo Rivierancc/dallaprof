@@ -151,6 +151,7 @@ export type Database = {
           expires_at: string | null
           id: number
           master_hash: string | null
+          mode: string
           notes: string
           owner_email: string
           pec: string
@@ -171,6 +172,7 @@ export type Database = {
           expires_at?: string | null
           id?: number
           master_hash?: string | null
+          mode?: string
           notes?: string
           owner_email?: string
           pec?: string
@@ -191,6 +193,7 @@ export type Database = {
           expires_at?: string | null
           id?: number
           master_hash?: string | null
+          mode?: string
           notes?: string
           owner_email?: string
           pec?: string
