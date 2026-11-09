@@ -17,7 +17,20 @@ export const Route = createFileRoute("/superadmin")({
   component: SuperAdmin,
 });
 
-const input = "w-full rounded-xl border border-border bg-background px-4 py-3 text-xl";
+const input = "superadmin-field w-full rounded-xl border px-4 py-3 text-xl";
+
+function PwInput({ value, onChange, placeholder, auto }: { value: string; onChange: (v: string) => void; placeholder: string; auto: string }) {
+  const [show, setShow] = useState(false);
+  return <div className="relative">
+    <input type={show ? "text" : "password"} autoComplete={auto} placeholder={placeholder} aria-label={placeholder} value={value} onChange={(e) => onChange(e.target.value)} className={input + " pr-16"} />
+    <button type="button" onClick={() => setShow(!show)} aria-label={show ? "Nascondi password" : "Mostra password"} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1 text-2xl">{show ? "🙈" : "👁️"}</button>
+  </div>;
+}
+function pwCheck(pw: string, again: string) {
+  if (pw.length < 8) return "La password deve avere almeno 8 caratteri";
+  if (pw !== again) return "Le due password non coincidono";
+  return "";
+}
 
 function SuperAdmin() {
   const st = Route.useLoaderData();
@@ -27,21 +40,26 @@ function SuperAdmin() {
 function Login({ configured }: { configured: boolean }) {
   const router = useRouter();
   const login = useServerFn(masterLogin);
-  const [pw, setPw] = useState(""); const [err, setErr] = useState("");
+  const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [err, setErr] = useState(""); const [forgot, setForgot] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr("");
+    if (!configured) { const c = pwCheck(pw, pw2); if (c) return setErr(c); }
     const r = await login({ data: configured ? { password: pw, ...gateFlags() } : { password: "", newPassword: pw, ...gateFlags() } }).catch(() => ({ ok: false, reason: "Errore" }));
     if (r.ok) router.invalidate(); else setErr(r.reason);
   };
-  return <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-6">
+  return <div className="superadmin-page"><main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-6">
     <h1 className="font-display text-6xl text-accent">Area riservata</h1>
     <p className="text-lg text-muted-foreground">{configured ? "Inserisci la password Master." : "Prima volta: scegli la password Master (almeno 8 caratteri). Devi essere già entrato in Admin con il PIN del personale su questo dispositivo."}</p>
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <input type="password" autoComplete={configured ? "current-password" : "new-password"} value={pw} onChange={(e) => setPw(e.target.value)} className={input} aria-label="Password Master" />
+      <PwInput value={pw} onChange={setPw} placeholder="Password Master" auto={configured ? "current-password" : "new-password"} />
+      {!configured && <PwInput value={pw2} onChange={setPw2} placeholder="Ripeti la password" auto="new-password" />}
+      {!configured && pw2 && <p className="text-lg">{pw === pw2 ? "✅ Le password coincidono" : "❌ Le password non coincidono"}</p>}
       {err && <p className="text-lg text-destructive">{err}</p>}
       <Button type="submit" className="h-14 text-xl">{configured ? "Entra" : "Imposta password"}</Button>
     </form>
-  </main>;
+    {configured && <button type="button" onClick={() => setForgot(!forgot)} className="text-lg underline">Password dimenticata?</button>}
+    {forgot && <p className="rounded-xl bg-card p-4 text-lg">Il recupero via email sarà attivo appena collegato un indirizzo email di invio. Nel frattempo contatta l'assistenza tecnica per reimpostarla.</p>}
+  </main></div>;
 }
 
 function LicensePanel() {
@@ -50,9 +68,9 @@ function LicensePanel() {
   const logout = useServerFn(masterLogout); const login = useServerFn(masterLogin);
   const { data } = useQuery({ queryKey: ["license-full"], queryFn: () => load() });
   const [d, setD] = useState<LicenseRow | null>(null);
-  const [msg, setMsg] = useState(""); const [oldPw, setOldPw] = useState(""); const [newPw, setNewPw] = useState("");
+  const [msg, setMsg] = useState(""); const [oldPw, setOldPw] = useState(""); const [newPw, setNewPw] = useState(""); const [newPw2, setNewPw2] = useState("");
   if (!d && data) setD(data);
-  if (!d) return <main className="p-10 text-2xl">Caricamento…</main>;
+  if (!d) return <div className="superadmin-page"><main className="p-10 text-2xl">Caricamento…</main></div>;
   const set = (k: keyof LicenseRow, v: unknown) => setD({ ...d, [k]: v } as LicenseRow);
   const text = (k: keyof LicenseRow, label: string, req = false) => <label className="flex flex-col gap-1 text-lg">
     <span>{label}{req && " *"}</span><input value={String(d[k] ?? "")} onChange={(e) => set(k, e.target.value)} className={input} />
@@ -63,10 +81,11 @@ function LicensePanel() {
     catch (e) { setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); }
   };
   const changePw = async () => {
+    const c = pwCheck(newPw, newPw2); if (c) return setMsg("⚠️ " + c);
     const r = await login({ data: { password: oldPw, newPassword: newPw, ...gateFlags() } });
-    setMsg(r.ok ? "✅ Password Master cambiata" : "⚠️ " + r.reason); if (r.ok) { setOldPw(""); setNewPw(""); }
+    setMsg(r.ok ? "✅ Password Master cambiata" : "⚠️ " + r.reason); if (r.ok) { setOldPw(""); setNewPw(""); setNewPw2(""); }
   };
-  return <main className="mx-auto flex max-w-3xl flex-col gap-8 p-6 pb-24">
+  return <div className="superadmin-page"><main className="mx-auto flex max-w-3xl flex-col gap-8 p-6 pb-24">
     <div className="flex items-center justify-between gap-4">
       <h1 className="font-display text-6xl text-accent">Licenza del locale</h1>
       <Button variant="secondary" onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }}>Esci</Button>
@@ -121,9 +140,11 @@ function LicensePanel() {
 
     <section className="grid gap-4 rounded-2xl bg-card p-5">
       <h2 className="font-display text-4xl">Cambia password Master</h2>
-      <input type="password" placeholder="Password attuale" value={oldPw} onChange={(e) => setOldPw(e.target.value)} className={input} autoComplete="current-password" />
-      <input type="password" placeholder="Nuova password (min. 8)" value={newPw} onChange={(e) => setNewPw(e.target.value)} className={input} autoComplete="new-password" />
+      <PwInput value={oldPw} onChange={setOldPw} placeholder="Password attuale" auto="current-password" />
+      <PwInput value={newPw} onChange={setNewPw} placeholder="Nuova password (min. 8)" auto="new-password" />
+      <PwInput value={newPw2} onChange={setNewPw2} placeholder="Ripeti la nuova password" auto="new-password" />
+      {newPw2 && <p className="text-lg">{newPw === newPw2 ? "✅ Le password coincidono" : "❌ Le password non coincidono"}</p>}
       <Button variant="secondary" onClick={changePw}>Cambia password</Button>
     </section>
-  </main>;
+  </main></div>;
 }

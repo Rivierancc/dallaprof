@@ -128,3 +128,10 @@
 @keyframes banner-fade { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 @keyframes banner-scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
 @keyframes news-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* Pagina riservata /superadmin: sfondo grigio scuro, campi grigio chiaro con testo nero */
+.superadmin-page { background: oklch(0.3 0 0); min-height: 100vh; }
+.superadmin-page section { background: oklch(0.36 0 0); }
+.superadmin-field { background: oklch(0.88 0 0) !important; color: oklch(0.15 0 0) !important; border-color: oklch(0.7 0 0) !important; }
+.superadmin-field::placeholder { color: oklch(0.45 0 0); }
+.superadmin-field option { color: oklch(0.15 0 0); background: oklch(0.92 0 0); }
