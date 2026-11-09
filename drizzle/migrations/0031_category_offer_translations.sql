@@ -1,0 +1,2 @@
+ALTER TABLE public.menu_categories ADD COLUMN IF NOT EXISTS name_tr jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.kiosk_banner ADD COLUMN IF NOT EXISTS offers_title_tr jsonb NOT NULL DEFAULT '{}'::jsonb;

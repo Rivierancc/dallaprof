@@ -218,6 +218,13 @@
       "when": 1794237121816,
       "tag": "0030_languages_de_ar",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794238056812,
+      "tag": "0031_category_offer_translations",
+      "breakpoints": true
     }
   ]
 }

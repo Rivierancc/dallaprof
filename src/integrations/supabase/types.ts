@@ -25,6 +25,7 @@ export type Database = {
           languages: Json
           news: Json
           offers_title: string
+          offers_title_tr: Json
           settings: Json
           updated_at: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           languages?: Json
           news?: Json
           offers_title?: string
+          offers_title_tr?: Json
           settings?: Json
           updated_at?: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           languages?: Json
           news?: Json
           offers_title?: string
+          offers_title_tr?: Json
           settings?: Json
           updated_at?: string
         }
@@ -127,6 +130,7 @@ export type Database = {
           id: string
           image_path: string
           name: string
+          name_tr: Json
           position: number
           slug: string
           strip: number
@@ -144,6 +148,7 @@ export type Database = {
           id?: string
           image_path?: string
           name: string
+          name_tr?: Json
           position?: number
           slug: string
           strip?: number
@@ -161,6 +166,7 @@ export type Database = {
           id?: string
           image_path?: string
           name?: string
+          name_tr?: Json
           position?: number
           slug?: string
           strip?: number
