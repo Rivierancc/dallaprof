@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
@@ -16,10 +16,10 @@ const staffOnly = async () => {
   await requireStaff();
 };
 
-const admin = async () => (await import("@/lib/venue.server")).venueAdmin();
+const admin = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
 
 // Public read-only client: the menu is shown to anyone at the totem.
-const publishable = async () => {
+const publishable = createServerOnlyFn(async () => {
   const { scoped, currentVenueId } = await import("@/lib/venue.server");
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
   return scoped(createClient<Database>(process.env["SUPABASE_URL"]!, key, {
@@ -33,7 +33,7 @@ const publishable = async () => {
       },
     },
   }), await currentVenueId());
-};
+});
 
 const sign = async (paths: string[]) => {
   const uniq = [...new Set(paths.filter(Boolean))];

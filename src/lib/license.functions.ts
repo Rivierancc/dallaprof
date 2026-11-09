@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { cleanDemo, cleanPublicLicense, PLANS } from "@/lib/license";
 import { slugFromPath, validSlug } from "@/lib/venue";
@@ -21,7 +21,8 @@ async function requireMaster() {
   if (!hash || s.data.master !== hash.slice(-16)) throw new Error("Accesso riservato");
 }
 
-const venueId = async () => (await import("@/lib/venue.server")).currentVenueId();
+const venueDb = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
+const venueId = createServerOnlyFn(async () => (await import("@/lib/venue.server")).currentVenueId());
 
 export const getLicenseState = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await (await admin()).rpc("license_state_v", { v: await venueId() });
@@ -101,7 +102,7 @@ export const saveLicense = createServerFn({ method: "POST" })
 
 /** Usato da saveProduct: blocca nuovi piatti oltre il limite della demo. */
 export async function assertProductAllowed() {
-  const db = await (await import("@/lib/venue.server")).venueAdmin();
+  const db = await venueDb();
   const { data } = await db.rpc("license_state_v", { v: await venueId() });
   const l = cleanPublicLicense(data);
   if (l.state !== "demo") return;
