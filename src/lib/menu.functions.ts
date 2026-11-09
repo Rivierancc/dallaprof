@@ -4,6 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { cleanNews, NEWS_SOURCES, type NewsSettings } from "@/lib/news";
 import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
 import { cleanCombo, cleanComboPrice, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
+import { cleanLanguages } from "@/lib/customer";
 import { cleanKitchenFeatures, type KitchenFeatures } from "@/lib/kitchen";
 
 const BUCKET = "menu-photos";
@@ -60,6 +61,8 @@ export type MenuCategory = {
   custom_title_en: string;
   custom_title_fr: string;
   custom_title_es: string;
+  custom_title_de: string;
+  custom_title_ar: string;
   strip: number;
 };
 
@@ -70,6 +73,8 @@ export type MenuIngredient = {
   name_en: string;
   name_fr: string;
   name_es: string;
+  name_de: string;
+  name_ar: string;
   kind: "dolce" | "salato";
   group: string;
   price: number;
@@ -94,6 +99,8 @@ export type MenuProduct = {
   description_en: string;
   description_fr: string;
   description_es: string;
+  description_de: string;
+  description_ar: string;
   ingredients: string[];
   extras: MenuExtra[];
   max_extras: number;
@@ -130,15 +137,15 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
   const db = publishable();
   const [c, p, g, b] = await Promise.all([
     db.from("menu_categories")
-      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, strip")
+      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, custom_title_de, custom_title_ar, strip")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, combo_alts, combo_groups, combo_extras, suggest, recipe_on, recipe")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, description_de, description_ar, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, combo_alts, combo_groups, combo_extras, suggest, recipe_on, recipe")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
-      .select("id, name, name_en, name_fr, name_es, kind, grp, price, available, position")
+      .select("id, name, name_en, name_fr, name_es, name_de, name_ar, kind, grp, price, available, position")
       .order("kind", { ascending: true })
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
@@ -163,6 +170,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       custom_title_en: r.custom_title_en,
       custom_title_fr: r.custom_title_fr,
       custom_title_es: r.custom_title_es,
+      custom_title_de: r.custom_title_de ?? "",
+      custom_title_ar: r.custom_title_ar ?? "",
       strip: Number(r.strip) || 0,
     })),
     ingredients: (g.data ?? []).map((r) => ({
@@ -171,6 +180,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       name_en: r.name_en ?? "",
       name_fr: r.name_fr ?? "",
       name_es: r.name_es ?? "",
+      name_de: r.name_de ?? "",
+      name_ar: r.name_ar ?? "",
       kind: r.kind === "dolce" ? "dolce" : "salato",
       group: r.grp ?? "",
       price: Number(r.price) || 0,
@@ -194,6 +205,8 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       description_en: r.description_en ?? "",
       description_fr: r.description_fr ?? "",
       description_es: r.description_es ?? "",
+      description_de: r.description_de ?? "",
+      description_ar: r.description_ar ?? "",
       ingredients: cleanIngredients(r.ingredients),
       extras: cleanExtras(r.extras),
       max_extras: cleanMaxExtras(r.max_extras),
@@ -513,19 +526,33 @@ export const setBadge = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+const TR_COLS = { EN: "description_en", FR: "description_fr", ES: "description_es", DE: "description_de", AR: "description_ar" } as const;
 export const setTranslation = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; language: "EN" | "FR" | "ES"; description: string }) => {
-    if (!["EN", "FR", "ES"].includes(d.language)) throw new Error("Lingua non valida");
-    const column: "description_en" | "description_fr" | "description_es" = d.language === "EN" ? "description_en" : d.language === "FR" ? "description_fr" : "description_es";
+  .inputValidator((d: { id: string; language: keyof typeof TR_COLS; description: string }) => {
+    const column = TR_COLS[d.language];
+    if (!column) throw new Error("Lingua non valida");
     return { id: String(d.id), column, description: String(d.description ?? "").trim().slice(0, 300) };
   })
   .handler(async ({ data }) => {
     await staffOnly();
     const db = await admin();
-    const patch = data.column === "description_en" ? { description_en: data.description } : data.column === "description_fr" ? { description_fr: data.description } : { description_es: data.description };
-    const { error } = await db.from("menu_products").update(patch).eq("id", data.id);
+    const { error } = await db.from("menu_products").update({ [data.column]: data.description } as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const getLanguages = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await publishable().from("kiosk_banner").select("languages").eq("id", 1).maybeSingle();
+  return cleanLanguages(data?.languages);
+});
+
+export const saveLanguages = createServerFn({ method: "POST" })
+  .inputValidator((d: { languages: unknown }) => ({ languages: cleanLanguages(d?.languages) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("kiosk_banner").update({ languages: data.languages as never }).eq("id", 1);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });
 
 export const getCustomerOrder = createServerFn({ method: "GET" })
@@ -542,7 +569,7 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
 const txt = (v: unknown, n = 40) => String(v ?? "").trim().slice(0, n);
 
 export const saveIngredient = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; name: string; name_en?: string; name_fr?: string; name_es?: string; group?: string; kind: string; price: number | string; available?: boolean }) => {
+  .inputValidator((d: { id?: string; name: string; name_en?: string; name_fr?: string; name_es?: string; name_de?: string; name_ar?: string; group?: string; kind: string; price: number | string; available?: boolean }) => {
     const name = txt(d.name);
     if (!name) throw new Error("Il nome dell'ingrediente è obbligatorio");
     const price = Number(String(d.price ?? "0").replace(",", "."));
@@ -554,6 +581,8 @@ export const saveIngredient = createServerFn({ method: "POST" })
         name_en: txt(d.name_en),
         name_fr: txt(d.name_fr),
         name_es: txt(d.name_es),
+        name_de: txt(d.name_de),
+        name_ar: txt(d.name_ar),
         grp: txt(d.group, 30),
         kind: d.kind === "dolce" ? "dolce" : "salato",
         price: Math.round(price * 100) / 100,
@@ -598,12 +627,14 @@ export const setCategoryCustom = createServerFn({ method: "POST" })
   });
 
 export const setCategoryCustomTitles = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; custom_title: string; custom_title_en: string; custom_title_fr: string; custom_title_es: string }) => ({
+  .inputValidator((d: { id: string; custom_title: string; custom_title_en: string; custom_title_fr: string; custom_title_es: string; custom_title_de?: string; custom_title_ar?: string }) => ({
     id: String(d.id),
     custom_title: txt(d.custom_title, 120),
     custom_title_en: txt(d.custom_title_en, 120),
     custom_title_fr: txt(d.custom_title_fr, 120),
     custom_title_es: txt(d.custom_title_es, 120),
+    custom_title_de: txt(d.custom_title_de, 120),
+    custom_title_ar: txt(d.custom_title_ar, 120),
   }))
   .handler(async ({ data }) => {
     await staffOnly();

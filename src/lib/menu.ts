@@ -37,6 +37,8 @@ export type Product = {
   description_en: string;
   description_fr: string;
   description_es: string;
+  description_de: string;
+  description_ar: string;
   ingredients: string[];
   extras: { name: string; price: number }[];
   max_extras: number;
@@ -66,6 +68,8 @@ export type Category = {
   custom_title_en: string;
   custom_title_fr: string;
   custom_title_es: string;
+  custom_title_de: string;
+  custom_title_ar: string;
   strip: number;
 };
 
@@ -75,6 +79,8 @@ export type Ingredient = {
   name_en: string;
   name_fr: string;
   name_es: string;
+  name_de: string;
+  name_ar: string;
   kind: "dolce" | "salato";
   group: string;
   price: number;
@@ -83,10 +89,10 @@ export type Ingredient = {
 };
 
 // Nome dell'ingrediente nella lingua scelta (sempre italiano se manca la traduzione).
-export const ingredientLabel = (name: string, list: Ingredient[], language: "IT" | "EN" | "FR" | "ES") => {
+export const ingredientLabel = (name: string, list: Ingredient[], language: "IT" | "EN" | "FR" | "ES" | "DE" | "AR") => {
   const g = list.find((x) => x.name.toLowerCase() === name.toLowerCase());
   if (!g || language === "IT") return name;
-  const t = language === "EN" ? g.name_en : language === "FR" ? g.name_fr : g.name_es;
+  const t = ({ EN: g.name_en, FR: g.name_fr, ES: g.name_es, DE: g.name_de, AR: g.name_ar } as const)[language] ?? "";
   return t.trim() || name;
 };
 // Un ingrediente dell'archivio segnato "non disponibile" sparisce dal totem.
