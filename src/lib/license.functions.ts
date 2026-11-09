@@ -157,3 +157,23 @@ export const createVenue = createServerFn({ method: "POST" })
     if (bad?.error) { await db.from("venues").delete().eq("id", v.id); throw new Error(bad.error.message); }
     return { id: v.id, slug: data.slug };
   });
+
+export const resetVenuePin = createServerFn({ method: "POST" })
+  .inputValidator((d: { venueId: string; pin: string }) => {
+    const pin = String(d.pin ?? "");
+    if (!/^[0-9]{4,12}$/.test(pin)) throw new Error("Il PIN deve avere da 4 a 12 cifre");
+    return { venueId: String(d.venueId), pin };
+  })
+  .handler(async ({ data }) => {
+    await requireMaster();
+    const { hashPin } = await import("@/lib/staff.server");
+    const db = await admin();
+    const row = { pin_hash: await hashPin(data.pin), version: crypto.randomUUID(), updated_at: new Date().toISOString() };
+    const up = await db.from("staff_credentials").update(row).eq("venue_id", data.venueId).select("id");
+    if (up.error) throw new Error("PIN non salvato");
+    if (!up.data?.length) {
+      const ins = await db.from("staff_credentials").insert({ ...row, venue_id: data.venueId });
+      if (ins.error) throw new Error("PIN non salvato");
+    }
+    return { ok: true };
+  });
