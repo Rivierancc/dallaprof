@@ -3,6 +3,9 @@ import { queryOptions } from "@tanstack/react-query";
 export type LicenseState = "active" | "demo" | "expired";
 export type DemoRules = { max_products: number; orders: "real" | "simulate"; badge: boolean };
 export type PublicLicense = { state: LicenseState; plan: string; expires_at: string | null; demo: DemoRules; business_name: string };
+export const MODES = { fast_food: "🍔 Solo Fast Food", restaurant: "🍽️ Solo Ristorante", both: "🍔+🍽️ Fast Food + Ristorante" } as const;
+export type VenueMode = keyof typeof MODES;
+export const cleanMode = (m: unknown): VenueMode => (m === "restaurant" || m === "both" ? m : "fast_food");
 export const PLANS = { prova: "Prova", mensile: "Mensile", stagionale: "Stagionale", annuale: "Annuale", perpetua: "Perpetua" } as const;
 
 export function cleanDemo(raw: unknown): DemoRules {

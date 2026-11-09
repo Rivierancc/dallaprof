@@ -70,7 +70,7 @@ export const masterLogout = createServerFn({ method: "POST" })
   .handler(async ({ data }) => { await (await useSession(await masterConfig(data))).clear(); return { ok: true }; });
 
 const FIELDS = ["business_name", "owner_email", "company_name", "vat", "address", "city", "sdi", "pec", "phone", "notes"] as const;
-export type LicenseRow = Record<(typeof FIELDS)[number], string> & { status: string; plan: string; expires_at: string | null; demo: ReturnType<typeof cleanDemo> };
+export type LicenseRow = Record<(typeof FIELDS)[number], string> & { status: string; plan: string; mode: string; expires_at: string | null; demo: ReturnType<typeof cleanDemo> };
 
 export const getLicense = createServerFn({ method: "GET" })
   .inputValidator((d: { venueId: string }) => ({ venueId: String(d.venueId) }))
@@ -79,7 +79,7 @@ export const getLicense = createServerFn({ method: "GET" })
   const { data, error } = await (await admin()).from("license").select("*").eq("venue_id", q.venueId).single();
   if (error) throw new Error(error.message);
   const out = Object.fromEntries(FIELDS.map((f) => [f, String(data[f] ?? "")])) as unknown as LicenseRow;
-  return { ...out, status: data.status, plan: data.plan, expires_at: data.expires_at, demo: cleanDemo(data.demo) };
+  return { ...out, status: data.status, plan: data.plan, mode: cleanMode(data.mode), expires_at: data.expires_at, demo: cleanDemo(data.demo) };
 });
 
 export const saveLicense = createServerFn({ method: "POST" })
@@ -90,7 +90,7 @@ export const saveLicense = createServerFn({ method: "POST" })
     const status = ["active", "demo", "expired"].includes(d.status) ? d.status : "demo";
     const plan = d.plan in PLANS ? d.plan : "prova";
     const expires_at = d.expires_at && /^\d{4}-\d{2}-\d{2}$/.test(d.expires_at) ? d.expires_at : null;
-    return { row: { ...row, status, plan, expires_at, demo: cleanDemo(d.demo) }, venueId: String(d.venueId) };
+    return { row: { ...row, status, plan, mode: cleanMode(d.mode), expires_at, demo: cleanDemo(d.demo) }, venueId: String(d.venueId) };
   })
   .handler(async ({ data }) => {
     await requireMaster();
@@ -110,20 +110,20 @@ export async function assertProductAllowed() {
   if ((count ?? 0) >= l.demo.max_products) throw new Error("Hai raggiunto il limite della versione demo. Passa alla versione completa per piatti illimitati.");
 }
 
-export type VenueListItem = { id: string; slug: string; name: string; status: string; plan: string; expires_at: string | null; owner_email: string };
+export type VenueListItem = { id: string; slug: string; name: string; status: string; plan: string; mode: string; expires_at: string | null; owner_email: string };
 
 export const listVenues = createServerFn({ method: "GET" }).handler(async (): Promise<VenueListItem[]> => {
   await requireMaster();
   const db = await admin();
   const [{ data: venues, error }, { data: lic }] = await Promise.all([
     db.from("venues").select("id, slug, name").order("created_at"),
-    db.from("license").select("venue_id, status, plan, expires_at, owner_email"),
+    db.from("license").select("venue_id, status, plan, mode, expires_at, owner_email"),
   ]);
   if (error) throw new Error(error.message);
   return (venues ?? []).map((v) => {
     const l = (lic ?? []).find((x) => x.venue_id === v.id);
     const expired = l?.status === "expired" || (!!l?.expires_at && l.expires_at < new Date().toISOString().slice(0, 10));
-    return { ...v, status: expired ? "expired" : l?.status ?? "expired", plan: l?.plan ?? "", expires_at: l?.expires_at ?? null, owner_email: l?.owner_email ?? "" };
+    return { ...v, status: expired ? "expired" : l?.status ?? "expired", plan: l?.plan ?? "", mode: cleanMode(l?.mode), expires_at: l?.expires_at ?? null, owner_email: l?.owner_email ?? "" };
   });
 });
 
