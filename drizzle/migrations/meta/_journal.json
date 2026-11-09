@@ -225,6 +225,13 @@
       "when": 1794238056812,
       "tag": "0031_category_offer_translations",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794241508079,
+      "tag": "0032_license_superadmin",
+      "breakpoints": true
     }
   ]
 }
