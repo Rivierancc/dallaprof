@@ -6,6 +6,7 @@ import { Fold } from "@/components/fold";
 import { menuQueryOptions } from "@/lib/menu";
 import { setComboOffer, setOffersTitle, setProductRules, type MenuProduct } from "@/lib/menu.functions";
 import { menuName, type ChoiceGroup, type ChoiceOption, type Place } from "@/lib/options";
+import { TranslationsEditor } from "@/components/translations-editor";
 import { GroupEditor } from "@/components/product-rules";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -31,7 +32,8 @@ export function ComboOffersPanel() {
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome della sezione sul totem
               <input value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} placeholder="Menu in offerta" className={`${box} min-w-0 flex-1`} /></label>
-            <button onClick={async () => { try { await saveTitle({ data: { title } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Nome sezione salvato"); } catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); } }} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
+            <button onClick={async () => { try { await saveTitle({ data: { title, tr: menu.offersTitleTr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Nome sezione salvato"); } catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); } }} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
+            <div className="w-full"><TranslationsEditor label="🌍 Nome della sezione nelle altre lingue" value={menu.offersTitleTr} onSave={async (tr) => { await saveTitle({ data: { title, tr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }} /></div>
           </div>
           {menus.map((p) => <ComboEditor key={p.id} p={p} />)}
           <select value="" onChange={(e) => e.target.value && setExtra((x) => [...x, e.target.value])} className={`${box} w-full`}>

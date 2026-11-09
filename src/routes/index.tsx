@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
 import { basePrice, canAddExtra, groupsValid, isCombo, menuName, suggestPrice } from "@/lib/options"
-import { copy, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
+import { copy, translatedFor, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -213,13 +213,13 @@ function Totem() {
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
           {offerMenus.length > 0 && (
             <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl border-4 border-accent bg-card">
-              <span className="glow relative z-10 font-display text-6xl text-accent">🍱 {(data?.offersTitle ?? "Menu in offerta").toUpperCase()}</span>
+              <span className="glow relative z-10 font-display text-6xl text-accent">🍱 {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span>
             </Button>
           )}
           {categories.filter((c) => !c.strip).map((c: Category) => (
             <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} className="whitespace-normal tap relative h-56 overflow-hidden rounded-3xl bg-card">
               {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
-              <span className="glow relative z-10 font-display text-6xl text-accent">{c.name.toUpperCase()}</span>
+              <span className="glow relative z-10 font-display text-6xl text-accent">{translatedFor(c.name, c.name_tr, language).toUpperCase()}</span>
             </Button>
           ))}
           {[...new Set(categories.map((c) => c.strip).filter(Boolean))].sort((a, b) => a - b).map((n) => (
@@ -228,7 +228,7 @@ function Totem() {
         </div>
       ) : (
         <>
-          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? data?.offersTitle : cat?.name}</Button>
+          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
           <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
               <Button variant="ghost" onClick={() => setCompose(cat)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
@@ -468,6 +468,7 @@ function KioskButton() {
 }
 
 function CategoryStrip({ cats, onPick }: { cats: Category[]; onPick: (id: string) => void }) {
+  const { language } = useCustomer()
   const ref = useRef<HTMLDivElement>(null)
   const [center, setCenter] = useState(0)
   const update = () => {
@@ -484,7 +485,7 @@ function CategoryStrip({ cats, onPick }: { cats: Category[]; onPick: (id: string
       {cats.map((c, i) => (
         <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl bg-card transition-all duration-300 ${i === center ? "h-72 w-[60%] border-4 border-accent" : "h-56 w-[45%] opacity-70"}`}>
           {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
-          <span className={`glow relative z-10 font-display text-accent ${i === center ? "text-6xl" : "text-4xl"}`}>{c.name.toUpperCase()}</span>
+          <span className={`glow relative z-10 font-display text-accent ${i === center ? "text-6xl" : "text-4xl"}`}>{translatedFor(c.name, c.name_tr, language).toUpperCase()}</span>
         </Button>
       ))}
       <div aria-hidden className="w-[20%] shrink-0" />
