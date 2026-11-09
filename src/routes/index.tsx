@@ -80,11 +80,13 @@ function Totem() {
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
       <div className="-mx-6 mb-4"><HomeBanner /></div>
-      <KioskButton />
       <div className="flex-1" />
       
       <div className="mx-auto w-full max-w-[62rem] text-center">
-        <CompanyIdentity />
+        <div className="relative">
+          <CompanyIdentity />
+          <KioskButton />
+        </div>
         <ThemeGreeting className="mb-6 [@media(max-height:900px)]:mb-2" />
         <h1 className="font-display text-8xl leading-none [@media(max-height:900px)]:text-6xl">{t.where}</h1>
         {custom ? (
@@ -337,12 +339,12 @@ function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: 
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {hasMenuPrice && (
             <div className="mt-4 flex gap-3">
-              {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? `🍱 Menu · ${euro(product.combo_price ?? 0)}` : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
+              {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? `🍱 Menu · ${euro(product.combo_price ?? 0)}` : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
             </div>
           )}
           {alts.length > 1 && (
             <section className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground">🍔 {({ IT: "Scegli il piatto", EN: "Choose your main", FR: "Choisissez le plat", ES: "Elige el plato" } as const)[language]}</h3>
+              <h3 className="font-display text-4xl text-muted-foreground">🍔 {({ IT: "Scegli il piatto", EN: "Choose your main", FR: "Choisissez le plat", ES: "Elige el plato", DE: "Wähle das Gericht", AR: "اختر الطبق" } as const)[language]}</h3>
               <div className="mt-3 flex flex-wrap gap-3">
                 {alts.map((x) => <Button variant="ghost" key={x.id} aria-pressed={dish.id === x.id} onClick={() => pickDish(x.id)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${dish.id === x.id ? "bg-success text-success-foreground" : "bg-muted"}`}>{dish.id === x.id ? "✓ " : ""}{x.name}</Button>)}
               </div>
@@ -458,8 +460,9 @@ function HomeBanner() { return <BannerView banner={useBanner()} /> }
 function KioskButton() {
   const { fullscreen, enterKiosk, kioskError } = useCustomer()
   if (fullscreen) return null
-  return <div className="fixed left-3 top-24 z-[100] flex items-center gap-3">
-    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap">⛶ Attiva modalità chiosco</Button>
+  // Accanto al logo, fuori dal flusso: il logo resta centrato. Su schermi stretti va sotto il logo.
+  return <div className="mb-4 flex flex-col items-center gap-2 md:absolute md:right-0 md:top-0 md:mb-0 md:items-end">
+    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap h-auto whitespace-normal md:max-w-[10rem]">⛶ Attiva modalità chiosco</Button>
     {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
   </div>
 }

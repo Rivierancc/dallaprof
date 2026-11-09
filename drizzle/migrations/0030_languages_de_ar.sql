@@ -1,0 +1,4 @@
+ALTER TABLE public.menu_products ADD COLUMN IF NOT EXISTS description_de text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS description_ar text NOT NULL DEFAULT '';
+ALTER TABLE public.menu_ingredients ADD COLUMN IF NOT EXISTS name_de text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS name_ar text NOT NULL DEFAULT '';
+ALTER TABLE public.menu_categories ADD COLUMN IF NOT EXISTS custom_title_de text NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS custom_title_ar text NOT NULL DEFAULT '';
+ALTER TABLE public.kiosk_banner ADD COLUMN IF NOT EXISTS languages jsonb NOT NULL DEFAULT '["EN","FR","ES"]'::jsonb;

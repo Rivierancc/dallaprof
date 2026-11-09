@@ -15,6 +15,7 @@ import { DividerSettings } from "@/components/menu-divider";
 import { KitchenFeaturesSettings } from "@/components/kitchen-features";
 import { PasswordSettings } from "@/components/password-settings";
 import { TextScaleToggle, useTextScale } from "@/components/text-scale";
+import { LanguageSettings } from "@/components/language-settings";
 import { OrderNumberSettings } from "@/components/order-number-settings";
 
 export const Route = createFileRoute("/admin/")({
@@ -56,6 +57,7 @@ function Admin() {
       <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       <ThemesPanel />
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></div>
+      <div className="mx-auto mt-6 max-w-5xl"><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></div>
