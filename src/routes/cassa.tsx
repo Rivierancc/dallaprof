@@ -14,6 +14,7 @@ import type { PaymentMethod } from "@/lib/customer";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 import { KitchenBoard } from "@/components/kitchen-board";
+import { OpenTabs } from "@/components/open-tabs";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
@@ -122,6 +123,7 @@ function Cassa() {
         </StaffChip>
       </header>
 
+      <OpenTabs />
       {showCfg && (
         <section className="mb-6 grid gap-4 rounded-3xl bg-card p-6 text-2xl">
           <label className="grid gap-2">
