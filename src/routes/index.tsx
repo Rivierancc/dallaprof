@@ -249,7 +249,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
               <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `${t.without} ${r}`)].join(" · ") : ""}</p>
             </div>
             <div className="flex items-center gap-6">
-              <p className="font-display text-5xl text-accent">{i.offer && i.price === 0 ? t.free : euro(i.price * i.qty)}</p>
+              <p className="font-display text-5xl text-accent">{(i.offer || i.gift) && i.price === 0 ? t.free : euro(i.price * i.qty)}</p>
               <Button variant="ghost" onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="whitespace-normal tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</Button>
             </div>
           </div>
