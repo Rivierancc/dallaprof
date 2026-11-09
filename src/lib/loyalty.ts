@@ -15,7 +15,7 @@ export function normalizePhone(raw: string) {
   if (d.startsWith("0039")) d = d.slice(4); else if (d.startsWith("39") && d.length > 10) d = d.slice(2);
   return d;
 }
-export const validPhone = (p: string) => /^\d{9,13}$/.test(p);
+export const validPhone = (p: string) => /^\d{10,13}$/.test(p);
 
 export function validBirthday(day: unknown, month: unknown): { day: number; month: number } | null {
   const d = Number(day), m = Number(month);
