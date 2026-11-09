@@ -57,7 +57,6 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [compose, setCompose] = useState<Category | null>(null)
   const lib = data?.ingredients ?? []
 
-  const categories = (data?.categories ?? []).filter((c) => limit == null || (data?.products ?? []).some((p) => p.category_id === c.id && products.some((x) => x.id === p.id)))
   const products = useMemo(() => {
     const all = data?.products ?? []
     if (limit == null) return all.filter((p) => !p.sold_out)
@@ -66,6 +65,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     const allowed = new Set([...all].sort((a, b) => (catPos.get(a.category_id) ?? 999) - (catPos.get(b.category_id) ?? 999)).slice(0, limit).map((p) => p.id))
     return all.filter((p) => !p.sold_out && allowed.has(p.id))
   }, [data, limit])
+  const categories = (data?.categories ?? []).filter((c) => limit == null || products.some((p) => p.category_id === c.id))
   const featured = useMemo(() => products.filter((p) => p.is_featured).slice(0, 3), [products])
   const [suggestSeen, setSuggestSeen] = useState(false)
   const [offerPick, setOfferPick] = useState(false)
