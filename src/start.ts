@@ -2,6 +2,13 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { browserSlug, VENUE_HEADER } from "@/lib/venue";
+
+// Ogni chiamata al server dice di quale locale si tratta.
+const venueMiddleware = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  const slug = browserSlug();
+  return next(slug ? { headers: { [VENUE_HEADER]: slug } } : undefined);
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -26,6 +33,6 @@ const csrfMiddleware = createCsrfMiddleware({
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],
+  functionMiddleware: [attachSupabaseAuth, venueMiddleware],
   requestMiddleware: [errorMiddleware, csrfMiddleware],
 }));
