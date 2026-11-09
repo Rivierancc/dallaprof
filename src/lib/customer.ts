@@ -16,7 +16,7 @@ export type PaymentMethod = "cash" | "card";
 export const CONFIRMATION_DELAY = 5_000;
 export const EXIT_TAPS = 5;
 export const EXIT_WINDOW = 2_000;
-export const isLanguage = (value: unknown): value is Language => LANGUAGES.some((l) => l.code === String(value)) || ["IT"].includes(String(value));
+export const isLanguage = (value: unknown): value is Language => LANGUAGES.some((l) => l.code === String(value));
 export const isOrderType = (value: unknown): value is OrderType => value === "qui" || value === "asporto";
 export const canExitKiosk = (pin: string, expected = DEFAULT_EXIT_PIN) => pin === expected;
 export const isPaidOrder = (order: { status: string; paid_at?: string | null }) =>
