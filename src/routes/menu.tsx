@@ -572,6 +572,13 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
           </Fragment>
         ))}
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
+        {products.length > 0 && (
+          <li className="list-none pt-2">
+            <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
+              + Aggiungi altro piatto
+            </button>
+          </li>
+        )}
       </ul>
     </>
   );
