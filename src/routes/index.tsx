@@ -80,11 +80,13 @@ function Totem() {
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
       <div className="-mx-6 mb-4"><HomeBanner /></div>
-      <KioskButton />
       <div className="flex-1" />
       
       <div className="mx-auto w-full max-w-[62rem] text-center">
-        <CompanyIdentity />
+        <div className="relative">
+          <CompanyIdentity />
+          <KioskButton />
+        </div>
         <ThemeGreeting className="mb-6 [@media(max-height:900px)]:mb-2" />
         <h1 className="font-display text-8xl leading-none [@media(max-height:900px)]:text-6xl">{t.where}</h1>
         {custom ? (
@@ -458,8 +460,9 @@ function HomeBanner() { return <BannerView banner={useBanner()} /> }
 function KioskButton() {
   const { fullscreen, enterKiosk, kioskError } = useCustomer()
   if (fullscreen) return null
-  return <div className="fixed left-3 top-24 z-[100] flex items-center gap-3">
-    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap">⛶ Attiva modalità chiosco</Button>
+  // Accanto al logo, fuori dal flusso: il logo resta centrato. Su schermi stretti va sotto il logo.
+  return <div className="mb-4 flex flex-col items-center gap-2 md:absolute md:right-0 md:top-0 md:mb-0 md:items-end">
+    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap h-auto whitespace-normal">⛶ Attiva modalità chiosco</Button>
     {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
   </div>
 }

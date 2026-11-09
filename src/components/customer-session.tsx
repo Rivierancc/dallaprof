@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { canExitKiosk, EXIT_TAPS, EXIT_WINDOW, isLanguage, isOrderType, type Language, type OrderType } from "@/lib/customer";
+import { useQuery } from "@tanstack/react-query";
+import { getLanguages } from "@/lib/menu.functions";
+import { canExitKiosk, EXIT_TAPS, EXIT_WINDOW, isLanguage, isRtl, LANGUAGES, isOrderType, type Language, type OrderType } from "@/lib/customer";
 import { DEFAULT_EXIT_PIN, EXIT_PIN_KEY, validatePinChange } from "@/lib/access";
 
 function store(key: string, value: string | null) {
@@ -67,7 +69,14 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     document.addEventListener("contextmenu", block);
     return () => document.removeEventListener("contextmenu", block);
   }, [fullscreen]);
-  useEffect(() => { if (customerPage) document.documentElement.lang = language.toLowerCase(); }, [language, customerPage]);
+  const { data: enabled } = useQuery({ queryKey: ["languages"], queryFn: () => getLanguages(), staleTime: 15_000, refetchInterval: 30_000 });
+  const shown = LANGUAGES.filter((l) => l.code === "IT" || (enabled ?? []).includes(l.code));
+  useEffect(() => { if (enabled && language !== "IT" && !enabled.includes(language)) setLanguage("IT"); }, [enabled, language]);
+  useEffect(() => {
+    const html = document.documentElement;
+    if (customerPage) { html.lang = language.toLowerCase(); html.dir = isRtl(language) ? "rtl" : "ltr"; }
+    else { html.lang = "it"; html.dir = "ltr"; }
+  }, [language, customerPage]);
   const enterKiosk = async () => {
     setKioskError("");
     try {
@@ -91,10 +100,10 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     {children}
     {customerPage && <>
       <Clock onTap={tapCorner} />
-      <div className="fixed right-3 top-3 z-[100] flex gap-2 rounded-2xl border-2 border-border bg-card p-2" aria-label="Lingua">
-        {([ ["IT", "🇮🇹"], ["EN", "🇬🇧"], ["FR", "🇫🇷"], ["ES", "🇪🇸"] ] as const).map(([lang, flag]) =>
-          <Button key={lang} title={lang} aria-label={lang} aria-pressed={language === lang} variant={language === lang ? "default" : "ghost"} onClick={() => setLanguage(lang)} className="tap h-16 min-w-16 gap-2 rounded-xl px-3"><span aria-hidden="true" className="text-4xl leading-none">{flag}</span><span className="font-sans text-xl font-bold">{lang}</span></Button>)}
-      </div>
+      {shown.length > 1 && <div dir="ltr" className="fixed right-2 top-2 z-[100] flex max-w-[calc(100vw-7.5rem)] flex-wrap justify-end gap-1 rounded-2xl border-2 border-border bg-card p-1 sm:right-3 sm:top-3 sm:max-w-none sm:gap-2 sm:p-2" aria-label="Lingua">
+        {shown.map(({ code, flag }) =>
+          <Button key={code} title={code} aria-label={code} aria-pressed={language === code} variant={language === code ? "default" : "ghost"} onClick={() => setLanguage(code)} className="tap h-10 min-w-10 gap-2 rounded-xl px-1.5 sm:h-16 sm:min-w-16 sm:px-3"><span aria-hidden="true" className="text-2xl leading-none sm:text-4xl">{flag}</span><span className="hidden font-sans text-xl font-bold sm:inline">{code}</span></Button>)}
+      </div>}
     </>}
     {!customerPage && fullscreen && <Button aria-label="Accesso uscita chiosco" variant="ghost" className="fixed left-0 top-0 z-[100] h-12 w-12" onClick={tapCorner}>•</Button>}
     {exitPrompt && <div className="fixed inset-0 z-[150] grid place-items-center bg-background/90 p-6">
@@ -111,8 +120,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 function Clock({ onTap }: { onTap: () => void }) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => { setNow(new Date()); const timer = setInterval(() => setNow(new Date()), 1_000); return () => clearInterval(timer); }, []);
-  return <Button aria-label="Orologio" variant="secondary" onClick={onTap} className="fixed left-3 top-3 z-[100] h-auto flex-col items-start gap-1 rounded-lg border border-border px-3 py-2 font-mono">
+  return <Button aria-label="Orologio" variant="secondary" onClick={onTap} className="fixed left-2 top-2 z-[100] h-auto flex-col items-start gap-0.5 rounded-lg border border-border px-2 py-1 font-mono sm:left-3 sm:top-3 sm:gap-1 sm:px-3 sm:py-2">
     <span className="text-[11px] uppercase text-muted-foreground">{now?.toLocaleDateString("it-IT", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) ?? "—"}</span>
-    <span className="text-[15px] font-bold">{now?.toLocaleTimeString("it-IT") ?? "—:—:—"}</span>
+    <span className="text-[13px] font-bold sm:text-[15px]">{now?.toLocaleTimeString("it-IT") ?? "—:—:—"}</span>
   </Button>;
 }
