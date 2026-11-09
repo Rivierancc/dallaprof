@@ -16,12 +16,13 @@ const staffOnly = async () => {
   await requireStaff();
 };
 
-const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+const admin = async () => (await import("@/lib/venue.server")).venueAdmin();
 
 // Public read-only client: the menu is shown to anyone at the totem.
-const publishable = () => {
+const publishable = async () => {
+  const { scoped, currentVenueId } = await import("@/lib/venue.server");
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
+  return scoped(createClient<Database>(process.env["SUPABASE_URL"]!, key, {
     auth: { persistSession: false },
     global: {
       fetch: (input, init) => {
