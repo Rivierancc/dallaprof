@@ -3,7 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 export type LicenseState = "active" | "demo" | "expired";
 export type DemoRules = { max_products: number; orders: "real" | "simulate"; badge: boolean };
 export type PublicLicense = { state: LicenseState; plan: string; expires_at: string | null; demo: DemoRules; business_name: string };
-export const PLANS = { prova: "Prova", mensile: "Mensile", stagionale: "Stagionale", annuale: "Annuale" } as const;
+export const PLANS = { prova: "Prova", mensile: "Mensile", stagionale: "Stagionale", annuale: "Annuale", perpetua: "Perpetua" } as const;
 
 export function cleanDemo(raw: unknown): DemoRules {
   const r = (raw && typeof raw === "object" ? raw : {}) as any;
