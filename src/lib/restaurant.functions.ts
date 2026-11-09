@@ -60,7 +60,7 @@ export const updateTablet = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const patch: Record<string, string> = { label: data.label, waiter: data.waiter };
+    const patch: { label: string; waiter: string; pin_hash?: string } = { label: data.label, waiter: data.waiter };
     if (data.pin) patch.pin_hash = await hash(data.pin);
     const { error } = await (await db()).from("restaurant_tablets").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);

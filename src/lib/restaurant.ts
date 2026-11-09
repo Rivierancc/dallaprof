@@ -11,7 +11,7 @@ export type Restaurant = {
 export const DEFAULT_RESTAURANT: Restaurant = { tables: 20, table_required: true, cover_on: false, cover_price: 2, courses: "single", bell_on: true, messages_on: true };
 
 export function cleanRestaurant(raw: unknown): Restaurant {
-  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const r = (raw && typeof raw === "object" ? raw : {}) as Partial<Record<keyof Restaurant, unknown>>;
   const n = Math.trunc(Number(r.tables));
   const p = Math.round(Number(r.cover_price) * 100) / 100;
   return {
