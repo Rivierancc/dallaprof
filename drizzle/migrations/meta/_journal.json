@@ -260,6 +260,13 @@
       "when": 1794266941947,
       "tag": "0036_restaurant_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794267395851,
+      "tag": "0037_restaurant_tabs",
+      "breakpoints": true
     }
   ]
 }

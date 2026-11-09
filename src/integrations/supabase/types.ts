@@ -486,6 +486,7 @@ export type Database = {
           partial_notes: Json
           payment_method: string | null
           status: string
+          tab_id: string | null
           total: number
           venue_id: string
         }
@@ -503,6 +504,7 @@ export type Database = {
           partial_notes?: Json
           payment_method?: string | null
           status?: string
+          tab_id?: string | null
           total?: number
           venue_id?: string
         }
@@ -520,6 +522,7 @@ export type Database = {
           partial_notes?: Json
           payment_method?: string | null
           status?: string
+          tab_id?: string | null
           total?: number
           venue_id?: string
         }
@@ -529,6 +532,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "venue_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_tab_id_fkey"
+            columns: ["tab_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tabs"
             referencedColumns: ["id"]
           },
           {
@@ -571,6 +581,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "restaurant_tablets_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_tabs: {
+        Row: {
+          closed_at: string | null
+          cover_price: number
+          covers: number
+          id: string
+          label: string
+          opened_at: string
+          payment_method: string | null
+          total: number | null
+          venue_id: string
+          waiter: string
+        }
+        Insert: {
+          closed_at?: string | null
+          cover_price?: number
+          covers?: number
+          id?: string
+          label: string
+          opened_at?: string
+          payment_method?: string | null
+          total?: number | null
+          venue_id: string
+          waiter?: string
+        }
+        Update: {
+          closed_at?: string | null
+          cover_price?: number
+          covers?: number
+          id?: string
+          label?: string
+          opened_at?: string
+          payment_method?: string | null
+          total?: number | null
+          venue_id?: string
+          waiter?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tabs_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
