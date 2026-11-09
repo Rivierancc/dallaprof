@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { createVenue, getLicense, listVenues, masterLogin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
+import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { PLANS } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
 import { Button } from "@/components/ui/button";
@@ -92,6 +92,7 @@ function Venues() {
             {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
             <Button size="sm" className="ml-auto" onClick={() => setOpen(v.id)}>Licenza e dati</Button>
           </div>
+          <PinReset venueId={v.id} />
         </div>); })}
     </div>}
   </main></div>;
@@ -218,4 +219,23 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
       <Button variant="secondary" onClick={changePw}>Cambia password</Button>
     </section>
   </main></div>;
+}
+
+function PinReset({ venueId }: { venueId: string }) {
+  const reset = useServerFn(resetVenuePin);
+  const [pin, setPin] = useState(""); const [show, setShow] = useState(false);
+  const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
+  return <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+    <span className="text-lg">PIN del personale:</span>
+    <input aria-label="Nuovo PIN del personale" type={show ? "text" : "password"} inputMode="numeric" maxLength={12} placeholder="Nuovo PIN"
+      value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, "")); setMsg(""); }} className={`${input} w-40`} />
+    <button type="button" aria-label="Mostra o nascondi PIN" onClick={() => setShow(!show)} className="text-2xl">👁️</button>
+    <Button size="sm" disabled={busy || pin.length < 4} onClick={async () => {
+      setBusy(true); setMsg("");
+      try { await reset({ data: { venueId, pin } }); setPin(""); setMsg("✅ PIN reimpostato"); }
+      catch (e) { setMsg(`⚠️ ${e instanceof Error ? e.message : "Errore"}`); }
+      finally { setBusy(false); }
+    }}>Reimposta PIN</Button>
+    {msg && <span className="text-lg">{msg}</span>}
+  </div>;
 }
