@@ -1,6 +1,6 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
-import { cleanDemo, cleanPublicLicense, PLANS } from "@/lib/license";
+import { cleanDemo, cleanMode, cleanPublicLicense, PLANS } from "@/lib/license";
 import { slugFromPath, validSlug } from "@/lib/venue";
 
 type Flags = { secure?: boolean; partitioned?: boolean };
