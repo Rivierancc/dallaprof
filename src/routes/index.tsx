@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
 import { basePrice, canAddExtra, groupsValid, isCombo, menuName, suggestPrice } from "@/lib/options"
+import { LoyaltyDialog, loyaltyCopy, type Member } from "@/components/loyalty-kiosk"
+import { getLoyalty, linkOrderCustomer } from "@/lib/loyalty.functions"
+import { discountFor } from "@/lib/loyalty"
 import { copy, translatedFor, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -80,14 +83,42 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const suggestions = products.filter((p) => p.suggest.on && !cart.some((i) => i.productId === p.id))
   const openCart = () => { if (!suggestSeen && suggestions.length) { setSuggestSeen(true); setShowSuggest(true) } else setShowCart(true) }
   const [showSuggest, setShowSuggest] = useState(false)
+  // Cliente registrato: riconosciuto solo in questo locale; sconto più alto tra fedeltà, benvenuto e compleanno.
+  const { data: loyalty } = useQuery({ queryKey: ["loyalty"], queryFn: () => getLoyalty(), staleTime: 30_000 })
+  const [member, setMember] = useState<NonNullable<Member> | null>(null)
+  const [askMember, setAskMember] = useState(false)
+  useEffect(() => { if (!dineOption) setMember(null) }, [dineOption])
+  const lt = loyaltyCopy(language)
+  const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0 }
+  const toPay = Math.round((total - disc.amount) * 100) / 100
+  const favs = member ? member.favourites.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p) : []
+  const addFav = (p: Product) => {
+    if (p.choice_groups.length || p.extras.length || p.ingredients.length || isCombo(p)) { setActiveCat(p.category_id); setCustom(p); setShowCart(false) }
+    else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1 }])
+  }
+  const memberBar = loyalty?.on ? (member ? (
+    <div className="mb-6 rounded-3xl border-4 border-success bg-card p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-display text-4xl text-success">{member.firstOrder ? lt.welcome : lt.hi} {member.firstName}! {member.birthday && loyalty.birthday_pct > 0 ? "🎂" : "🎉"}</p>
+        <Button variant="ghost" onClick={() => setMember(null)} className="tap rounded-full bg-secondary px-5 py-2 text-xl">✕ {lt.out}</Button>
+      </div>
+      {disc.pct > 0 && <p className="mt-2 text-2xl text-accent">{disc.reason === "birthday" ? lt.birthday : `${lt.discount} ${disc.reason === "welcome" ? lt.welcomeD : lt.member}`} -{disc.pct}%</p>}
+      {favs.length > 0 && <div className="mt-4"><p className="font-display text-3xl">{lt.favs}</p>
+        <div className="mt-2 flex flex-wrap gap-3">{favs.map((p) => <Button key={p.id} variant="ghost" onClick={() => addFav(p)} className="tap h-auto rounded-full bg-accent px-6 py-3 font-display text-3xl text-accent-foreground">+ {p.name} · {euro(p.price)}</Button>)}</div></div>}
+    </div>
+  ) : (
+    <Button variant="ghost" onClick={() => setAskMember(true)} className="tap mb-6 h-auto w-full whitespace-normal rounded-3xl border-4 border-dashed border-accent bg-card py-5 font-display text-4xl text-accent">{lt.ask}</Button>
+  )) : null
+  const memberDialog = askMember ? <LoyaltyDialog language={language} onClose={() => setAskMember(false)} onMember={(m) => { setMember(m); setAskMember(false) }} /> : null
 
   const createOrder = useMutation({
     mutationFn: async (method: PaymentMethod) => {
       setOrderError("")
-      const payload = orderPayload(dineOption, priced, method)
+      const payload = { ...orderPayload(dineOption, priced, method), total: toPay, discount: disc.amount }
       if (simulate) return null
       const { data: order, error } = await supabase.from("orders").insert({ ...payload, venue_id: await browserVenueId() }).select("id, order_number").single()
       if (error) throw error
+      if (member) await linkOrderCustomer({ data: { orderId: order.id, customerId: member.id } }).catch(() => undefined)
       return order
     },
     onSuccess: (order) => {
@@ -96,6 +127,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       try { localStorage.setItem("last_order_id", order.id) } catch { /* Navigation also carries the order ID. */ }
       setCart([])
       setSuggestSeen(false)
+      setMember(null)
       void navigate({ to: "/ordine-confermato/$id", params: { id: order.id } })
     },
     onError: () => setOrderError(t.error),
@@ -200,7 +232,9 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</span>
         <Button variant="ghost" onClick={() => setShowCart(false)} className="whitespace-normal tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ {t.close}</Button>
       </header>
+      {memberDialog}
       <h1 className="mb-8 font-display text-8xl">{t.yourOrder}</h1>
+      {memberBar}
       <div className="grid gap-4">
         {priced.map((i) => (
           <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
@@ -216,9 +250,13 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         ))}
       </div>
       <div className="mt-10 border-t-4 border-border pt-8">
+        {disc.amount > 0 && <div className="mb-4 flex items-baseline justify-between text-success">
+          <p className="font-display text-4xl">🎁 {lt.discount} -{disc.pct}%</p>
+          <p className="font-display text-5xl">-{euro(disc.amount)}</p>
+        </div>}
         <div className="flex items-baseline justify-between">
           <p className="font-display text-6xl text-muted-foreground">{t.total}</p>
-          <p className="font-display text-9xl text-accent">{euro(total)}</p>
+          <p className="font-display text-9xl text-accent">{euro(toPay)}</p>
         </div>
         {orderError && <p role="alert" className="mt-4 text-2xl text-destructive">{orderError}</p>}
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -242,6 +280,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <span />
         <Button variant="ghost" onClick={() => setDineOption(null)} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
       </header>
+      {memberDialog}
+      {activeCat === null && memberBar}
 
       {activeCat === null? (
         <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
