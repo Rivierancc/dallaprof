@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validPhone as vp10 } from "@/lib/loyalty";
 import { it as it10, expect as ex10 } from "vitest";
-it10("cellulare: servono almeno 10 cifre", () => { ex10(vp10("333176086")).toBe(false); ex10(vp10("3331760866")).toBe(true); });
+it10("cellulare: valgono anche i numeri da 9 cifre", () => { ex10(vp10("33317608")).toBe(false); ex10(vp10("333176086")).toBe(true); ex10(vp10("3331760866")).toBe(true); });
 import { birthdayNear, cleanLoyalty, discountFor, favourites, normalizePhone, validBirthday } from "@/lib/loyalty";
 
 const rules = cleanLoyalty({ on: true, pct: 5, welcome_pct: 10, birthday_pct: 20, birthday_days: 0 });
