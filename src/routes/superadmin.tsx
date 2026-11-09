@@ -91,7 +91,7 @@ function Venues() {
             <span className={`rounded-full px-3 py-1 text-sm font-bold text-black ${color}`}>{label}</span>
             <span className="font-display text-3xl">{v.name}</span>
             <span className="text-muted-foreground">/{v.slug}</span>
-            <span className="ml-auto text-muted-foreground">{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
+            <span className="ml-auto text-muted-foreground"><span className={v.plan === "perpetua" ? "rounded bg-blue-600 px-2 text-white" : ""}>{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}</span>{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
@@ -176,7 +176,13 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
             {Object.entries(PLANS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></label>
         <label className="flex flex-col gap-1 text-lg">Data di scadenza
-          <input type="date" value={d.expires_at ?? ""} onChange={(e) => set("expires_at", e.target.value || null)} className={input} /></label>
+          <input type="date" disabled={d.plan === "perpetua"} value={d.expires_at ?? ""} onChange={(e) => set("expires_at", e.target.value || null)} className={`${input} disabled:opacity-50`} /></label>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button type="button" onClick={() => { const t = new Date(); t.setFullYear(t.getFullYear() + 1); set("plan", "annuale"); set("expires_at", t.toISOString().slice(0, 10)); }}
+          className={`rounded-xl px-5 py-3 text-lg font-bold ${d.plan === "annuale" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}>📅 Annuale (scade tra 1 anno)</button>
+        <button type="button" onClick={() => { set("plan", "perpetua"); set("expires_at", null); set("status", "active"); }}
+          className={`rounded-xl px-5 py-3 text-lg font-bold ${d.plan === "perpetua" ? "bg-blue-600 text-white ring-4 ring-blue-300" : "bg-secondary text-secondary-foreground"}`}>♾️ Perpetua (nessuna scadenza)</button>
       </div>
       <p className="text-muted-foreground">Superata la data di scadenza il locale passa automaticamente a «Scaduto».</p>
     </section>
