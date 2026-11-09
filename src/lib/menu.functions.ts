@@ -32,7 +32,7 @@ const publishable = async () => {
         return fetch(input, { ...init, headers: h });
       },
     },
-  });
+  }), await currentVenueId());
 };
 
 const sign = async (paths: string[]) => {
@@ -136,7 +136,7 @@ const cleanExtras = (v: unknown): MenuExtra[] =>
 export type MenuData = { categories: MenuCategory[]; products: MenuProduct[]; ingredients: MenuIngredient[]; offersTitle: string; offersTitleTr: Translations };
 
 export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promise<MenuData> => {
-  const db = publishable();
+  const db = (await publishable());
   const [c, p, g, b] = await Promise.all([
     db.from("menu_categories")
       .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, custom_title_de, custom_title_ar, name_tr, strip")
@@ -151,7 +151,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .order("kind", { ascending: true })
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
-    db.from("kiosk_banner").select("offers_title, offers_title_tr").eq("id", 1).maybeSingle(),
+    db.from("kiosk_banner").select("offers_title, offers_title_tr").maybeSingle(),
   ]);
   if (g.error) throw new Error(g.error.message);
   if (c.error) throw new Error(c.error.message);
@@ -294,7 +294,7 @@ export const setOffersTitle = createServerFn({ method: "POST" })
   .inputValidator((d: { title: string; tr?: unknown }) => ({ title: String(d.title ?? "").trim().slice(0, 40), tr: cleanTranslations(d.tr) }))
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").update({ offers_title: data.title || "Menu in offerta", offers_title_tr: data.tr as never }).eq("id", 1);
+    const { error } = await (await admin()).from("kiosk_banner").update({ offers_title: data.title || "Menu in offerta", offers_title_tr: data.tr as never });
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -547,7 +547,7 @@ export const setTranslation = createServerFn({ method: "POST" })
   });
 
 export const getLanguages = createServerFn({ method: "GET" }).handler(async () => {
-  const { data } = await publishable().from("kiosk_banner").select("languages").eq("id", 1).maybeSingle();
+  const { data } = await (await publishable()).from("kiosk_banner").select("languages").maybeSingle();
   return cleanLanguages(data?.languages);
 });
 
@@ -555,7 +555,7 @@ export const saveLanguages = createServerFn({ method: "POST" })
   .inputValidator((d: { languages: unknown }) => ({ languages: cleanLanguages(d?.languages) }))
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").update({ languages: data.languages as never }).eq("id", 1);
+    const { error } = await (await admin()).from("kiosk_banner").update({ languages: data.languages as never });
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -566,7 +566,7 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
     return { id: d.id };
   })
   .handler(async ({ data }) => {
-    const { data: order, error } = await publishable().from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
+    const { data: order, error } = await (await publishable()).from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     return order;
   });
@@ -666,7 +666,7 @@ const hex = (v: unknown, d: string) => (/^#[0-9a-fA-F]{6}$/.test(String(v ?? "")
 const md = (v: unknown) => (/^\d\d-\d\d$/.test(String(v ?? "")) ? String(v) : "");
 
 export const getThemes = createServerFn({ method: "GET" }).handler(async (): Promise<KioskTheme[]> => {
-  const { data, error } = await publishable().from("kiosk_themes").select("*").order("position").order("created_at");
+  const { data, error } = await (await publishable()).from("kiosk_themes").select("*").order("position").order("created_at");
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({
     id: r.id, name: r.name,
@@ -720,7 +720,7 @@ export const deleteTheme = createServerFn({ method: "POST" })
   });
 
 export const getCompany = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await publishable().from("kiosk_banner").select("company_description, company_logo_path, company_style").eq("id", 1).maybeSingle();
+  const { data, error } = await (await publishable()).from("kiosk_banner").select("company_description, company_logo_path, company_style").maybeSingle();
   if (error) throw new Error(error.message);
   const path = data?.company_logo_path ?? "";
   const urls = await sign([path]);
@@ -735,7 +735,7 @@ export const saveCompany = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, company_description: data.description, company_logo_path: data.logoPath, company_style: data.style });
+    const { error } = await (await admin()).from("kiosk_banner").upsert({ company_description: data.description, company_logo_path: data.logoPath, company_style: data.style });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -758,7 +758,7 @@ export const uploadCompanyLogo = createServerFn({ method: "POST" })
   });
 
 export const getBanner = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | number | boolean>> => {
-  const { data, error } = await publishable().from("kiosk_banner").select("settings").eq("id", 1).maybeSingle();
+  const { data, error } = await (await publishable()).from("kiosk_banner").select("settings").maybeSingle();
   if (error) throw new Error(error.message);
   return (data?.settings ?? {}) as Record<string, string | number | boolean>;
 });
@@ -770,14 +770,14 @@ export const saveBanner = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").upsert({ id: 1, settings: data.settings as never, updated_at: new Date().toISOString() });
+    const { error } = await (await admin()).from("kiosk_banner").upsert({ settings: data.settings as never, updated_at: new Date().toISOString() });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 // Linea di separazione tra i piatti in Gestione menu: lettura libera, scrittura solo personale.
 export const getDivider = createServerFn({ method: "GET" }).handler(async (): Promise<Record<string, string | boolean>> => {
-  const { data, error } = await publishable().from("kiosk_banner").select("divider").eq("id", 1).maybeSingle();
+  const { data, error } = await (await publishable()).from("kiosk_banner").select("divider").maybeSingle();
   if (error) throw new Error(error.message);
   return (data?.divider ?? {}) as Record<string, string | boolean>;
 });
@@ -792,13 +792,13 @@ export const saveDivider = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").update({ divider: data as never }).eq("id", 1);
+    const { error } = await (await admin()).from("kiosk_banner").update({ divider: data as never });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const getNewsSettings = createServerFn({ method: "GET" }).handler(async (): Promise<NewsSettings> => {
-  const { data } = await publishable().from("kiosk_banner").select("news").eq("id", 1).maybeSingle();
+  const { data } = await (await publishable()).from("kiosk_banner").select("news").maybeSingle();
   return cleanNews(data?.news);
 });
 
@@ -806,7 +806,7 @@ export const saveNewsSettings = createServerFn({ method: "POST" })
   .inputValidator((d: NewsSettings) => cleanNews(d))
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").update({ news: data as never }).eq("id", 1);
+    const { error } = await (await admin()).from("kiosk_banner").update({ news: data as never });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -823,7 +823,7 @@ async function feedTitles(url: string): Promise<string[]> {
 
 /** Titoli delle fonti scelte, alternati tra loro, per la striscia che scorre. */
 export const getNews = createServerFn({ method: "GET" }).handler(async (): Promise<{ source: string; title: string }[]> => {
-  const { data } = await publishable().from("kiosk_banner").select("news").eq("id", 1).maybeSingle();
+  const { data } = await (await publishable()).from("kiosk_banner").select("news").maybeSingle();
   const settings = cleanNews(data?.news);
   if (!settings.on) return [];
   const lists = await Promise.all(settings.sources.map(async (s) => (await feedTitles(NEWS_SOURCES[s].url)).map((title) => ({ source: NEWS_SOURCES[s].name, title }))));
@@ -836,7 +836,7 @@ export const getNews = createServerFn({ method: "GET" }).handler(async (): Promi
 export type { KitchenFeatures } from "@/lib/kitchen";
 
 export const getKitchenFeatures = createServerFn({ method: "GET" }).handler(async (): Promise<KitchenFeatures> => {
-  const { data, error } = await publishable().from("kiosk_banner").select("kitchen").eq("id", 1).maybeSingle();
+  const { data, error } = await (await publishable()).from("kiosk_banner").select("kitchen").maybeSingle();
   if (error) throw new Error(error.message);
   return cleanKitchenFeatures(data?.kitchen as Partial<KitchenFeatures> | null);
 });
@@ -845,7 +845,7 @@ export const saveKitchenFeatures = createServerFn({ method: "POST" })
   .inputValidator((d: KitchenFeatures) => cleanKitchenFeatures({ partial: !!d.partial, history: !!d.history, checklist: !!d.checklist, delivery: !!d.delivery, displayTill: d.displayTill, displayKitchen: d.displayKitchen, readySound: d.readySound, partialSound: d.partialSound }))
   .handler(async ({ data }) => {
     await staffOnly();
-    const { error } = await (await admin()).from("kiosk_banner").update({ kitchen: data as never }).eq("id", 1);
+    const { error } = await (await admin()).from("kiosk_banner").update({ kitchen: data as never });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
