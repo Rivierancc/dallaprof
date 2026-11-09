@@ -28,7 +28,7 @@ export const descriptionFor = (product: { description: string; description_en?: 
 export type Translations = Partial<Record<Exclude<Language, "IT">, string>>;
 export const cleanTranslations = (v: unknown): Translations => {
   const out: Translations = {};
-  if (v && typeof v === "object") for (const c of OPTIONAL_LANGUAGES) { const t = (v as Record<string, unknown>)[c]; if (typeof t === "string" && t.trim()) out[c] = t.trim().slice(0, 60); }
+  if (v && typeof v === "object") for (const c of OPTIONAL_LANGUAGES) { const t = (v as Record<string, unknown>)[c]; if (typeof t === "string" && t.trim()) out[c as keyof Translations] = t.trim().slice(0, 60); }
   return out;
 };
 /** Testo nella lingua del cliente; se manca la traduzione resta l'italiano. */
