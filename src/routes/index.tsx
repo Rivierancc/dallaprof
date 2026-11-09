@@ -462,7 +462,7 @@ function KioskButton() {
   if (fullscreen) return null
   // Accanto al logo, fuori dal flusso: il logo resta centrato. Su schermi stretti va sotto il logo.
   return <div className="mb-4 flex flex-col items-center gap-2 md:absolute md:right-0 md:top-0 md:mb-0 md:items-end">
-    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap h-auto whitespace-normal">⛶ Attiva modalità chiosco</Button>
+    <Button variant="secondary" onClick={() => void enterKiosk()} className="tap h-auto whitespace-normal md:max-w-[10rem]">⛶ Attiva modalità chiosco</Button>
     {kioskError && <span role="alert" className="text-destructive">{kioskError}</span>}
   </div>
 }
