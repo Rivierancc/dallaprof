@@ -70,6 +70,7 @@ export type Category = {
   custom_title_es: string;
   custom_title_de: string;
   custom_title_ar: string;
+  name_tr: import("@/lib/customer").Translations;
   strip: number;
 };
 
