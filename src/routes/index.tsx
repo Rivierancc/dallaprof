@@ -1,4 +1,5 @@
 import { ThemeGreeting } from "@/components/theme-layer"
+import { browserVenueId } from "@/lib/venue-client"
 import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner } from "@/components/display-banner"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -85,7 +86,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       setOrderError("")
       const payload = orderPayload(dineOption, priced, method)
       if (simulate) return null
-      const { data: order, error } = await supabase.from("orders").insert(payload).select("id, order_number").single()
+      const { data: order, error } = await supabase.from("orders").insert({ ...payload, venue_id: await browserVenueId() }).select("id, order_number").single()
       if (error) throw error
       return order
     },
