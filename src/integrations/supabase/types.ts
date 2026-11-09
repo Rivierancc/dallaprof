@@ -570,6 +570,7 @@ export type Database = {
         Row: {
           birth_day: number | null
           birth_month: number | null
+          birthday_gift: Json | null
           consent_at: string
           created_at: string
           id: string
@@ -580,6 +581,7 @@ export type Database = {
         Insert: {
           birth_day?: number | null
           birth_month?: number | null
+          birthday_gift?: Json | null
           consent_at?: string
           created_at?: string
           id?: string
@@ -590,6 +592,7 @@ export type Database = {
         Update: {
           birth_day?: number | null
           birth_month?: number | null
+          birthday_gift?: Json | null
           consent_at?: string
           created_at?: string
           id?: string

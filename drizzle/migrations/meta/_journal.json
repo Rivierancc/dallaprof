@@ -239,6 +239,13 @@
       "when": 1794246162344,
       "tag": "0033_multi_venue",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794262273046,
+      "tag": "0034_birthday_gift",
+      "breakpoints": true
     }
   ]
 }

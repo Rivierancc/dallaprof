@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { deleteCustomer, getLoyalty, listCustomers, saveLoyalty, type CustomerRow } from "@/lib/loyalty.functions";
+import { deleteCustomer, getLoyalty, listCustomers, saveLoyalty, setBirthdayGift, type CustomerRow } from "@/lib/loyalty.functions";
 import { birthdayNear, type Loyalty } from "@/lib/loyalty";
-import { euro } from "@/lib/menu";
+import { euro, menuQueryOptions } from "@/lib/menu";
 
 const MONTHS = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
 const bday = (c: CustomerRow) => (c.birth_day && c.birth_month ? `${c.birth_day} ${MONTHS[c.birth_month - 1]}` : "—");
@@ -22,6 +22,36 @@ function Pct({ label, value, onChange }: { label: string; value: number; onChang
     <span className="flex items-center gap-2"><input type="number" min={0} max={50} value={value} onChange={(e) => onChange(Number(e.target.value))} className="h-12 w-24 rounded-xl bg-background px-3 text-2xl" />%</span></label>;
 }
 
+/** Regalo di compleanno: in cima i piatti che il cliente ordina di solito, poi tutto il menu; sceglie il ristoratore. */
+function GiftPicker({ c, onDone }: { c: CustomerRow; onDone: () => void }) {
+  const qc = useQueryClient();
+  const { data: menu } = useQuery(menuQueryOptions);
+  const thisYear = new Date().getFullYear();
+  const [ids, setIds] = useState<string[]>(c.gift && c.gift.year === thisYear ? c.gift.ids : []);
+  const [q, setQ] = useState("");
+  const [msg, setMsg] = useState("");
+  const products = menu?.products ?? [];
+  const usual = c.top.map((t) => products.find((p) => p.name === t.name)).filter((p): p is (typeof products)[number] => !!p);
+  const others = products.filter((p) => !usual.includes(p) && (!q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase())));
+  const toggle = (id: string) => { setMsg(""); setIds((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id])); };
+  const chip = (p: (typeof products)[number]) => <Button key={p.id} variant={ids.includes(p.id) ? "default" : "secondary"} aria-pressed={ids.includes(p.id)} onClick={() => toggle(p.id)}>{ids.includes(p.id) ? "✓ " : ""}{p.name}</Button>;
+  const save = async () => {
+    setMsg("Salvo…");
+    try { await setBirthdayGift({ data: { id: c.id, ids } }); await qc.invalidateQueries({ queryKey: ["customers"] }); setMsg("Salvato ✓"); onDone(); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore"); }
+  };
+  return <div className="mt-3 space-y-3 rounded-2xl border border-border p-4 text-lg">
+    <p className="text-xl font-bold">🎁 Regalo per il compleanno {thisYear}</p>
+    {!c.birth_day && <p className="text-destructive">Questo cliente non ha messo la data di nascita: il regalo non comparirà.</p>}
+    <p className="text-muted-foreground">Al totem, nei giorni del compleanno, i prodotti scelti finiscono gratis nel carrello (una sola volta).</p>
+    {usual.length > 0 && <div><p className="font-bold">⭐ Di solito prende</p><div className="mt-2 flex flex-wrap gap-2">{usual.map(chip)}</div></div>}
+    <div><p className="font-bold">Tutto il menu</p>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca un prodotto" className="mt-2 h-12 w-full rounded-xl bg-background px-3 text-xl" />
+      <div className="mt-2 flex max-h-72 flex-wrap gap-2 overflow-auto">{others.map(chip)}</div></div>
+    <div className="flex items-center gap-3"><Button onClick={save}>Salva regalo{ids.length ? ` (${ids.length})` : " (nessuno)"}</Button><span className="text-muted-foreground">{msg}</span></div>
+  </div>;
+}
+
 /** Admin → Clienti: regole sconto, anagrafica del solo locale, storico, compleanni ed esportazione. */
 export function LoyaltySettings() {
   const qc = useQueryClient();
@@ -32,6 +62,7 @@ export function LoyaltySettings() {
   const [search, setSearch] = useState("");
   const [onlyBday, setOnlyBday] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [giftFor, setGiftFor] = useState<string | null>(null);
   useEffect(() => { if (!draft && data) setDraft(data); }, [data, draft]);
   if (!draft) return <p className="text-xl text-muted-foreground">Caricamento…</p>;
   const set = (p: Partial<Loyalty>) => { setMsg(""); setDraft({ ...draft, ...p }); };
@@ -77,10 +108,12 @@ export function LoyaltySettings() {
             <span className="text-2xl font-bold">{c.name}</span><span>📱 {c.phone}</span><span>🎂 {bday(c)}</span>
             <span>{c.orders} ordini · {euro(c.spent)}</span><span className="text-muted-foreground">iscritto il {day(c.created_at)}</span>
             <span className="ml-auto flex gap-2">
+              <Button variant={c.gift && c.gift.year === new Date().getFullYear() && c.gift.ids.length ? "default" : "secondary"} onClick={() => setGiftFor(giftFor === c.id ? null : c.id)}>🎁 Regalo{c.gift && c.gift.year === new Date().getFullYear() ? (c.gift.used ? " (consegnato)" : ` (${c.gift.ids.length})`) : ""}</Button>
               <Button variant="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>📜 Storico</Button>
               <Button variant="destructive" aria-label={`Cancella ${c.name}`} onClick={() => void remove(c)}>🗑️</Button>
             </span>
           </div>
+          {giftFor === c.id && <GiftPicker c={c} onDone={() => undefined} />}
           {open === c.id && <div className="mt-3 space-y-2 text-lg">
             {c.top.length > 0 && <p><b>Preferiti:</b> {c.top.map((t) => `${t.name} ×${t.qty}`).join(" · ")}</p>}
             {c.history.length ? c.history.map((h, i) => <p key={i} className="text-muted-foreground">{new Date(h.at).toLocaleString("it-IT")} · {euro(h.total)} — {h.items.map((x) => `${x.qty}× ${x.name}`).join(", ")}</p>) : <p className="text-muted-foreground">Nessun ordine pagato.</p>}
