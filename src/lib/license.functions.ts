@@ -72,13 +72,13 @@ export const getLicense = createServerFn({ method: "GET" }).handler(async (): Pr
   await requireMaster();
   const { data, error } = await (await admin()).from("license").select("*").eq("id", 1).single();
   if (error) throw new Error(error.message);
-  const out = Object.fromEntries(FIELDS.map((f) => [f, String(data[f] ?? "")])) as LicenseRow;
+  const out = Object.fromEntries(FIELDS.map((f) => [f, String(data[f] ?? "")])) as unknown as LicenseRow;
   return { ...out, status: data.status, plan: data.plan, expires_at: data.expires_at, demo: cleanDemo(data.demo) };
 });
 
 export const saveLicense = createServerFn({ method: "POST" })
   .inputValidator((d: LicenseRow) => {
-    const row = Object.fromEntries(FIELDS.map((f) => [f, String(d[f] ?? "").trim().slice(0, f === "notes" ? 4000 : 200)])) as LicenseRow;
+    const row = Object.fromEntries(FIELDS.map((f) => [f, String(d[f] ?? "").trim().slice(0, f === "notes" ? 4000 : 200)])) as unknown as LicenseRow;
     if (!row.business_name) throw new Error("Il nome del locale è obbligatorio");
     if (!/^\S+@\S+\.\S+$/.test(row.owner_email)) throw new Error("Email del titolare non valida");
     const status = ["active", "demo", "expired"].includes(d.status) ? d.status : "demo";

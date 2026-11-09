@@ -6,7 +6,7 @@ export type PublicLicense = { state: LicenseState; plan: string; expires_at: str
 export const PLANS = { prova: "Prova", mensile: "Mensile", stagionale: "Stagionale", annuale: "Annuale" } as const;
 
 export function cleanDemo(raw: unknown): DemoRules {
-  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const r = (raw && typeof raw === "object" ? raw : {}) as any;
   const n = Math.trunc(Number(r.max_products));
   return {
     max_products: Number.isFinite(n) && n >= 0 ? Math.min(n, 999) : 6,
@@ -16,7 +16,7 @@ export function cleanDemo(raw: unknown): DemoRules {
 }
 
 export function cleanPublicLicense(raw: unknown): PublicLicense {
-  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const r = (raw && typeof raw === "object" ? raw : {}) as any;
   const state: LicenseState = r.state === "demo" || r.state === "expired" ? r.state : "active";
   return { state, plan: String(r.plan ?? ""), expires_at: r.expires_at ? String(r.expires_at) : null, demo: cleanDemo(r.demo), business_name: String(r.business_name ?? "") };
 }
