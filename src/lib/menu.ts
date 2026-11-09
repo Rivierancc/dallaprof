@@ -12,6 +12,7 @@ export type CartItem = {
   qty: number;
   extras?: string[];
   removed?: string[];
+  gift?: boolean; // regalo di compleanno scelto dal ristoratore: prezzo 0
   offer?: boolean; // prodotto suggerito: prezzo ricalcolato in base alla spesa
 };
 

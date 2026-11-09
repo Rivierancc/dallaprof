@@ -96,20 +96,26 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     if (p.choice_groups.length || p.extras.length || p.ingredients.length || isCombo(p)) { setActiveCat(p.category_id); setCustom(p); setShowCart(false) }
     else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1 }])
   }
+  // Regali di compleanno: aggiunti gratis al carrello, il nome per la cucina resta in italiano.
+  const addGifts = (m: NonNullable<Member>) => {
+    const gifts = m.gifts.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p)
+    if (gifts.length) setCart((c) => [...c.filter((i) => !i.gift), ...gifts.map((p) => ({ id: crypto.randomUUID(), productId: p.id, name: `🎁 OMAGGIO ${p.name}`, price: 0, qty: 1, gift: true }))])
+  }
   const memberBar = loyalty?.on ? (member ? (
     <div className="mb-6 rounded-3xl border-4 border-success bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-display text-4xl text-success">{member.firstOrder ? lt.welcome : lt.hi} {member.firstName}! {member.birthday && loyalty.birthday_pct > 0 ? "🎂" : "🎉"}</p>
-        <Button variant="ghost" onClick={() => setMember(null)} className="tap rounded-full bg-secondary px-5 py-2 text-xl">✕ {lt.out}</Button>
+        <Button variant="ghost" onClick={() => { setMember(null); setCart((c) => c.filter((i) => !i.gift)) }} className="tap rounded-full bg-secondary px-5 py-2 text-xl">✕ {lt.out}</Button>
       </div>
       {disc.pct > 0 && <p className="mt-2 text-2xl text-accent">{disc.reason === "birthday" ? lt.birthday : `${lt.discount} ${disc.reason === "welcome" ? lt.welcomeD : lt.member}`} -{disc.pct}%</p>}
+      {member.gifts.length > 0 && <p className="mt-2 text-2xl text-accent">{lt.gift}: {member.gifts.map((id) => products.find((p) => p.id === id)?.name).filter(Boolean).join(", ")}</p>}
       {favs.length > 0 && <div className="mt-4"><p className="font-display text-3xl">{lt.favs}</p>
         <div className="mt-2 flex flex-wrap gap-3">{favs.map((p) => <Button key={p.id} variant="ghost" onClick={() => addFav(p)} className="tap h-auto rounded-full bg-accent px-6 py-3 font-display text-3xl text-accent-foreground">+ {p.name} · {euro(p.price)}</Button>)}</div></div>}
     </div>
   ) : (
     <Button variant="ghost" onClick={() => setAskMember(true)} className="tap mb-6 h-auto w-full whitespace-normal rounded-3xl border-4 border-dashed border-accent bg-card py-5 font-display text-4xl text-accent">{lt.ask}</Button>
   )) : null
-  const memberDialog = askMember ? <LoyaltyDialog language={language} onClose={() => setAskMember(false)} onMember={(m) => { setMember(m); setAskMember(false) }} /> : null
+  const memberDialog = askMember ? <LoyaltyDialog language={language} onClose={() => setAskMember(false)} onMember={(m) => { setMember(m); setAskMember(false); addGifts(m) }} /> : null
 
   const createOrder = useMutation({
     mutationFn: async (method: PaymentMethod) => {
