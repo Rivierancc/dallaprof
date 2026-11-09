@@ -37,3 +37,4 @@
 - Staff text zoom is `--text-scale` multiplied into the root font-size clamp (styles.css), per device; why: wrapper zoom skips dropdowns.
 - Staff page controls sit in one top row as identical compact chips built from StaffChip/StaffCrossLink (src/components/staff-nav.tsx); body-page action buttons may stay large for touch; why: staff asked for uniform small buttons and a single command row.
 - Update src/lib/manual.ts (+MANUAL_UPDATED) on every user-visible change; why: /manuale must stay current.
+- Licensing lives in the single-row `license` table (service-role only) managed from the master-password /superadmin page; customers read only the `license_state()` RPC, and the orders insert policy calls `license_allows_orders()`; why: the restaurateur's Admin must never be able to change or bypass their own licence.
