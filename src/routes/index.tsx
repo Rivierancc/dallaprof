@@ -71,6 +71,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [showCart, setShowCart] = useState(false)
   const [compose, setCompose] = useState<Category | null>(null)
   const lib = data?.ingredients ?? []
+  const { reset: resetCustomer } = useCustomer()
+  const idle = Number(useBanner().idle ?? 60)
 
   const products = useMemo(() => {
     const all = data?.products ?? []
@@ -99,6 +101,18 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [member, setMember] = useState<NonNullable<Member> | null>(null)
   const [askMember, setAskMember] = useState(false)
   useEffect(() => { if (!dineOption) setMember(null) }, [dineOption])
+  // Inattività: dopo il tempo scelto in Admin il totem torna alla schermata iniziale.
+  const busy = !!dineOption || cart.length > 0 || !!custom || activeCat !== null
+  useEffect(() => {
+    if (!busy || !idle || idle <= 0) return
+    let timer = setTimeout(go, idle * 1000)
+    function go() { setCart([]); setCustom(null); setActiveCat(null); setShowCart(false); setShowSuggest(false); setSuggestSeen(false); setMember(null); setAskMember(false); setCompose(null); resetCustomer(); window.scrollTo({ top: 0 }) }
+    const bump = () => { clearTimeout(timer); timer = setTimeout(go, idle * 1000) }
+    const evs = ["pointerdown", "keydown", "scroll", "touchstart"] as const
+    evs.forEach((e) => window.addEventListener(e, bump, { passive: true, capture: true }))
+    return () => { clearTimeout(timer); evs.forEach((e) => window.removeEventListener(e, bump, { capture: true })) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busy, idle])
   const lt = loyaltyCopy(language)
   const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0 }
   const toPay = Math.round((total - disc.amount) * 100) / 100

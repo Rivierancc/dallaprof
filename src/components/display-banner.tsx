@@ -8,6 +8,8 @@ export type Banner = {
   on: boolean; text: string; bold: boolean; italic: boolean; underline: boolean;
   size: "s" | "m" | "l"; align: "left" | "center" | "right";
   color: string; bg: string; effect: BannerEffect; speed: number;
+  /** Secondi di inattività prima che il totem torni all'inizio; 0 = mai. */
+  idle?: number;
 };
 const KEY = "display_banner";
 const DEFAULT: Banner = { on: false, text: "Benvenuti!", bold: true, italic: false, underline: false, size: "m", align: "center", color: "#ffd84d", bg: "#b3261e", effect: "none", speed: 2 };
@@ -71,5 +73,25 @@ function BannerEditor({ banner, set, onSave, msg }: { banner: Banner; set: (p: P
       <div className="rounded-lg border border-border"><BannerView banner={{ ...banner, on: true }} /></div>
       <div className="flex items-center gap-4"><Button onClick={onSave}>Salva scritta</Button>{msg && <span role="status" className="text-xl">{msg}</span>}</div>
     </div>
+  </div>;
+}
+
+const IDLE_CHOICES: [number, string][] = [[30, "30 secondi"], [60, "1 minuto"], [90, "90 secondi"], [120, "2 minuti"], [180, "3 minuti"], [0, "Mai"]];
+/** Admin: dopo quanto tempo senza tocchi il totem torna alla schermata iniziale. */
+export function IdleSettings() {
+  const { data: saved } = useQuery(bannerQueryOptions);
+  const qc = useQueryClient();
+  const [msg, setMsg] = useState("");
+  if (!saved) return null;
+  const current = Number(saved["idle"] ?? 60);
+  const pick = async (idle: number) => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, idle } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
+  };
+  return <div className="space-y-4">
+    <p className="text-xl text-muted-foreground">Se nessuno tocca il totem per questo tempo, il carrello si svuota e torna la schermata iniziale per il cliente successivo.</p>
+    <div className="flex flex-wrap gap-2">{IDLE_CHOICES.map(([v, l]) => <Button key={v} variant={current === v ? "default" : "secondary"} onClick={() => void pick(v)}>{l}</Button>)}</div>
+    {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
 }

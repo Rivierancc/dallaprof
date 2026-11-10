@@ -11,7 +11,7 @@ import { Fold } from "@/components/fold";
 import { CategoryOrderPanel } from "@/components/category-order-panel";
 import { ThemesPanel } from "@/components/themes-panel";
 import { CompanySettings } from "@/components/company-identity";
-import { BannerSettings } from "@/components/display-banner";
+import { BannerSettings, IdleSettings } from "@/components/display-banner";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { DividerSettings } from "@/components/menu-divider";
 import { KitchenFeaturesSettings } from "@/components/kitchen-features";
@@ -69,6 +69,7 @@ function Admin() {
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="🍽️ Ristorante: tavoli, coperto e tablet"><RestaurantSettings /></Fold></div>
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="👥 Clienti e fidelizzazione"><LoyaltySettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></div>}
+      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="⏱️ Ritorno all'inizio del totem"><IdleSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></div>}
