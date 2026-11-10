@@ -33,6 +33,8 @@ function pwCheck(pw: string, again: string) {
   return "";
 }
 
+const isExpired = (e: unknown) => e instanceof Error && e.message.startsWith("Accesso scaduto");
+
 function SuperAdmin() {
   const st = Route.useLoaderData();
   return st.unlocked ? <Venues /> : <Login configured={st.configured} />;
@@ -69,7 +71,8 @@ const PAGES: [string, string][] = [["", "Totem"], ["/cucina", "Cucina"], ["/cass
 function Venues() {
   const router = useRouter();
   const list = useServerFn(listVenues); const logout = useServerFn(masterLogout);
-  const { data, refetch } = useQuery({ queryKey: ["venues"], queryFn: () => list() });
+  const { data, refetch, error } = useQuery({ queryKey: ["venues"], queryFn: () => list(), retry: false });
+  if (isExpired(error)) void router.invalidate();
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
@@ -107,6 +110,7 @@ function Venues() {
 }
 
 function NewVenue({ onDone }: { onDone: (id: string) => void }) {
+  const router = useRouter();
   const create = useServerFn(createVenue);
   const [f, setF] = useState({ name: "", slug: "", email: "", pin: "", status: "demo", plan: "prova", expires_at: "" });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
@@ -115,7 +119,7 @@ function NewVenue({ onDone }: { onDone: (id: string) => void }) {
   const submit = async () => {
     setErr(""); setBusy(true);
     try { const r = await create({ data: { ...f, expires_at: f.expires_at || null } }); onDone(r.id); }
-    catch (e) { setErr(e instanceof Error ? e.message : "Errore"); }
+    catch (e) { if (isExpired(e)) { await router.invalidate(); return; } setErr(e instanceof Error ? e.message : "Errore"); }
     finally { setBusy(false); }
   };
   const field = (k: keyof typeof f, label: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => <label className="flex flex-col gap-1 text-lg">{label}
@@ -157,7 +161,7 @@ function LicensePanel({ venueId, onBack }: { venueId: string; onBack: () => void
   const doSave = async () => {
     setMsg("");
     try { await save({ data: { ...d, venueId } }); setMsg("✅ Salvato"); qc.invalidateQueries({ queryKey: ["license"] }); }
-    catch (e) { setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); }
+    catch (e) { if (isExpired(e)) { await router.invalidate(); return; } setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); }
   };
   return <div className="superadmin-page"><main className="mx-auto flex max-w-3xl flex-col gap-8 p-6 pb-24">
     <div className="flex items-center justify-between gap-4">
@@ -259,6 +263,7 @@ function MasterPassword({ onBack }: { onBack: () => void }) {
 }
 
 function PinReset({ venueId }: { venueId: string }) {
+  const router = useRouter();
   const reset = useServerFn(resetVenuePin);
   const [pin, setPin] = useState(""); const [show, setShow] = useState(false);
   const [msg, setMsg] = useState(""); const [busy, setBusy] = useState(false);
@@ -269,7 +274,7 @@ function PinReset({ venueId }: { venueId: string }) {
     <Button size="sm" disabled={busy || pin.length < 4} onClick={async () => {
       setBusy(true); setMsg("");
       try { await reset({ data: { venueId, pin } }); setPin(""); setMsg("✅ PIN reimpostato"); }
-      catch (e) { setMsg(`⚠️ ${e instanceof Error ? e.message : "Errore"}`); }
+      catch (e) { if (isExpired(e)) { await router.invalidate(); return; } setMsg(`⚠️ ${e instanceof Error ? e.message : "Errore"}`); }
       finally { setBusy(false); }
     }}>Reimposta PIN</Button>
     {msg && <span className="text-lg">{msg}</span>}
