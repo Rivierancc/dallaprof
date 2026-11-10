@@ -368,6 +368,7 @@ export type Database = {
           description_fr: string
           extras: Json
           featured_at: string | null
+          food_tags: Json
           id: string
           image_path: string
           ingredients: Json
@@ -404,6 +405,7 @@ export type Database = {
           description_fr?: string
           extras?: Json
           featured_at?: string | null
+          food_tags?: Json
           id?: string
           image_path?: string
           ingredients?: Json
@@ -440,6 +442,7 @@ export type Database = {
           description_fr?: string
           extras?: Json
           featured_at?: string | null
+          food_tags?: Json
           id?: string
           image_path?: string
           ingredients?: Json
