@@ -42,17 +42,17 @@ function CodeForm({ title, name, onSave }: { title: string; name: string; onSave
   </form>;
 }
 
-export function PasswordSettings() {
+export function PasswordSettings({ restaurantOnly = false }: { restaurantOnly?: boolean }) {
   const changeStaff = useServerFn(changeStaffPin);
   const { changeExitPin } = useCustomer();
   return <div className="mx-auto mt-6 max-w-5xl"><Fold title="🔐 Password e codici">
     <div className="space-y-8">
-      <CodeForm title="PIN personale · Menu, Cucina, Cassa e Chiosco" name="PIN personale" onSave={async (current, next, confirmation) => {
+      <CodeForm title={restaurantOnly ? "PIN personale · Menu, Cucina, Cassa e Admin" : "PIN personale · Menu, Cucina, Cassa e Chiosco"} name="PIN personale" onSave={async (current, next, confirmation) => {
         await changeStaff({ data: { current, next, confirmation, ...gateFlags() } });
       }} />
-      <div className="border-t border-border pt-6">
+      {!restaurantOnly && <div className="border-t border-border pt-6">
         <CodeForm title="Uscita chiosco · Solo questo dispositivo" name="codice uscita chiosco" onSave={async (current, next, confirmation) => { changeExitPin(current, next, confirmation); }} />
-      </div>
+      </div>}
     </div>
   </Fold></div>;
 }
