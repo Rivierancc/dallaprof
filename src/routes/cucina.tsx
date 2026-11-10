@@ -43,6 +43,7 @@ function KitchenGate() {
 function Kitchen() {
   const restaurantOnly = useRestaurantOnly();
   const router = useRouter();
+  const { index: textScale, change: changeTextScale } = useTextScale();
   const update = useServerFn(setOrderStatus);
   const lock = useServerFn(lockKitchen);
   const [sound, setSound] = useState(false);
@@ -83,6 +84,9 @@ function Kitchen() {
       <header className="mb-6 flex flex-wrap items-center gap-2">
         <h1 className="mr-auto font-display text-7xl text-accent">Cucina</h1>
         <StaffFullscreenButton />
+        <StaffChip onClick={() => changeTextScale(nextTextScaleIndex(textScale))} aria-label="Ingrandisci il testo">
+          🔠 {TEXT_SCALES[textScale]?.label}
+        </StaffChip>
         <StaffChip
           onClick={() => {
             ctx.current ??= new AudioContext();
