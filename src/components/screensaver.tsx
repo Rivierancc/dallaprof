@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { getSaverPhotos, getSaverVideo, saveBanner, uploadSaverPhoto, uploadSaverVideo } from "@/lib/menu.functions";
@@ -29,7 +29,7 @@ export function Screensaver() {
   const s = readSaver(data);
   const { data: videoUrl } = useQuery({ queryKey: ["saver-video", s.video], queryFn: () => getSaverVideo({ data: { path: s.video } }), enabled: s.kind === "video" && !!s.video, staleTime: 30 * 60_000 });
   const { data: mine } = useQuery({ queryKey: ["saver-photos", s.photos], queryFn: () => getSaverPhotos({ data: { paths: s.photos } }), enabled: s.photos.length > 0, staleTime: 30 * 60_000 });
-  const pics = mine && mine.length ? mine : PHOTOS;
+  const pics = mine && mine.length ? mine.map((x) => x.url) : PHOTOS;
   const [show, setShow] = useState(false);
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -66,17 +66,19 @@ export function ScreensaverSettings() {
   const { data: saved } = useQuery(bannerQueryOptions);
   const qc = useQueryClient();
   const [msg, setMsg] = useState("");
+  const videoInput = useRef<HTMLInputElement>(null);
   const s = readSaver(saved);
   const { data: mine } = useQuery({ queryKey: ["saver-photos", s.photos], queryFn: () => getSaverPhotos({ data: { paths: s.photos } }), enabled: s.photos.length > 0 });
   if (!saved) return null;
   const save = async (p: Record<string, unknown>) => {
     setMsg("Salvo…");
-    try { await saveBanner({ data: { settings: { ...saved, ...p } as never } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    const fresh = qc.getQueryData<Record<string, unknown>>(bannerQueryOptions.queryKey) ?? saved;
+    try { await saveBanner({ data: { settings: { ...fresh, ...p } as never } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
     catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
   };
   const upload = (f: File | undefined) => {
     if (!f) return;
-    if (!/^video\/(mp4|webm)$/.test(f.type)) { setMsg("Usa un video MP4 o WebM"); return; }
+    if (!/^video\/(mp4|webm|quicktime)$/.test(f.type)) { setMsg("Usa un video MP4, WebM o MOV"); return; }
     if (f.size > 20 * 1024 * 1024) { setMsg("Il video è troppo grande (massimo 20 MB)"); return; }
     setMsg("Carico il video…");
     const r = new FileReader();
@@ -99,7 +101,14 @@ export function ScreensaverSettings() {
     }
     if (added.length) await save({ saverPhotos: [...s.photos, ...added].slice(0, 20), saverKind: "photos" });
   };
-  const removePhoto = (n: number) => void save({ saverPhotos: s.photos.filter((_, k) => k !== n) });
+  const removePhoto = (path: string) => {
+    if (!window.confirm("Togliere questa foto dal salvaschermo?")) return;
+    void save({ saverPhotos: s.photos.filter((x) => x !== path) });
+  };
+  const removeAll = () => {
+    if (!window.confirm("Togliere tutte le tue foto? Torneranno quelle di Albenga.")) return;
+    void save({ saverPhotos: [], saverKind: "photos" });
+  };
   return <div className="space-y-5">
     <p className="text-xl text-muted-foreground">Quando nessuno tocca la schermata iniziale del totem, parte a tutto schermo. Un tocco lo chiude.</p>
     <div className="flex flex-wrap gap-2">
@@ -109,18 +118,18 @@ export function ScreensaverSettings() {
     <div><p className="mb-2 text-xl">Parte dopo</p><div className="flex flex-wrap gap-2">{AFTER.map(([v, l]) => <Button key={v} variant={s.after === v ? "default" : "secondary"} onClick={() => void save({ saverAfter: v })}>{l}</Button>)}</div></div>
     <div><p className="mb-2 text-xl">Cosa mostrare</p><div className="flex flex-wrap gap-2">
       <Button variant={s.kind === "photos" ? "default" : "secondary"} onClick={() => void save({ saverKind: "photos" })}>🖼️ Foto</Button>
-      <Button variant={s.kind === "video" ? "default" : "secondary"} disabled={!s.video} onClick={() => void save({ saverKind: "video" })}>🎬 Il mio video</Button>
+      <Button variant={s.kind === "video" ? "default" : "secondary"} onClick={() => (s.video ? void save({ saverKind: "video" }) : videoInput.current?.click())}>🎬 Il mio video</Button>
     </div></div>
     <label className="block text-xl">🎬 Carica un video (MP4 o WebM, massimo 20 MB, parte senza audio)
-      <input type="file" accept="video/mp4,video/webm" className="mt-2 block text-lg" onChange={(e) => upload(e.target.files?.[0])} />
+      <input ref={videoInput} type="file" accept="video/mp4,video/webm,video/quicktime" className="mt-2 block text-lg" onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
     </label>
-    {s.video && <p className="text-lg text-muted-foreground">Video caricato ✓</p>}
+    {s.video && <div className="flex flex-wrap items-center gap-3"><p className="text-lg text-muted-foreground">Video caricato ✓</p><Button variant="destructive" onClick={() => { if (window.confirm("Togliere il video?")) void save({ saverVideo: "", saverKind: "photos" }); }}>✕ Togli video</Button></div>}
     <label className="block text-xl">🖼️ Carica le tue foto (JPG, PNG o WebP, massimo 10 MB l'una, fino a 20)
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-2 block text-lg" onChange={(e) => void addPhotos(e.target.files)} />
+      <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-2 block text-lg" onChange={(e) => { const f = e.target.files; void addPhotos(f).finally(() => { e.target.value = ""; }); }} />
     </label>
     {s.photos.length > 0 ? <>
-      <p className="text-lg text-muted-foreground">Il totem mostra le tue foto. Togliendole tutte tornano quelle di Albenga.</p>
-      <div className="grid grid-cols-4 gap-2">{(mine ?? []).map((p, n) => <div key={p} className="relative"><img src={p} alt="Foto salvaschermo" loading="lazy" className="aspect-[9/16] w-full rounded-xl object-cover" /><Button size="sm" variant="destructive" className="absolute right-1 top-1" onClick={() => removePhoto(n)}>✕ Togli</Button></div>)}</div>
+      <div className="flex flex-wrap items-center gap-3"><p className="text-lg text-muted-foreground">Il totem mostra le tue foto. Togliendole tutte tornano quelle di Albenga.</p><Button variant="destructive" onClick={removeAll}>✕ Togli tutte le foto</Button></div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{(mine ?? []).map((p) => <div key={p.path} className="space-y-2"><img src={p.url} alt="Foto salvaschermo" loading="lazy" className="aspect-[9/16] w-full rounded-xl object-cover" /><Button variant="destructive" className="w-full" onClick={() => removePhoto(p.path)}>✕ Togli</Button></div>)}</div>
     </> : <>
       <p className="text-lg text-muted-foreground">Ora il totem mostra le foto di Albenga:</p>
       <div className="grid grid-cols-5 gap-2">{PHOTOS.map((p) => <img key={p} src={p} alt="Albenga" loading="lazy" className="aspect-[9/16] w-full rounded-xl object-cover" />)}</div>

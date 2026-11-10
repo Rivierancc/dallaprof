@@ -765,7 +765,7 @@ export const getBanner = createServerFn({ method: "GET" }).handler(async (): Pro
 
 export const saveBanner = createServerFn({ method: "POST" })
   .inputValidator((d: { settings: Record<string, unknown> }) => {
-    if (!d || typeof d.settings !== "object" || JSON.stringify(d.settings).length > 2000) throw new Error("Dati non validi");
+    if (!d || typeof d.settings !== "object" || JSON.stringify(d.settings).length > 20000) throw new Error("Dati non validi");
     return d;
   })
   .handler(async ({ data }) => {
@@ -872,16 +872,16 @@ export const setOrderKitchenInfo = createServerFn({ method: "POST" })
 export const uploadSaverVideo = createServerFn({ method: "POST" })
   .inputValidator((d: { file: string }) => {
     const file = String(d.file ?? "");
-    const m = /^data:video\/(mp4|webm);base64,/.exec(file);
+    const m = /^data:video\/(mp4|webm|quicktime);base64,/.exec(file);
     if (!m || file.length > 28_000_000) throw new Error("Video non valido o troppo grande");
-    return { file, ext: m[1] as "mp4" | "webm" };
+    return { file, ext: (m[1] === "quicktime" ? "mov" : m[1]) as "mp4" | "webm" | "mov" };
   })
   .handler(async ({ data }) => {
     await staffOnly();
     const bin = atob(data.file.slice(data.file.indexOf(",") + 1));
     const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
     const path = `video-${crypto.randomUUID()}.${data.ext}`;
-    const { error } = await (await admin()).storage.from(BUCKET).upload(path, bytes, { contentType: `video/${data.ext}` });
+    const { error } = await (await admin()).storage.from(BUCKET).upload(path, bytes, { contentType: data.ext === "mov" ? "video/quicktime" : `video/${data.ext}` });
     if (error) throw new Error(error.message);
     return { path };
   });
@@ -889,7 +889,7 @@ export const uploadSaverVideo = createServerFn({ method: "POST" })
 export const getSaverVideo = createServerFn({ method: "GET" })
   .inputValidator((d: { path: string }) => {
     const path = String(d.path ?? "");
-    if (!/^video-[0-9a-f-]{36}\.(mp4|webm)$/.test(path)) throw new Error("Video non valido");
+    if (!/^video-[0-9a-f-]{36}\.(mp4|webm|mov)$/.test(path)) throw new Error("Video non valido");
     return { path };
   })
   .handler(async ({ data }) => (await sign([data.path]))[data.path] ?? "");
@@ -917,7 +917,7 @@ export const getSaverPhotos = createServerFn({ method: "GET" })
     return { paths };
   })
   .handler(async ({ data }) => {
-    if (!data.paths.length) return [] as string[];
+    if (!data.paths.length) return [] as { path: string; url: string }[];
     const m = await sign(data.paths);
-    return data.paths.map((p) => m[p]).filter(Boolean) as string[];
+    return data.paths.map((p) => ({ path: p, url: m[p] ?? "" })).filter((x) => x.url);
   });
