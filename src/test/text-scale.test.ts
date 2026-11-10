@@ -32,7 +32,7 @@ describe("ingrandimento del testo nei pannelli staff", () => {
   it("il pulsante 🔠 passa al livello più grande e poi riparte dal normale", () => {
     expect(nextTextScaleIndex(0)).toBe(1);
     expect(nextTextScaleIndex(TEXT_SCALES.length - 1)).toBe(0);
-    expect(nextTextScaleIndex("abc")).toBe(1);
+    expect(nextTextScaleIndex(NaN)).toBe(1);
     for (let i = 0; i < TEXT_SCALES.length; i++) {
       expect(nextTextScaleIndex(i)).toBe(i + 1 < TEXT_SCALES.length ? i + 1 : 0);
     }
