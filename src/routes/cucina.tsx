@@ -1,3 +1,4 @@
+import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
@@ -37,6 +38,7 @@ function KitchenGate() {
 }
 
 function Kitchen() {
+  const restaurantOnly = useRestaurantOnly();
   const router = useRouter();
   const update = useServerFn(setOrderStatus);
   const lock = useServerFn(lockKitchen);

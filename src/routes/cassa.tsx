@@ -1,3 +1,4 @@
+import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/cassa")({
 });
 
 function Cassa() {
+  const restaurantOnly = useRestaurantOnly();
   const router = useRouter();
   const settle = useServerFn(settleOrder);
   const lock = useServerFn(lockKitchen);
