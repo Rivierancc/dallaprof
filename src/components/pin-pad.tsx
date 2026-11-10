@@ -1,6 +1,6 @@
 import { useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { unlockKitchen } from "@/lib/kitchen.functions";
 import { gateFlags } from "@/lib/gate";
 
@@ -10,9 +10,14 @@ export function PinPad({ title = "Accesso personale" }: { title?: string }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [full, setFull] = useState(false);
+  useEffect(() => { setFull(localStorage.getItem("staff-fullscreen") === "1"); }, []);
+  const toggleFull = () => setFull((f) => { localStorage.setItem("staff-fullscreen", f ? "0" : "1"); return !f; });
 
   const submit = async () => {
     if (!pin || busy) return;
+    const wantFull = full && document.fullscreenEnabled && !document.fullscreenElement;
+    if (wantFull) void document.documentElement.requestFullscreen().catch(() => {});
     setBusy(true);
     const r = await unlock({ data: { pin, ...gateFlags() } }).catch(() => ({ ok: false }));
     setBusy(false);
@@ -20,6 +25,7 @@ export function PinPad({ title = "Accesso personale" }: { title?: string }) {
     else {
       setError(true);
       setPin("");
+      if (wantFull && document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     }
   };
 
@@ -48,6 +54,10 @@ export function PinPad({ title = "Accesso personale" }: { title?: string }) {
           </button>
         ))}
       </div>
+      <label className="flex items-center gap-3 text-xl text-muted-foreground">
+        <input type="checkbox" checked={full} onChange={toggleFull} className="size-6" />
+        ⛶ Schermo intero all'accesso (su questo dispositivo)
+      </label>
     </main>
   );
 }
