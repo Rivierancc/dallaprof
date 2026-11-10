@@ -12,7 +12,12 @@ export const TEXT_SCALES: TextScaleLevel[] = [
   { label: "Grande", factor: 1.25 },
   { label: "Molto grande", factor: 1.5 },
   { label: "Enorme", factor: 1.8 },
+  { label: "Gigante", factor: 2.2 },
+  { label: "Massima", factor: 2.6 },
 ];
+
+/** Il tocco sul pulsante 🔠 passa al livello successivo, ripartendo dal normale. */
+export const nextTextScaleIndex = (index: number) => (cleanTextScale(index) + 1) % TEXT_SCALES.length;
 
 /** Qualunque valore salvato (vuoto, scritto male, numero fuori lista) riporta al primo livello. */
 export function cleanTextScale(raw: unknown): number {

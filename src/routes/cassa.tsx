@@ -17,6 +17,8 @@ import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-d
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 import { KitchenBoard } from "@/components/kitchen-board";
 import { OpenTabs } from "@/components/open-tabs";
+import { useTextScale } from "@/components/text-scale";
+import { TEXT_SCALES, nextTextScaleIndex } from "@/lib/text-scale";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
@@ -42,6 +44,7 @@ export const Route = createFileRoute("/cassa")({
 function Cassa() {
   const restaurantOnly = useRestaurantOnly();
   const router = useRouter();
+  const { index: textScale, change: changeTextScale } = useTextScale();
   const settle = useServerFn(settleOrder);
   const lock = useServerFn(lockKitchen);
   const orders = useLiveOrders(["awaiting_payment"]);
@@ -107,6 +110,9 @@ function Cassa() {
       <header className="mb-6 flex flex-wrap items-center gap-2">
         <h1 className="mr-auto font-display text-7xl text-accent">Cassa</h1>
         <StaffFullscreenButton />
+        <StaffChip onClick={() => changeTextScale(nextTextScaleIndex(textScale))} aria-label="Ingrandisci il testo">
+          🔠 {TEXT_SCALES[textScale]?.label}
+        </StaffChip>
         <StaffChip onClick={() => setShowCfg(!showCfg)} aria-expanded={showCfg} aria-label="Stampante Epson" tone={cfg.ip ? "success" : "secondary"}>
           🖨️ Stampante {cfg.ip ? "✓" : "—"}
         </StaffChip>
