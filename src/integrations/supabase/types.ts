@@ -553,6 +553,7 @@ export type Database = {
       restaurant_tablets: {
         Row: {
           created_at: string
+          fullscreen: boolean
           id: string
           label: string
           pin_hash: string
@@ -562,6 +563,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          fullscreen?: boolean
           id?: string
           label: string
           pin_hash: string
@@ -571,6 +573,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          fullscreen?: boolean
           id?: string
           label?: string
           pin_hash?: string

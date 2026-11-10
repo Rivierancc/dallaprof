@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurant_tablets ADD COLUMN fullscreen boolean NOT NULL DEFAULT false;
