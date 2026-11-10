@@ -16,6 +16,8 @@ import { OrderNumberSettings } from "@/components/order-number-settings";
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 import { KitchenBoard } from "@/components/kitchen-board";
+import { useTextScale } from "@/components/text-scale";
+import { TEXT_SCALES, nextTextScaleIndex } from "@/lib/text-scale";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),

@@ -17,6 +17,8 @@ import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-d
 import { StaffChip, StaffCrossLink, staffChipClass } from "@/components/staff-nav";
 import { KitchenBoard } from "@/components/kitchen-board";
 import { OpenTabs } from "@/components/open-tabs";
+import { useTextScale } from "@/components/text-scale";
+import { TEXT_SCALES, nextTextScaleIndex } from "@/lib/text-scale";
 import { useKitchenFeatures } from "@/components/kitchen-features";
 import { loadPrinter, printTicket, savePrinter, scanPrinters, type PrinterCfg } from "@/lib/epson";
 
