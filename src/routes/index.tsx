@@ -362,10 +362,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                   {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                     <div key={d.id} data-dish={d.id} className="mt-1">
                       <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
-                      {descriptionFor(d, language) && <p className="line-clamp-2 text-lg text-muted-foreground">{descriptionFor(d, language)}</p>}
+                      {descriptionFor(d, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="leading-snug text-muted-foreground">{descriptionFor(d, language)}</p>}
                     </div>
                   ))}
-                  {!isOffers && descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
+                  {!isOffers && descriptionFor(p, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="mt-1 leading-snug text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
                 <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
