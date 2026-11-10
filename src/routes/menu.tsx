@@ -1,3 +1,4 @@
+import { StaffFullscreenButton } from "@/components/staff-display";
 import { venuePageTitle } from "@/lib/page-title";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -375,6 +376,7 @@ function MenuEditor() {
   return (
     <main className="min-h-screen p-6">
       <header className="mb-6 flex flex-wrap items-center gap-4">
+        <StaffFullscreenButton />
         <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
         <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/admin">Admin</Link></Button>
         <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/manuale">📖 Manuale</Link></Button>
