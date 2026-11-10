@@ -1,4 +1,4 @@
-import { useRestaurantOnly } from "@/lib/venue-mode";
+import { useCustomerDisplayAllowed } from "@/lib/venue-mode";
 import { Maximize, Minimize, Monitor, Move, Settings2, RotateCcw, Scaling } from "lucide-react";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useCustomer } from "@/components/customer-session";
@@ -27,9 +27,9 @@ export function StaffFullscreenButton() {
 
 export function StaffDisplayPreview({ page }: { page: "cassa" | "cucina" }) {
   const features = useKitchenFeatures();
-  const restaurantOnly = useRestaurantOnly();
+  const displayAllowed = useCustomerDisplayAllowed();
   const enabled = page === "cassa" ? features.displayTill : features.displayKitchen;
-  return enabled && !restaurantOnly ? <LivePreview key={page} page={page} partial={features.partial} /> : null;
+  return enabled && displayAllowed ? <LivePreview key={page} page={page} partial={features.partial} /> : null;
 }
 
 function LivePreview({ page, partial }: { page: "cassa" | "cucina"; partial: boolean }) {
