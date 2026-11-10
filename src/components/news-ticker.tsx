@@ -17,7 +17,7 @@ export function NewsTicker({ fixed = false }: { fixed?: boolean }) {
   // La pagina display la mostra dentro la propria impaginazione.
   if (!visible || !data.length || (fixed && page === "display")) return null;
   const line = data.map((n) => `${n.title} (${n.source})`).join("   •   ") + "   •   ";
-  return <div className={`${fixed ? "fixed inset-x-0 bottom-0 z-[90]" : ""} flex items-stretch overflow-hidden border-t-2 border-border bg-card text-card-foreground`}>
+  return <div dir="ltr" className={`${fixed ? "fixed inset-x-0 bottom-0 z-[90]" : ""} flex items-stretch overflow-hidden border-t-2 border-border bg-card text-card-foreground`}>
     <span className="z-10 flex shrink-0 items-center bg-primary px-6 font-display text-4xl text-primary-foreground">Ultima ora</span>
     <div className="flex-1 overflow-hidden py-3">
       <p className="inline-block whitespace-nowrap font-sans text-3xl font-semibold" style={{ animation: `news-scroll ${Math.max(60, line.length / 4)}s linear infinite` }}>{line}{line}</p>

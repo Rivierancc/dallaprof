@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { getSaverPhotos, getSaverVideo, saveBanner, uploadSaverPhoto, uploadSaverVideo } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
+import { NewsTicker } from "@/components/news-ticker";
 import torri from "@/assets/albenga-torri.jpg";
 import gallinara from "@/assets/albenga-gallinara.jpg";
 import carruggi from "@/assets/albenga-carruggi.jpg";
@@ -50,10 +51,11 @@ export function Screensaver() {
     <div role="button" aria-label="Tocca per ordinare" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setShow(false); }} className="fixed inset-0 z-[9999] cursor-pointer overflow-hidden bg-background">
       {useVideo ? <video src={videoUrl} autoPlay muted loop playsInline className="h-full w-full object-cover" /> :
         pics.map((p, n) => <img key={p} src={p} alt="Salvaschermo" className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms]" style={{ opacity: n === i % pics.length ? 1 : 0 }} />)}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-16 text-center">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-16 pb-32 text-center">
         <p className="animate-pulse font-display text-8xl text-foreground">👆 Tocca lo schermo per ordinare</p>
         <p className="mt-3 font-display text-5xl text-muted-foreground">Touch the screen to order</p>
       </div>
+      <div className="absolute inset-x-0 bottom-0"><NewsTicker /></div>
     </div>
   );
 }
