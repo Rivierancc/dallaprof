@@ -1,3 +1,4 @@
+import { Screensaver } from "@/components/screensaver"
 import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { Link as SalaLink } from "@tanstack/react-router";
@@ -176,6 +177,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
+      <Screensaver />
       <div className="-mx-6 mb-4"><HomeBanner /></div>
       <div className="flex-1" />
       
