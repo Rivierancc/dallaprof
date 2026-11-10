@@ -111,7 +111,7 @@ function Cassa() {
           ▦ Cucina {split ? "✓" : ""}
         </StaffChip>
         <StaffCrossLink page="cassa" />
-        <Link to="/" className={staffChipClass}>← Totem</Link>
+        {!restaurantOnly && <Link to="/" className={staffChipClass}>← Totem</Link>}{restaurantOnly && <Link to="/sala" className={staffChipClass}>🍽️ Sala</Link>}
         <StaffChip
           onClick={async () => {
             await lock({ data: gateFlags() });

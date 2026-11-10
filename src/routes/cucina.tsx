@@ -97,7 +97,7 @@ function Kitchen() {
         )}
         <OrderNumberSettings />
         <StaffCrossLink page="cucina" />
-        <Link to="/" className={staffChipClass}>← Totem</Link>
+        {!restaurantOnly && <Link to="/" className={staffChipClass}>← Totem</Link>}{restaurantOnly && <Link to="/sala" className={staffChipClass}>🍽️ Sala</Link>}
         <StaffChip onClick={logout} aria-label="Esci">🚪 Esci</StaffChip>
       </header>
       <StaffDisplayPreview page="cucina" />

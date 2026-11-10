@@ -191,3 +191,6 @@ export const closeTab = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const, total };
   });
+
+/** Modalità del locale (decisa dal Super Admin): serve a nascondere totem e funzioni fast food. */
+export const getVenueMode = createServerFn({ method: "GET" }).handler(async () => (await restaurantOn()).mode);
