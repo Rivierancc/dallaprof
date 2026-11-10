@@ -136,7 +136,7 @@ export function KitchenBoard({
             setSelList([...sel.filter((s) => s.o !== o.id), ...ids]);
           }} className="tap mt-3 rounded-2xl bg-shared px-4 py-2 text-xl font-bold text-shared-foreground">📖 Apri tutti gli ingredienti</button>
         )}
-        <ul className={`my-4 flex-1 text-4xl font-bold leading-tight [&>li]:py-3 ${twoCols ? "grid grid-cols-2 gap-x-6 [&>li]:border-b-2 [&>li]:border-border" : "divide-y-2 divide-border"}`}>
+        <ul className={`my-4 flex-1 text-4xl font-bold leading-tight [&>li]:py-3 ${twoCols ? "grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-x-6 [&>li]:border-b-2 [&>li]:border-border" : "divide-y-2 divide-border"}`}>
           {o.items.map((i) => {
             const done = (o.checked_items ?? []).includes(i.id);
             const gave = delivered.includes(i.id);
