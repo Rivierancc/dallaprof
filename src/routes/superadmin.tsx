@@ -1,12 +1,13 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SuperManual } from "@/components/super-manual";
 import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { MODES, PLANS, cleanMode } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
 import { Button } from "@/components/ui/button";
+import { isMasterAccessExpired as isExpired } from "@/lib/master-access";
 
 export const Route = createFileRoute("/superadmin")({
   loader: () => masterStatus(),
@@ -32,8 +33,6 @@ function pwCheck(pw: string, again: string) {
   if (pw !== again) return "Le due password non coincidono";
   return "";
 }
-
-const isExpired = (e: unknown) => e instanceof Error && e.message.startsWith("Accesso scaduto");
 
 function SuperAdmin() {
   const st = Route.useLoaderData();
@@ -72,7 +71,9 @@ function Venues() {
   const router = useRouter();
   const list = useServerFn(listVenues); const logout = useServerFn(masterLogout);
   const { data, refetch, error } = useQuery({ queryKey: ["venues"], queryFn: () => list(), retry: false });
-  if (isExpired(error)) void router.invalidate();
+  useEffect(() => {
+    if (isExpired(error)) void router.invalidate();
+  }, [error, router]);
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);

@@ -2,6 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { cleanDemo, cleanMode, cleanPublicLicense, PLANS } from "@/lib/license";
 import { slugFromPath, validSlug } from "@/lib/venue";
+import { MASTER_ACCESS_EXPIRED } from "@/lib/master-access";
 
 type Flags = { secure?: boolean; partitioned?: boolean };
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -9,7 +10,7 @@ const admin = async () => (await import("@/integrations/supabase/client.server")
 async function masterConfig(flags: Flags = {}) {
   const { staffSessionConfig } = await import("@/lib/staff.server");
   const c = staffSessionConfig(flags);
-  return { ...c, name: "master-gate", maxAge: 60 * 60 * 12 };
+  return { ...c, name: "master-gate", maxAge: 60 * 60 * 4 };
 }
 async function masterHash() {
   const { data } = await (await admin()).from("license").select("master_hash").eq("id", 1).maybeSingle();
@@ -18,7 +19,7 @@ async function masterHash() {
 async function requireMaster() {
   const s = await useSession<{ master?: string }>(await masterConfig());
   const hash = await masterHash();
-  if (!hash || s.data.master !== hash.slice(-16)) throw new Error("Accesso scaduto: inserisci di nuovo la password Master");
+  if (!hash || s.data.master !== hash.slice(-16)) throw new Error(MASTER_ACCESS_EXPIRED);
 }
 
 const venueDb = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
