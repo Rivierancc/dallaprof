@@ -13,6 +13,7 @@ import { CustomerProvider } from "@/components/customer-session";
 import { ThemeLayer } from "@/components/theme-layer";
 import { NewsTicker } from "@/components/news-ticker";
 import { Toaster } from "@/components/ui/sonner";
+import { licenseQueryOptions } from "@/lib/license";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -78,13 +79,17 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
+  loader: async ({ context }) => {
+    const license = await context.queryClient.ensureQueryData(licenseQueryOptions);
+    return { venueName: license.business_name };
+  },
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
-      { title: "Totem Burger" },
+      { title: loaderData?.venueName || "Locale" },
       { name: "description", content: "Totem self-service per ordinare al fast food." },
-      { property: "og:title", content: "Totem Burger" },
+      { property: "og:title", content: loaderData?.venueName || "Locale" },
       { property: "og:description", content: "Totem self-service per ordinare al fast food." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

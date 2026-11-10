@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { kitchenStatus } from "@/lib/kitchen.functions";
@@ -28,9 +29,9 @@ export const Route = createFileRoute("/admin/")({
     if (status.unlocked) await context.queryClient.ensureQueryData(menuQueryOptions);
     return status;
   },
-  head: () => ({ meta: [
-    { title: "Admin — Totem Burger" }, { name: "description", content: "Impostazioni riservate al personale: codici, categorie, temi, identità aziendale, scritte e notizie." },
-    { property: "og:title", content: "Admin — Totem Burger" }, { property: "og:description", content: "Impostazioni riservate al personale: codici, categorie, temi, identità aziendale, scritte e notizie." },
+  head: ({ matches }) => ({ meta: [
+    { title: venuePageTitle("Admin", matches) }, { name: "description", content: "Impostazioni riservate al personale: codici, categorie, temi, identità aziendale, scritte e notizie." },
+    { property: "og:title", content: venuePageTitle("Admin", matches) }, { property: "og:description", content: "Impostazioni riservate al personale: codici, categorie, temi, identità aziendale, scritte e notizie." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
   component: AdminGate,

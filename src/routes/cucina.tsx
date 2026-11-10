@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,11 +19,11 @@ import { KitchenBoard } from "@/components/kitchen-board";
 
 export const Route = createFileRoute("/cucina")({
   loader: () => kitchenStatus(),
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Cucina — Totem Burger" },
+      { title: venuePageTitle("Cucina", matches) },
       { name: "description", content: "Pannello cucina riservato al personale." },
-      { property: "og:title", content: "Cucina — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Cucina", matches) },
       { property: "og:description", content: "Pannello cucina riservato al personale." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

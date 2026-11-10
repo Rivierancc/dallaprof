@@ -1,13 +1,14 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { MANUAL_UPDATED, manualAsText, searchManual } from "@/lib/manual";
 
 export const Route = createFileRoute("/manuale")({
-  head: () => ({ meta: [
-    { title: "Manuale istruzioni — Totem Burger" },
+  head: ({ matches }) => ({ meta: [
+    { title: venuePageTitle("Manuale istruzioni", matches) },
     { name: "description", content: "Manuale dettagliato di totem, cassa, cucina, tabellone, gestione menu e admin, con ricerca." },
-    { property: "og:title", content: "Manuale istruzioni — Totem Burger" },
+    { property: "og:title", content: venuePageTitle("Manuale istruzioni", matches) },
     { property: "og:description", content: "Manuale dettagliato di tutte le funzioni, con ricerca e download." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),

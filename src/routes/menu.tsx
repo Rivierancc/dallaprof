@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -41,11 +42,11 @@ export const Route = createFileRoute("/menu")({
     ]);
     return status;
   },
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Gestione menu — Totem Burger" },
+      { title: venuePageTitle("Gestione menu", matches) },
       { name: "description", content: "Pannello riservato al personale: aggiungi, modifica e rimuovi i piatti." },
-      { property: "og:title", content: "Gestione menu — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Gestione menu", matches) },
       { property: "og:description", content: "Pannello riservato al personale: aggiungi, modifica e rimuovi i piatti." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
