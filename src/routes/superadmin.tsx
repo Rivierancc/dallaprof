@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { SuperManual } from "@/components/super-manual";
 import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { MODES, PLANS, cleanMode } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
@@ -72,6 +73,8 @@ function Venues() {
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
+  const [manual, setManual] = useState(false);
+  if (manual) return <SuperManual onBack={() => setManual(false)} />;
   if (pwOpen) return <MasterPassword onBack={() => setPwOpen(false)} />;
   if (open) return <LicensePanel venueId={open} onBack={() => { setOpen(null); void refetch(); }} />;
   return <div className="superadmin-page"><main className="mx-auto flex max-w-4xl flex-col gap-6 p-6 pb-24">
@@ -82,6 +85,7 @@ function Venues() {
     <div className="flex flex-wrap gap-3">
       <Button onClick={() => setAdding(!adding)} className="h-14 px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
       <Button variant="secondary" onClick={() => setPwOpen(true)} className="h-14 px-8 text-xl">🔑 La mia password</Button>
+      <Button variant="secondary" onClick={() => setManual(true)} className="h-14 px-8 text-xl">📖 Manuale fornitore</Button>
     </div>
     {adding && <NewVenue onDone={(id) => { setAdding(false); void refetch(); setOpen(id); }} />}
     {!data ? <p className="text-xl">Caricamento…</p> : <div className="grid gap-3">
