@@ -30,8 +30,8 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
   };
 
   return (
-    <Fold title="↕️ Ordine categorie e strisce" hint="1 = prima sul totem">
-      <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del totem. «Nessuna» = riquadri normali.</p>
+    <Fold title="↕️ Ordine categorie e strisce" hint="1 = prima sul tablet">
+      <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del tablet. «Nessuna» = riquadri normali.</p>
       <ul className="space-y-2">
         {cats.map((c, i) => (
           <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-background/40 p-3">
