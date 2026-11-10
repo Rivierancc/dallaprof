@@ -54,6 +54,7 @@ export type Product = {
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
+  food_tags: string[];
 };
 
 export type Category = {

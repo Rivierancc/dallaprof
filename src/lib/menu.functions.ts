@@ -117,6 +117,7 @@ export type MenuProduct = {
   suggest: Suggest;
   recipe_on: boolean;
   recipe: string;
+  food_tags: string[];
 };
 
 export type MenuExtra = { name: string; price: number };
@@ -143,7 +144,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
-      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, description_de, description_ar, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, combo_alts, combo_groups, combo_extras, suggest, recipe_on, recipe")
+      .select("id, category_id, name, price, image_path, position, sold_out, description, description_en, description_fr, description_es, description_de, description_ar, ingredients, extras, is_featured, badge_on, badge_text, badge_blink, max_extras, choice_groups, combo_items, combo_price, combo_offer, combo_name, combo_alts, combo_groups, combo_extras, suggest, recipe_on, recipe, food_tags")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
@@ -225,6 +226,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       suggest: cleanSuggest(r.suggest),
       recipe_on: r.recipe_on !== false,
       recipe: r.recipe ?? "",
+      food_tags: (Array.isArray(r.food_tags) ? r.food_tags : []).filter((x): x is string => typeof x === "string"),
     })),
   };
 });
@@ -305,6 +307,15 @@ export const setProductRecipe = createServerFn({ method: "POST" })
     await staffOnly();
     const supabase = await admin();
     const { error } = await supabase.from("menu_products").update({ recipe_on: data.on, recipe: data.recipe }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const setProductTags = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; tags: string[] }) => ({ id: String(d.id), tags: (Array.isArray(d.tags) ? d.tags : []).map((x) => String(x).slice(0, 30)).slice(0, 20) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const { error } = await (await admin()).from("menu_products").update({ food_tags: data.tags }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
