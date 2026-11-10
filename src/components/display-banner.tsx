@@ -83,7 +83,7 @@ export function IdleSettings() {
   const qc = useQueryClient();
   const [msg, setMsg] = useState("");
   if (!saved) return null;
-  const current = Number(saved.idle ?? 60);
+  const current = Number(saved["idle"] ?? 60);
   const pick = async (idle: number) => {
     setMsg("Salvo…");
     try { await saveBanner({ data: { settings: { ...saved, idle } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
