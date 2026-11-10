@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,11 +12,11 @@ import { TEXT_SCALES } from "@/lib/text-scale";
 
 export const Route = createFileRoute("/sala")({
   loader: () => salaStatus(),
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Sala camerieri — Totem Burger" },
+      { title: venuePageTitle("Sala camerieri", matches) },
       { name: "description", content: "Comande ai tavoli per i camerieri, con invio diretto in cucina." },
-      { property: "og:title", content: "Sala camerieri — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Sala camerieri", matches) },
       { property: "og:description", content: "Comande ai tavoli per i camerieri, con invio diretto in cucina." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

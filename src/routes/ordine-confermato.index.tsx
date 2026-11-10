@@ -1,11 +1,12 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { OrderConfirmation } from "@/components/order-confirmation";
 
 export const Route = createFileRoute("/ordine-confermato/")({
-  head: () => ({ meta: [
-    { title: "Ultimo ordine — Totem Burger" }, { name: "description", content: "Consulta la conferma del tuo ultimo ordine." },
-    { property: "og:title", content: "Ultimo ordine — Totem Burger" }, { property: "og:description", content: "Consulta la conferma del tuo ultimo ordine." },
+  head: ({ matches }) => ({ meta: [
+    { title: venuePageTitle("Ultimo ordine", matches) }, { name: "description", content: "Consulta la conferma del tuo ultimo ordine." },
+    { property: "og:title", content: venuePageTitle("Ultimo ordine", matches) }, { property: "og:description", content: "Consulta la conferma del tuo ultimo ordine." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
   component: LatestOrder,

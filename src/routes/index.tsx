@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { Link as SalaLink } from "@tanstack/react-router";
 import { ThemeGreeting } from "@/components/theme-layer"
@@ -20,11 +21,11 @@ import { discountFor } from "@/lib/loyalty"
 import { copy, translatedFor, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Totem — Totem Burger" },
+      { title: venuePageTitle("Totem", matches) },
       { name: "description", content: "Ordina al totem: mangia qui o asporto, poi paga alla cassa." },
-      { property: "og:title", content: "Totem — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Totem", matches) },
       { property: "og:description", content: "Ordina al totem: mangia qui o asporto, poi paga alla cassa." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

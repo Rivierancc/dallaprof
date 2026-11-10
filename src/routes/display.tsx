@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { ThemeGreeting } from "@/components/theme-layer";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -10,11 +11,11 @@ import { useEffect, useRef, useState } from "react";
 import { DisplayBoard } from "@/components/display-board";
 
 export const Route = createFileRoute("/display")({
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Display ordini — Totem Burger" },
+      { title: venuePageTitle("Display ordini", matches) },
       { name: "description", content: "Stato degli ordini: in preparazione e pronti." },
-      { property: "og:title", content: "Display ordini — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Display ordini", matches) },
       { property: "og:description", content: "Stato degli ordini: in preparazione e pronti." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

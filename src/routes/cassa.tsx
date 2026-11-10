@@ -1,3 +1,4 @@
+import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -24,11 +25,11 @@ const SPLIT_KEY = "cassa-kitchen-split";
 
 export const Route = createFileRoute("/cassa")({
   loader: () => kitchenStatus(),
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
-      { title: "Cassa — Totem Burger" },
+      { title: venuePageTitle("Cassa", matches) },
       { name: "description", content: "Incasso con POS SumUp e invio degli ordini in cucina." },
-      { property: "og:title", content: "Cassa — Totem Burger" },
+      { property: "og:title", content: venuePageTitle("Cassa", matches) },
       { property: "og:description", content: "Incasso con POS SumUp e invio degli ordini in cucina." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
