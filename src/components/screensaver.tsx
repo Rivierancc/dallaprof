@@ -4,13 +4,7 @@ import { bannerQueryOptions } from "@/components/display-banner";
 import { getSaverPhotos, getSaverVideo, saveBanner, uploadSaverPhoto, uploadSaverVideo } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
 import { NewsTicker } from "@/components/news-ticker";
-import torri from "@/assets/albenga-torri.jpg";
-import gallinara from "@/assets/albenga-gallinara.jpg";
-import carruggi from "@/assets/albenga-carruggi.jpg";
-import battistero from "@/assets/albenga-battistero.jpg";
-import viaGenova from "@/assets/albenga-via-genova.jpg";
 
-const PHOTOS = [torri, gallinara, carruggi, battistero, viaGenova];
 export type Saver = { on: boolean; after: number; kind: "photos" | "video"; video: string; photos: string[] };
 export function readSaver(s: Record<string, unknown> | undefined): Saver {
   const v = s ?? {};
@@ -29,7 +23,7 @@ export function Screensaver() {
   const s = readSaver(data);
   const { data: videoUrl } = useQuery({ queryKey: ["saver-video", s.video], queryFn: () => getSaverVideo({ data: { path: s.video } }), enabled: s.kind === "video" && !!s.video, staleTime: 30 * 60_000 });
   const { data: mine } = useQuery({ queryKey: ["saver-photos", s.photos], queryFn: () => getSaverPhotos({ data: { paths: s.photos } }), enabled: s.photos.length > 0, staleTime: 30 * 60_000 });
-  const pics = mine && mine.length ? mine.map((x) => x.url) : PHOTOS;
+  const pics = mine && mine.length ? mine.map((x) => x.url) : [];
   const [show, setShow] = useState(false);
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -42,11 +36,11 @@ export function Screensaver() {
   }, [data, s.on, s.after]);
   useEffect(() => {
     if (!show) return;
-    const t = setInterval(() => setI((x) => (x + 1) % pics.length), 7000);
+    const t = setInterval(() => setI((x) => (x + 1) % Math.max(1, pics.length)), 7000);
     return () => clearInterval(t);
   }, [show, pics.length]);
-  if (!show || !s.on) return null;
   const useVideo = s.kind === "video" && !!videoUrl;
+  if (!show || !s.on || (!useVideo && pics.length === 0)) return null;
   return (
     <div role="button" aria-label="Tocca per ordinare" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShow(false); window.scrollTo({ top: 0 }); }} className="fixed inset-0 z-[9999] cursor-pointer overflow-hidden bg-background">
       {useVideo ? <video src={videoUrl} autoPlay muted loop playsInline className="h-full w-full object-cover" /> :
@@ -61,7 +55,7 @@ export function Screensaver() {
 }
 
 const AFTER: [number, string][] = [[30, "30 secondi"], [60, "1 minuto"], [120, "2 minuti"], [300, "5 minuti"]];
-/** Admin: accende il salvaschermo, sceglie il tempo, foto di Albenga o video caricato. */
+/** Admin: accende il salvaschermo, sceglie il tempo, foto o video caricati dal locale. */
 export function ScreensaverSettings() {
   const { data: saved } = useQuery(bannerQueryOptions);
   const qc = useQueryClient();
@@ -106,7 +100,7 @@ export function ScreensaverSettings() {
     void save({ saverPhotos: s.photos.filter((x) => x !== path) });
   };
   const removeAll = () => {
-    if (!window.confirm("Togliere tutte le tue foto? Torneranno quelle di Albenga.")) return;
+    if (!window.confirm("Togliere tutte le foto? Il salvaschermo non partirà finché non ne carichi altre o un video.")) return;
     void save({ saverPhotos: [], saverKind: "photos" });
   };
   return <div className="space-y-5">
@@ -128,11 +122,10 @@ export function ScreensaverSettings() {
       <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-2 block text-lg" onChange={(e) => { const f = e.target.files; void addPhotos(f).finally(() => { e.target.value = ""; }); }} />
     </label>
     {s.photos.length > 0 ? <>
-      <div className="flex flex-wrap items-center gap-3"><p className="text-lg text-muted-foreground">Il totem mostra le tue foto. Togliendole tutte tornano quelle di Albenga.</p><Button variant="destructive" onClick={removeAll}>✕ Togli tutte le foto</Button></div>
+      <div className="flex flex-wrap items-center gap-3"><p className="text-lg text-muted-foreground">Il totem mostra le tue foto.</p><Button variant="destructive" onClick={removeAll}>✕ Togli tutte le foto</Button></div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{(mine ?? []).map((p) => <div key={p.path} className="space-y-2"><img src={p.url} alt="Foto salvaschermo" loading="lazy" className="aspect-[9/16] w-full rounded-xl object-cover" /><Button variant="destructive" className="w-full" onClick={() => removePhoto(p.path)}>✕ Togli</Button></div>)}</div>
     </> : <>
-      <p className="text-lg text-muted-foreground">Ora il totem mostra le foto di Albenga:</p>
-      <div className="grid grid-cols-5 gap-2">{PHOTOS.map((p) => <img key={p} src={p} alt="Albenga" loading="lazy" className="aspect-[9/16] w-full rounded-xl object-cover" />)}</div>
+      <p className="rounded-xl border border-border p-4 text-lg text-muted-foreground">Per attivare il salvaschermo carica almeno una foto o un video del tuo locale.</p>
     </>}
     {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
