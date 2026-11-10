@@ -73,7 +73,7 @@ export function KitchenBoard({
           </div>
         </div>
       ) : (
-        <div className={`grid gap-5 ${compact ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]"}`}>
+        <div className={`grid gap-5 ${compact ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(24rem,1fr))]"}`}>
           {orders.map((o) => card(o))}
         </div>
       )}
@@ -86,14 +86,14 @@ export function KitchenBoard({
     return (
       <article
         key={o.id}
-        className={`animate-pop flex flex-col rounded-3xl border-4 bg-card p-5 ${o.status === "ready" ? "border-success" : "border-accent"}`}
+        className={`animate-pop flex flex-col rounded-3xl border-4 bg-card p-6 ${o.status === "ready" ? "border-success" : "border-accent"}`}
       >
         <div className="flex items-baseline justify-between">
           <span className="font-display text-8xl leading-none">{String(o.order_number).padStart(2, "0")}</span>
-          <span className="rounded-full bg-muted px-4 py-1 text-xl font-bold uppercase">{o.dine_option}</span>
+          <span className="rounded-full bg-muted px-4 py-2 text-3xl font-bold uppercase text-foreground">{o.dine_option}</span>
         </div>
-        <p className="text-lg text-muted-foreground">
-          {new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
+        <p className="text-2xl font-bold">
+          🕒 {new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
         </p>
         {features.delivery && (
           <p className={`text-xl font-bold ${allDelivered ? "text-success" : "text-muted-foreground"}`}>
@@ -109,7 +109,7 @@ export function KitchenBoard({
             setSelList([...sel.filter((s) => s.o !== o.id), ...ids]);
           }} className="tap mt-3 rounded-2xl bg-shared px-4 py-2 text-xl font-bold text-shared-foreground">📖 Apri tutti gli ingredienti</button>
         )}
-        <ul className="my-4 flex-1 space-y-2 text-2xl font-bold">
+        <ul className="my-4 flex-1 divide-y-2 divide-border text-4xl font-bold leading-tight [&>li]:py-3">
           {o.items.map((i) => {
             const done = (o.checked_items ?? []).includes(i.id);
             const gave = delivered.includes(i.id);
@@ -118,12 +118,12 @@ export function KitchenBoard({
             return (
               <li key={i.id} className="flex items-start gap-3">
                 {features.checklist && (
-                  <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-4 text-xl ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
+                  <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mt-1 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-4 text-2xl ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
                     {done ? "✓" : ""}
                   </button>
                 )}
                 {features.delivery && (
-                  <button onClick={toggleDelivered} aria-label={gave ? `Togli consegna di ${i.name}` : `Segna ${i.name} come consegnato`} className={`tap mt-1 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-4 text-xl ${gave ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground"}`}>
+                  <button onClick={toggleDelivered} aria-label={gave ? `Togli consegna di ${i.name}` : `Segna ${i.name} come consegnato`} className={`tap mt-1 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-4 text-2xl ${gave ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground"}`}>
                     {gave ? "🚚" : ""}
                   </button>
                 )}
@@ -134,9 +134,9 @@ export function KitchenBoard({
                     </button>
                   ) : <>{i.qty} × {itemTitle(i, dishOf(i))}</>}
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
-                    {m.dish.length > 0 && <span className="block text-xl font-bold text-accent">{m.dish.join(" · ")}</span>}
-                    {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
-                    {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
+                    {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
+                    {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-2xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
+                    {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
                   </>; })()}
                   {features.delivery && gave && (
                     <span className="block text-xl font-bold text-success">✓ consegnato</span>
