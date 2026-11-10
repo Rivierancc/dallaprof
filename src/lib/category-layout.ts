@@ -28,9 +28,9 @@ export function dishLayoutFor(s: Record<string, unknown> | undefined | null, cat
 }
 /** Larghezza scheda (rem, per lo scorrevole), colonne griglia, altezza foto e testo (rem). */
 export const DISH_TILE = [
-  { w: 12, cols: 5, img: 6, title: 1.4, price: 1.4 },
-  { w: 16, cols: 4, img: 8, title: 1.75, price: 1.75 },
-  { w: 22, cols: 3, img: 11, title: 2.25, price: 2.25 },
-  { w: 28, cols: 2, img: 16, title: 2.75, price: 2.5 },
-  { w: 40, cols: 1, img: 24, title: 3.5, price: 3 },
+  { w: 12, cols: 5, img: 6, title: 1.4, price: 1.4, desc: 0.95, lines: 4 },
+  { w: 16, cols: 4, img: 8, title: 1.75, price: 1.75, desc: 1.05, lines: 4 },
+  { w: 22, cols: 3, img: 11, title: 2.25, price: 2.25, desc: 1.25, lines: 3 },
+  { w: 28, cols: 2, img: 16, title: 2.75, price: 2.5, desc: 1.25, lines: 3 },
+  { w: 40, cols: 1, img: 24, title: 3.5, price: 3, desc: 1.5, lines: 3 },
 ] as const
