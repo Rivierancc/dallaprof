@@ -12,6 +12,12 @@ export type KitchenInfo = { partial_notes?: string[]; checked_items?: string[]; 
  * In Cassa si usa con compact: le schede stanno in colonna singola e i
  * riquadri ingredienti si aprono sotto l'ordine invece che a fianco.
  */
+const KITCHEN_WIDTHS = [
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))]",
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,33rem),1fr))]",
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,43rem),1fr))]",
+];
+
 export function KitchenBoard({
   orders,
   features,
@@ -131,7 +137,6 @@ export function KitchenBoard({
           }} className="tap mt-3 rounded-2xl bg-shared px-4 py-2 text-xl font-bold text-shared-foreground">📖 Apri tutti gli ingredienti</button>
         )}
         <ul className={`my-4 flex-1 text-4xl font-bold leading-tight [&>li]:py-3 ${twoCols ? "grid grid-cols-2 gap-x-6 [&>li]:border-b-2 [&>li]:border-border" : "divide-y-2 divide-border"}`}>
-{/* divide-border text-4xl font-bold leading-tight [&>li]:py-3">
           {o.items.map((i) => {
             const done = (o.checked_items ?? []).includes(i.id);
             const gave = delivered.includes(i.id);
@@ -148,6 +153,7 @@ export function KitchenBoard({
             };
             const tappable = features.checklist || features.delivery;
             const drinkSolo = isStandaloneDrink(productOf(i), menu?.categories ?? []);
+            if (hidden && drinkSolo) return null;
             return (
               <li key={i.id} className="flex items-start gap-3">
                 <div
@@ -162,7 +168,7 @@ export function KitchenBoard({
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                     {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
                     {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-2xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
-                    {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
+                    {m.drink.length > 0 && !hidden && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
                   </>; })()}
                   {step === "ready" && <span className="block text-xl font-bold text-success no-underline">✓ Pronto</span>}
                   {step === "delivered" && <span className="block text-xl font-bold text-muted-foreground">🚚 Consegnato</span>}
