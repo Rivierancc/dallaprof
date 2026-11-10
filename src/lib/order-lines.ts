@@ -46,7 +46,7 @@ export function splitMenu(item: CartItem, product: Product | undefined, products
 export function isStandaloneDrink(product: Product | undefined, categories: Category[]) {
   if (!product) return false;
   const c = categories.find((x) => x.id === product.category_id);
-  return !!c && /bevand|bibit|drink|bere|birr|vin|aperitiv|rinfresc/i.test(c.name + " " + c.slug);
+  return !!c && /bevand|bibit|drink|bere|birr|\bvini\b|aperitiv|rinfresc/i.test(c.name + " " + c.slug);
 }
 
 // Ciclo al tocco in cucina: da fare → pronto → consegnato → da fare.

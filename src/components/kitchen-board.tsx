@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { menuQueryOptions, type CartItem, type Order, type Product } from "@/lib/menu";
-import { itemTitle, splitMenu } from "@/lib/order-lines";
+import { isStandaloneDrink, itemTitle, nextStep, splitMenu, type ItemStep } from "@/lib/order-lines";
 import { loadPrinter, printTicket } from "@/lib/epson";
 import type { KitchenFeatures } from "@/lib/menu.functions";
 
@@ -101,7 +101,7 @@ export function KitchenBoard({
           </p>
         )}
         {features.checklist && features.delivery && (
-          <p className="text-base text-muted-foreground">✓ = preparato · 🚚 = consegnato</p>
+          <p className="text-base text-muted-foreground">Tocca il piatto: 1° ✓ pronto · 2° 🚚 consegnato · 3° annulla</p>
         )}
         {o.items.filter((i) => productOf(i)?.recipe_on !== false).length > 1 && (
           <button onClick={() => {
@@ -113,35 +113,41 @@ export function KitchenBoard({
           {o.items.map((i) => {
             const done = (o.checked_items ?? []).includes(i.id);
             const gave = delivered.includes(i.id);
-            const toggle = () => onInfo(o.id, { checked_items: done ? (o.checked_items ?? []).filter((x) => x !== i.id) : [...(o.checked_items ?? []), i.id] });
-            const toggleDelivered = () => onInfo(o.id, { delivered_items: gave ? delivered.filter((x) => x !== i.id) : [...delivered, i.id] });
+            const step: ItemStep = gave ? "delivered" : done ? "ready" : "todo";
+            const checked = (o.checked_items ?? []).filter((x) => x !== i.id);
+            const dlv = delivered.filter((x) => x !== i.id);
+            // Un tocco sulla riga: da fare → pronto → consegnato (sbarrato) → di nuovo da fare.
+            const tap = () => {
+              if (features.checklist && features.delivery) {
+                const n = nextStep(step);
+                onInfo(o.id, { checked_items: n === "todo" ? checked : [...checked, i.id], delivered_items: n === "delivered" ? [...dlv, i.id] : dlv });
+              } else if (features.checklist) onInfo(o.id, { checked_items: done ? checked : [...checked, i.id] });
+              else if (features.delivery) onInfo(o.id, { delivered_items: gave ? dlv : [...dlv, i.id] });
+            };
+            const tappable = features.checklist || features.delivery;
+            const drinkSolo = isStandaloneDrink(productOf(i), menu?.categories ?? []);
             return (
               <li key={i.id} className="flex items-start gap-3">
-                {features.checklist && (
-                  <button onClick={toggle} aria-label={done ? "Togli spunta" : "Spunta piatto"} className={`tap mt-1 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-4 text-2xl ${done ? "border-success bg-success text-success-foreground" : "border-muted-foreground"}`}>
-                    {done ? "✓" : ""}
-                  </button>
-                )}
-                {features.delivery && (
-                  <button onClick={toggleDelivered} aria-label={gave ? `Togli consegna di ${i.name}` : `Segna ${i.name} come consegnato`} className={`tap mt-1 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-4 text-2xl ${gave ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground"}`}>
-                    {gave ? "🚚" : ""}
-                  </button>
-                )}
-                <span className={`min-w-0 flex-1 ${features.checklist && done ? "text-muted-foreground line-through" : ""}`}>
-                  {productOf(i)?.recipe_on !== false ? (
-                    <button onClick={() => toggleSel(o.id, i.id)} className={`tap rounded-lg text-left underline decoration-dotted underline-offset-4 ${isSel(o.id, i.id) ? "bg-accent px-2 text-accent-foreground" : ""}`}>
-                      {i.qty} × {itemTitle(i, dishOf(i))} 📖
-                    </button>
-                  ) : <>{i.qty} × {itemTitle(i, dishOf(i))}</>}
+                <div
+                  role={tappable ? "button" : undefined}
+                  tabIndex={tappable ? 0 : undefined}
+                  aria-label={tappable ? `${i.name}: ${step === "todo" ? "da fare" : step === "ready" ? "pronto" : "consegnato"}` : undefined}
+                  onClick={tappable ? tap : undefined}
+                  onKeyDown={tappable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tap(); } } : undefined}
+                  className={`min-w-0 flex-1 rounded-xl ${tappable ? "tap cursor-pointer select-none" : ""} ${step === "ready" ? "bg-success/15 px-2" : ""} ${step === "delivered" ? "line-through opacity-50" : ""}`}
+                >
+                  <span className={drinkSolo ? "text-2xl text-kitchen-drink" : ""}>{i.qty} × {drinkSolo && "🥤 "}{itemTitle(i, dishOf(i))}</span>
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                     {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
                     {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-2xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
                     {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
                   </>; })()}
-                  {features.delivery && gave && (
-                    <span className="block text-xl font-bold text-success">✓ consegnato</span>
-                  )}
-                </span>
+                  {step === "ready" && <span className="block text-xl font-bold text-success no-underline">✓ Pronto</span>}
+                  {step === "delivered" && <span className="block text-xl font-bold text-muted-foreground">🚚 Consegnato</span>}
+                </div>
+                {productOf(i)?.recipe_on !== false && !drinkSolo && (
+                  <button onClick={() => toggleSel(o.id, i.id)} aria-label={`Ingredienti di ${i.name}`} className={`tap shrink-0 rounded-xl px-3 py-1 text-3xl ${isSel(o.id, i.id) ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>📖</button>
+                )}
               </li>
             );
           })}
