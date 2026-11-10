@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Fold } from "@/components/fold";
-import { reorderCategories, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { bannerQueryOptions } from "@/components/display-banner";
+import { cleanCategoryLayout, CATEGORY_SIZES } from "@/lib/category-layout";
+import { reorderCategories, saveBanner, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
   const [cats, setCats] = useState(categories);
   const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
+  const { data: banner } = useQuery(bannerQueryOptions);
+  const layout = cleanCategoryLayout(banner);
+  const setLayout = async (p: Record<string, unknown>) => {
+    if (!banner) return;
+    try { await saveBanner({ data: { settings: { ...banner, ...p } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); toast.success("Salvato"); }
+    catch (e) { console.error(e); toast.error("Salvataggio non riuscito"); }
+  };
   useEffect(() => setCats(categories), [categories]);
   const changed = cats.some((c, i) => c.id !== categories[i]?.id);
 
@@ -31,6 +42,20 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
 
   return (
     <Fold title="↕️ Ordine categorie e strisce" hint="1 = prima sul tablet">
+      {banner && <div className="mb-5 space-y-4 rounded-2xl bg-background/40 p-4">
+        <div>
+          <p className="mb-2 text-xl font-bold">Come si vedono le categorie</p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void setLayout({ catStrips: false })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${!layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>▦ Riquadri fissi</button>
+            <button onClick={() => void setLayout({ catStrips: true })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>↔️ Strisce scorrevoli</button>
+          </div>
+          {!layout.strips && <p className="mt-2 text-lg text-muted-foreground">Le strisce assegnate restano ricordate: riattivandole tornano come prima.</p>}
+        </div>
+        <div>
+          <p className="mb-2 text-xl font-bold">Grandezza delle categorie</p>
+          <div className="flex flex-wrap gap-2">{CATEGORY_SIZES.map((l, i) => <button key={l} onClick={() => void setLayout({ catSize: i })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.size === i ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{l}</button>)}</div>
+        </div>
+      </div>}
       <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del tablet. «Nessuna» = riquadri normali.</p>
       <ul className="space-y-2">
         {cats.map((c, i) => (
