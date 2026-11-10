@@ -58,7 +58,7 @@ function Admin() {
     }}>{fullscreen ? "Esci da chiosco" : "Attiva modalità chiosco"}</Button>}
     {kioskError && <p role="alert" className="mt-6 text-2xl text-destructive">{kioskError}</p>}
     <div className="mt-6">
-      <PasswordSettings />
+      <PasswordSettings restaurantOnly={ro} />
       {!ro && <div className="mt-6"><OrderNumberSettings /></div>}
       <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
       {!ro && <ThemesPanel />}
