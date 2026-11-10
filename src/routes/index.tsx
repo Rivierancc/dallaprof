@@ -6,7 +6,7 @@ import { ThemeGreeting } from "@/components/theme-layer"
 import { browserVenueId } from "@/lib/venue-client"
 import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner, bannerQueryOptions } from "@/components/display-banner"
-import { cleanCategoryLayout, TILE } from "@/lib/category-layout"
+import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -309,6 +309,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const cat = categories.find((c) => c.id === activeCat)
   const shown = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
   const isOffers = activeCat === OFFERS
+  const dl = dishLayoutFor(bannerSettings, activeCat ?? "")
+  const dt = DISH_TILE[dl.size]!
 
   return (
     <main className="min-h-screen p-8 pb-36">
@@ -340,23 +342,23 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       ) : (
         <>
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
-          <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+          <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : "grid gap-6"} style={dl.scroll ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
-              <Button variant="ghost" onClick={() => setCompose(cat)} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
+              <Button variant="ghost" onClick={() => setCompose(cat)} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
                 <div className="grid h-44 w-full place-items-center rounded-2xl bg-muted text-8xl">✨</div>
                 <h3 className="mt-4 break-words font-display text-4xl leading-tight">{customTitleFor(cat, language)}</h3>
                 <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(cat.custom_price)}</span>
               </Button>
             )}
             {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
+              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
                 <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
                 {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "⭐ " : ""}🍱 {menuName(p.name, p.combo_name)}</h3> : null}
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
-                  {p.image? <img src={p.image} alt={p.name} className="h-44 w-full object-cover" /> : <div className="h-44 w-full bg-muted" />}
+                  {p.image? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  {!isOffers && <h3 className="font-display text-4xl leading-tight">{p.name}</h3>}
+                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
                   {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                     <div key={d.id} data-dish={d.id} className="mt-1">
                       <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
@@ -365,7 +367,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                   ))}
                   {!isOffers && descriptionFor(p, language) && <p className="mt-1 line-clamp-2 text-xl text-muted-foreground">{descriptionFor(p, language)}</p>}
                 </div>
-                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
+                <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
             ))}
             {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
