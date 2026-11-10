@@ -14,7 +14,7 @@ export function FoodFilterSettings() {
   const [emoji, setEmoji] = useState("");
   if (!banner) return <p className="text-lg text-muted-foreground">Caricamento…</p>;
   const on = filtersOn(banner);
-  const list = cleanFilters(banner.food_filters);
+  const list = cleanFilters(banner["food_filters"]);
   const save = async (p: Record<string, unknown>) => {
     try { await saveBanner({ data: { settings: { ...banner, ...p } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); toast.success("Salvato"); }
     catch { toast.error("Salvataggio non riuscito"); }

@@ -309,7 +309,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const OFFERS = "__offers"
   const offerMenus = products.filter((p) => isCombo(p) && !p.sold_out).sort((a, b) => Number(b.combo_offer) - Number(a.combo_offer))
   const cat = categories.find((c) => c.id === activeCat)
-  const foodFilters = filtersOn(bannerSettings) ? cleanFilters(bannerSettings?.food_filters).filter((f) => f.on) : []
+  const foodFilters = filtersOn(bannerSettings) ? cleanFilters(bannerSettings?.["food_filters"]).filter((f) => f.on) : []
   const ffOn = foodFilters.find((f) => f.id === foodFilter)
   const inCat = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
   const shown = ffOn ? inCat.filter((p) => dishMatches(p, ffOn)) : inCat

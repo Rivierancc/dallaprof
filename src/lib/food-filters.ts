@@ -35,7 +35,7 @@ export const newFilter = (label: string, emoji: string, list: FoodFilter[]): Foo
   return { id, label: label.trim().slice(0, 24), emoji: emoji.trim().slice(0, 4), on: true, words: [label.trim().toLowerCase()] };
 };
 
-export const filtersOn = (s: Record<string, unknown> | undefined) => s?.food_filters_on === true;
+export const filtersOn = (s: Record<string, unknown> | undefined) => s?.["food_filters_on"] === true;
 
 type Dish = { name: string; description: string; ingredients: string[]; food_tags?: string[] };
 /** Un piatto rientra se ha l'etichetta spuntata o se nome/ingredienti/descrizione contengono una parola chiave. */

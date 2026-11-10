@@ -176,7 +176,7 @@ function TagsEditor({ p }: { p: MenuProduct }) {
   const qc = useQueryClient();
   const save = useServerFn(setProductTags);
   const { data: banner } = useQuery(bannerQueryOptions);
-  const list = cleanFilters(banner?.food_filters);
+  const list = cleanFilters(banner?.["food_filters"]);
   const toggle = async (id: string) => {
     const tags = p.food_tags.includes(id) ? p.food_tags.filter((t) => t !== id) : [...p.food_tags, id];
     try { await save({ data: { id: p.id, tags } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }
