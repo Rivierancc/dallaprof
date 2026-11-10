@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@/components/customer-session", () => ({ useCustomer: () => state }));
 vi.mock("@/components/kitchen-features", () => ({ useKitchenFeatures: () => state.features }));
 vi.mock("@/hooks/use-orders", () => ({ useLiveOrders: () => state.orders }));
+vi.mock("@/lib/venue-mode", () => ({ useCustomerDisplayAllowed: () => true, useRestaurantOnly: () => false }));
 import { StaffDisplayPreview, StaffFullscreenButton } from "@/components/staff-display";
 
 beforeEach(() => {
