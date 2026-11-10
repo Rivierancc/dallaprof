@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
-import { cleanCategoryLayout, CATEGORY_SIZES } from "@/lib/category-layout";
+import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, dishLayoutFor } from "@/lib/category-layout";
 import { reorderCategories, saveBanner, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
@@ -16,6 +16,23 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
     if (!banner) return;
     try { await saveBanner({ data: { settings: { ...banner, ...p } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); toast.success("Salvato"); }
     catch (e) { console.error(e); toast.error("Salvataggio non riuscito"); }
+  };
+  const setDish = (id: string, p: Record<string, unknown>) => {
+    const all = (banner?.["dishLayout"] && typeof banner["dishLayout"] === "object" ? banner["dishLayout"] : {}) as Record<string, unknown>;
+    void setLayout({ dishLayout: { ...all, [id]: { ...dishLayoutFor(banner, id), ...p } } });
+  };
+  const dishRow = (id: string, name: string) => {
+    const d = dishLayoutFor(banner, id);
+    return (
+      <div className="flex flex-wrap items-center gap-2 pl-12 text-lg">
+        <span className="text-muted-foreground">Piatti:</span>
+        <button onClick={() => setDish(id, { scroll: false })} aria-label={`Piatti a griglia per ${name}`} className={`tap rounded-lg px-3 py-1 ${!d.scroll ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>▦ Griglia</button>
+        <button onClick={() => setDish(id, { scroll: true })} aria-label={`Piatti scorrevoli per ${name}`} className={`tap rounded-lg px-3 py-1 ${d.scroll ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>↔️ Scorrevoli</button>
+        <select value={d.size} onChange={(e) => setDish(id, { size: Number(e.target.value) })} aria-label={`Grandezza piatti di ${name}`} className="rounded-lg bg-secondary px-3 py-1">
+          {DISH_SIZES.map((l, i) => <option key={l} value={i}>{l}</option>)}
+        </select>
+      </div>
+    );
   };
   useEffect(() => setCats(categories), [categories]);
   const changed = cats.some((c, i) => c.id !== categories[i]?.id);
@@ -59,7 +76,7 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
       <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del tablet. «Nessuna» = riquadri normali.</p>
       <ul className="space-y-2">
         {cats.map((c, i) => (
-          <li key={c.id} className="flex items-center gap-3 rounded-2xl bg-background/40 p-3">
+          <li key={c.id} className="space-y-2 rounded-2xl bg-background/40 p-3"><div className="flex items-center gap-3">
             <span className="w-10 text-center font-display text-3xl text-accent">{i + 1}</span>
             <span className="min-w-0 flex-1 text-2xl font-bold">{c.name}</span>
             <select value={c.strip} onChange={(e) => setStrip(c.id, Number(e.target.value))} aria-label={`Striscia di ${c.name}`} className="rounded-xl bg-secondary px-3 py-2 text-xl">
@@ -68,8 +85,9 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
             </select>
             <button onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Sposta su ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▲</button>
             <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} aria-label={`Sposta giù ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▼</button>
-          </li>
+          </div>{banner && dishRow(c.id, c.name)}</li>
         ))}
+        {banner && <li className="space-y-2 rounded-2xl bg-background/40 p-3"><span className="pl-12 text-2xl font-bold">🍱 Menu in offerta</span>{dishRow("__offers", "Menu in offerta")}</li>}
         {!cats.length && <li className="text-lg text-muted-foreground">Nessuna categoria</li>}
       </ul>
       <div className="mt-4 flex gap-2">
