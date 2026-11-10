@@ -177,3 +177,8 @@ export const resetVenuePin = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const getSuperManual = createServerFn({ method: "GET" }).handler(async () => {
+  await requireMaster();
+  return (await import("@/lib/superadmin-manual.server")).superManual();
+});
