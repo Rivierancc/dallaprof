@@ -3,7 +3,10 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { menuQueryOptions } from "@/lib/menu";
-import { setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
+import { useQuery } from "@tanstack/react-query";
+import { bannerQueryOptions } from "@/components/display-banner";
+import { cleanFilters, dishMatches } from "@/lib/food-filters";
+import { setProductTags, setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
 import type { ChoiceGroup, Suggest } from "@/lib/options";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -37,6 +40,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
 
   return (
     <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
+      <TagsEditor p={p} />
       <RecipeEditor p={p} />
       <section>
         <h3 className="mb-2 text-2xl font-bold">Quanti extra può aggiungere il cliente</h3>
@@ -164,6 +168,32 @@ function RecipeEditor({ p }: { p: MenuProduct }) {
       <button onClick={() => run(!p.recipe_on, text)} className={`${btn} mb-3 ${p.recipe_on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.recipe_on ? "Acceso" : "Spento"}</button>
       <textarea value={text} maxLength={1000} rows={4} onChange={(e) => setText(e.target.value)} placeholder="Es. pane tostato, 180 g di carne, cheddar, insalata, pomodoro…" className={`${box} block w-full`} />
       <button onClick={() => run(p.recipe_on, text)} className={`${btn} mt-2 bg-primary text-primary-foreground`}>Salva note</button>
+    </section>
+  );
+}
+
+// Etichette per i filtri del totem (Pollo, Halal, Senza glutine…).
+function TagsEditor({ p }: { p: MenuProduct }) {
+  const qc = useQueryClient();
+  const save = useServerFn(setProductTags);
+  const { data: banner } = useQuery(bannerQueryOptions);
+  const list = cleanFilters(banner?.food_filters);
+  const toggle = async (id: string) => {
+    const tags = p.food_tags.includes(id) ? p.food_tags.filter((t) => t !== id) : [...p.food_tags, id];
+    try { await save({ data: { id: p.id, tags } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
+  };
+  return (
+    <section>
+      <h3 className="mb-1 text-2xl font-bold">🔎 Filtri sul totem</h3>
+      <p className="mb-3 text-lg text-muted-foreground">Spunta i filtri in cui deve comparire questo piatto. «Auto» vuol dire che è già riconosciuto dagli ingredienti.</p>
+      <div className="flex flex-wrap gap-2">
+        {list.map((f) => {
+          const on = p.food_tags.includes(f.id);
+          const auto = !on && dishMatches({ ...p, food_tags: [] }, f);
+          return <button key={f.id} onClick={() => toggle(f.id)} className={`${btn} ${on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{on ? "✓ " : ""}{f.emoji} {f.label}{auto ? " · auto" : ""}</button>;
+        })}
+      </div>
     </section>
   );
 }
