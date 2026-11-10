@@ -48,7 +48,7 @@ export function Screensaver() {
   if (!show || !s.on) return null;
   const useVideo = s.kind === "video" && !!videoUrl;
   return (
-    <div role="button" aria-label="Tocca per ordinare" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setShow(false); }} className="fixed inset-0 z-[9999] cursor-pointer overflow-hidden bg-background">
+    <div role="button" aria-label="Tocca per ordinare" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }} onClick={(e) => { e.stopPropagation(); e.preventDefault(); setShow(false); window.scrollTo({ top: 0 }); }} className="fixed inset-0 z-[9999] cursor-pointer overflow-hidden bg-background">
       {useVideo ? <video src={videoUrl} autoPlay muted loop playsInline className="h-full w-full object-cover" /> :
         pics.map((p, n) => <img key={p} src={p} alt="Salvaschermo" className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[2000ms]" style={{ opacity: n === i % pics.length ? 1 : 0 }} />)}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-16 pb-32 text-center">
