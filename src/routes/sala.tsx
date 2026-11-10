@@ -6,6 +6,8 @@ import { salaLogin, salaLogout, salaState, salaStatus, openTab, sendComanda, mar
 import { euro, menuQueryOptions } from "@/lib/menu";
 import { translatedFor } from "@/lib/customer";
 import { gateFlags } from "@/lib/gate";
+import { useTextScale } from "@/components/text-scale";
+import { TEXT_SCALES } from "@/lib/text-scale";
 
 export const Route = createFileRoute("/sala")({
   loader: () => salaStatus(),
@@ -96,6 +98,7 @@ function Floor({ me, tables, required, t, lang, langBtn }: { me: { label: string
   const [custom, setCustom] = useState("");
   const qc = useQueryClient();
   const readyCount = useRef(0);
+  const { index: zoom, change: setZoom } = useTextScale();
 
   // Suono quando la cucina segna nuovi piatti pronti.
   const ready = tabs.reduce((n, x) => n + x.orders.filter((o) => o.status === "ready").length, 0);
@@ -120,6 +123,7 @@ function Floor({ me, tables, required, t, lang, langBtn }: { me: { label: string
     <header className="sticky top-0 z-10 mb-4 flex items-center gap-2 bg-background/95 py-2 text-sm">
       <span className="rounded-full bg-secondary px-3 py-1 font-bold">📱 {me.label}{me.waiter && ` (${me.waiter})`}</span>
       {langBtn}
+      <button onClick={() => setZoom((zoom + 1) % TEXT_SCALES.length)} aria-label="Ingrandisci il testo" className="tap rounded-full bg-muted px-3 py-1 font-bold">🔠 {TEXT_SCALES[zoom]?.label}</button>
       <button onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }} className="tap ml-auto rounded-full bg-muted px-3 py-1 font-bold">{t.lock}</button>
     </header>
   );

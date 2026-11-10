@@ -1,3 +1,5 @@
+import { useRestaurantOnly } from "@/lib/venue-mode";
+import { Link as SalaLink } from "@tanstack/react-router";
 import { ThemeGreeting } from "@/components/theme-layer"
 import { browserVenueId } from "@/lib/venue-client"
 import { CompanyIdentity } from "@/components/company-identity"
@@ -33,6 +35,14 @@ export const Route = createFileRoute("/")({
 
 function Totem() {
   const { data: license } = useQuery(licenseQueryOptions)
+  const restaurantOnly = useRestaurantOnly()
+  if (restaurantOnly) return (
+    <main className="grid min-h-dvh place-items-center p-10 text-center">
+      <div><p className="font-display text-7xl text-accent">🍽️ Servizio al tavolo</p>
+      <p className="mt-6 text-3xl text-muted-foreground">In questo locale le ordinazioni le prende il cameriere.</p>
+      <SalaLink to="/sala" className="tap mt-10 inline-block rounded-2xl bg-primary px-8 py-4 text-3xl font-bold text-primary-foreground">Apri la sala camerieri</SalaLink></div>
+    </main>
+  )
   if (license?.state === "expired") return (
     <main className="grid min-h-dvh place-items-center p-10 text-center">
       <div><p className="font-display text-7xl text-accent">Sistema momentaneamente non disponibile</p>
