@@ -94,7 +94,7 @@ function Venues() {
             <span className="ml-auto text-muted-foreground"><span className="mr-2 rounded bg-secondary px-2">{MODES[cleanMode(v.mode)]}</span><span className={v.plan === "perpetua" ? "rounded bg-blue-600 px-2 text-white" : ""}>{PLANS[v.plan as keyof typeof PLANS] ?? v.plan}</span>{v.expires_at ? ` · scade il ${new Date(v.expires_at).toLocaleDateString("it-IT")}` : ""}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {PAGES.map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
+            {PAGES.filter(([p]) => cleanMode(v.mode) !== "restaurant" || (p !== "" && p !== "/display")).map(([p, l]) => <a key={l} href={`/${v.slug}${p}`} target="_blank" rel="noreferrer" className="rounded-lg border px-3 py-1 text-base">{l} ↗</a>)}
             <Button size="sm" className="ml-auto" onClick={() => setOpen(v.id)}>Licenza e dati</Button>
           </div>
         </div>); })}
