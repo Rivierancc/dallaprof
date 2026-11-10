@@ -1,4 +1,4 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 
 export const venueModeQuery = queryOptions({
   queryKey: ["venue-mode"],
@@ -16,8 +16,8 @@ export function useCustomerDisplayAllowed() {
   return allowsCustomerDisplay(data);
 }
 
-/** true solo quando il locale è «Solo Ristorante»: il totem e le funzioni fast food spariscono. */
+/** Aspetta la modalità reale: nessuna schermata assume Fast Food durante il caricamento. */
 export function useRestaurantOnly() {
-  const { data } = useQuery(venueModeQuery);
+  const { data } = useSuspenseQuery(venueModeQuery);
   return data === "restaurant";
 }
