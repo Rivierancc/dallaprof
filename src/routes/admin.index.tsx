@@ -13,6 +13,7 @@ import { ThemesPanel } from "@/components/themes-panel";
 import { CompanySettings } from "@/components/company-identity";
 import { BannerSettings, IdleSettings } from "@/components/display-banner";
 import { ScreensaverSettings } from "@/components/screensaver";
+import { FoodFilterSettings } from "@/components/food-filter-settings";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { DividerSettings } from "@/components/menu-divider";
 import { KitchenFeaturesSettings } from "@/components/kitchen-features";
@@ -71,6 +72,7 @@ function Admin() {
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="👥 Clienti e fidelizzazione"><LoyaltySettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="⏱️ Ritorno all'inizio del totem"><IdleSettings /></Fold></div>}
+      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🔎 Filtri dei piatti sul totem"><FoodFilterSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🖼️ Salvaschermo del totem"><ScreensaverSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>}

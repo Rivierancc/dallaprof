@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { menuQueryOptions } from "@/lib/menu";
-import { useQuery } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { cleanFilters, dishMatches } from "@/lib/food-filters";
 import { setProductTags, setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
