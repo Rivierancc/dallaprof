@@ -6,6 +6,7 @@ import { ThemeGreeting } from "@/components/theme-layer"
 import { browserVenueId } from "@/lib/venue-client"
 import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner, bannerQueryOptions } from "@/components/display-banner"
+import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
 import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -74,6 +75,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [custom, setCustom] = useState<Product | null>(null)
   const [startDish, setStartDish] = useState<string | null>(null)
   const [showCart, setShowCart] = useState(false)
+  const [foodFilter, setFoodFilter] = useState<string | null>(null)
   const [compose, setCompose] = useState<Category | null>(null)
   const lib = data?.ingredients ?? []
   const { reset: resetCustomer } = useCustomer()
@@ -307,7 +309,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const OFFERS = "__offers"
   const offerMenus = products.filter((p) => isCombo(p) && !p.sold_out).sort((a, b) => Number(b.combo_offer) - Number(a.combo_offer))
   const cat = categories.find((c) => c.id === activeCat)
-  const shown = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
+  const foodFilters = filtersOn(bannerSettings) ? cleanFilters(bannerSettings?.food_filters).filter((f) => f.on) : []
+  const ffOn = foodFilters.find((f) => f.id === foodFilter)
+  const inCat = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
+  const shown = ffOn ? inCat.filter((p) => dishMatches(p, ffOn)) : inCat
   const isOffers = activeCat === OFFERS
   const dl = dishLayoutFor(bannerSettings, activeCat ?? "")
   const dt = DISH_TILE[dl.size]!
@@ -342,6 +347,14 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       ) : (
         <>
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
+          {foodFilters.length > 0 && (
+            <div dir="ltr" className="mb-6 flex gap-3 overflow-x-auto pb-2">
+              {foodFilters.map((f) => (
+                <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-6 py-3 font-display text-3xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
+              ))}
+            </div>
+          )}
+          {ffOn && shown.length === 0 && <p className="mb-6 text-3xl text-muted-foreground">{ffOn.emoji} {ffOn.label}: —</p>}
           <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : "grid gap-6"} style={dl.scroll ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
               <Button variant="ghost" onClick={() => setCompose(cat)} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
