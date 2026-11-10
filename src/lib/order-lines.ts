@@ -42,6 +42,19 @@ export function splitMenu(item: CartItem, product: Product | undefined, products
   return { dish, dishExtras, side, drink };
 }
 
+// Bevanda ordinata da sola (non dentro un menu): prodotto di una categoria bevande.
+export function isStandaloneDrink(product: Product | undefined, categories: Category[]) {
+  if (!product) return false;
+  const c = categories.find((x) => x.id === product.category_id);
+  return !!c && /bevand|bibit|drink|bere|birr|vin|aperitiv|rinfresc/i.test(c.name + " " + c.slug);
+}
+
+// Ciclo al tocco in cucina: da fare → pronto → consegnato → da fare.
+export type ItemStep = "todo" | "ready" | "delivered";
+export function nextStep(s: ItemStep): ItemStep {
+  return s === "todo" ? "ready" : s === "ready" ? "delivered" : "todo";
+}
+
 // Versione semplice per chi ha solo l'ordine e il menu (cassa, storico, comanda).
 export function orderLines(i: CartItem, menu: MenuData | undefined) {
   const product = menu ? productOf(i, menu.products) : undefined;

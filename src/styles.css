@@ -30,6 +30,7 @@
   --color-shared: var(--shared);
   --color-shared-foreground: var(--shared-foreground);
   --color-kitchen-side: var(--kitchen-side);
+  --color-kitchen-drink: var(--kitchen-drink);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-destructive: var(--destructive);
@@ -60,6 +61,7 @@
   --accent-foreground: oklch(0.2 0.03 40);
   --success: oklch(0.72 0.18 150);
   --success-foreground: oklch(0.15 0.03 150);
+  --kitchen-drink: oklch(0.88 0.15 155);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.34 0.03 40);
