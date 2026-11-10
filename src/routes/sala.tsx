@@ -48,6 +48,12 @@ function Sala() {
   return <Floor me={s.me} tables={s.settings.tables} required={s.settings.table_required} t={t} lang={lang} langBtn={Lang} />;
 }
 
+function FullBtn() {
+  const [on, setOn] = useState(false);
+  useEffect(() => { const f = () => setOn(!!document.fullscreenElement); f(); document.addEventListener("fullscreenchange", f); return () => document.removeEventListener("fullscreenchange", f); }, []);
+  return <button onClick={() => { if (document.fullscreenElement) void document.exitFullscreen().catch(() => {}); else void document.documentElement.requestFullscreen?.().catch(() => {}); }} className="tap ml-auto rounded-full bg-muted px-3 py-1 font-bold">{on ? "⛶ Esci schermo intero" : "⛶ Schermo intero"}</button>;
+}
+
 function Login({ tablets, t, lang }: { tablets: { id: string; label: string; waiter: string; fullscreen: boolean }[]; t: typeof T.IT; lang: React.ReactNode }) {
   const router = useRouter();
   const login = useServerFn(salaLogin);
@@ -128,6 +134,7 @@ function Floor({ me, tables, required, t, lang, langBtn }: { me: { label: string
       <span className="rounded-full bg-secondary px-3 py-1 font-bold">📱 {me.label}{me.waiter && ` (${me.waiter})`}</span>
       {langBtn}
       <button onClick={() => setZoom((zoom + 1) % TEXT_SCALES.length)} aria-label="Ingrandisci il testo" className="tap rounded-full bg-muted px-3 py-1 font-bold">🔠 {TEXT_SCALES[zoom]?.label}</button>
+      <FullBtn />
       <button onClick={async () => { await logout({ data: gateFlags() }); router.invalidate(); }} className="tap ml-auto rounded-full bg-muted px-3 py-1 font-bold">{t.lock}</button>
     </header>
   );
