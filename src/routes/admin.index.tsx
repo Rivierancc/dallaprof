@@ -11,7 +11,7 @@ import { Fold } from "@/components/fold";
 import { CategoryOrderPanel } from "@/components/category-order-panel";
 import { ThemesPanel } from "@/components/themes-panel";
 import { CompanySettings } from "@/components/company-identity";
-import { BannerSettings } from "@/components/display-banner";
+import { BannerSettings, IdleSettings } from "@/components/display-banner";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { DividerSettings } from "@/components/menu-divider";
 import { KitchenFeaturesSettings } from "@/components/kitchen-features";
