@@ -52,7 +52,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       const savedExit = localStorage.getItem(EXIT_PIN_KEY);
       if (savedExit && /^\d{4,12}$/.test(savedExit)) setExitPin(savedExit);
       if (isLanguage(lang)) languageState(lang); else store("selected_lang", "IT");
-      if (isOrderType(type)) orderState(type); else store("order_type", null);
+      // Il totem riparte sempre dalla schermata iniziale: la scelta qui/asporto non sopravvive al ricaricamento.
+      void type; store("order_type", null);
     } catch { /* Keep safe defaults. */ }
     const sync = () => { setFullscreen(!!document.fullscreenElement); if (!document.fullscreenElement) setExitPrompt(false); };
     sync();
