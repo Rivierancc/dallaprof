@@ -893,3 +893,31 @@ export const getSaverVideo = createServerFn({ method: "GET" })
     return { path };
   })
   .handler(async ({ data }) => (await sign([data.path]))[data.path] ?? "");
+
+export const uploadSaverPhoto = createServerFn({ method: "POST" })
+  .inputValidator((d: { file: string }) => {
+    const file = String(d.file ?? "");
+    const m = /^data:image\/(jpeg|png|webp);base64,/.exec(file);
+    if (!m || file.length > 14_000_000) throw new Error("Foto non valida o troppo grande");
+    return { file, ext: m[1] === "jpeg" ? "jpg" : m[1] };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const bin = atob(data.file.slice(data.file.indexOf(",") + 1));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    const path = `saver-${crypto.randomUUID()}.${data.ext}`;
+    const { error } = await (await admin()).storage.from(BUCKET).upload(path, bytes, { contentType: `image/${data.ext === "jpg" ? "jpeg" : data.ext}` });
+    if (error) throw new Error(error.message);
+    return { path };
+  });
+
+export const getSaverPhotos = createServerFn({ method: "GET" })
+  .inputValidator((d: { paths: string[] }) => {
+    const paths = (Array.isArray(d.paths) ? d.paths : []).map(String).filter((p) => /^saver-[0-9a-f-]{36}\.(jpg|png|webp)$/.test(p)).slice(0, 20);
+    return { paths };
+  })
+  .handler(async ({ data }) => {
+    if (!data.paths.length) return [] as string[];
+    const m = await sign(data.paths);
+    return data.paths.map((p) => m[p]).filter(Boolean) as string[];
+  });
