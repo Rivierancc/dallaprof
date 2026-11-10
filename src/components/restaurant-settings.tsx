@@ -18,13 +18,15 @@ function TabletRow({ t, onDone }: { t: Tablet; onDone: () => void }) {
   const [label, setLabel] = useState(t.label);
   const [waiter, setWaiter] = useState(t.waiter);
   const [pin, setPin] = useState("");
+  const [full, setFull] = useState(t.fullscreen);
   const [msg, setMsg] = useState("");
   const run = async (f: () => Promise<unknown>, ok: string) => { setMsg("…"); try { await f(); setMsg(ok); setPin(""); onDone(); } catch (e) { setMsg((e as Error).message); } };
   return <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-background/40 p-3">
     <input aria-label="Nome tablet" value={label} onChange={(e) => setLabel(e.target.value)} className={`${inp} w-40`} />
     <input aria-label="Cameriere" placeholder="Cameriere" value={waiter} onChange={(e) => setWaiter(e.target.value)} className={`${inp} w-40`} />
     <input aria-label="Nuovo PIN" placeholder="Nuovo PIN" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} className={`${inp} w-36`} />
-    <Button onClick={() => run(() => updateTablet({ data: { id: t.id, label, waiter, pin } }), pin ? "PIN reimpostato ✓" : "Salvato ✓")}>Salva</Button>
+    <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="size-6" checked={full} onChange={(e) => setFull(e.target.checked)} />⛶ Schermo intero all'accesso</label>
+    <Button onClick={() => run(() => updateTablet({ data: { id: t.id, label, waiter, pin, fullscreen: full } }), pin ? "PIN reimpostato ✓" : "Salvato ✓")}>Salva</Button>
     <Button variant="destructive" onClick={() => confirm(`Eliminare ${t.label}?`) && run(() => deleteTablet({ data: { id: t.id } }), "")}>🗑️</Button>
     {msg && <span className="text-lg text-muted-foreground">{msg}</span>}
   </div>;

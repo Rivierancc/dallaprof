@@ -267,6 +267,13 @@
       "when": 1794267395851,
       "tag": "0037_restaurant_tabs",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794271773878,
+      "tag": "0038_tablet_fullscreen",
+      "breakpoints": true
     }
   ]
 }

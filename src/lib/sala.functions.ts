@@ -47,7 +47,7 @@ const restaurantOn = createServerOnlyFn(async () => {
 
 export const salaStatus = createServerFn({ method: "GET" }).handler(async () => {
   const r = await restaurantOn();
-  const { data } = await (await db()).from("restaurant_tablets").select("id, label, waiter").order("position").order("created_at");
+  const { data } = await (await db()).from("restaurant_tablets").select("id, label, waiter, fullscreen").order("position").order("created_at");
   return { ...r, tablets: data ?? [], me: await currentTablet() };
 });
 
