@@ -2,7 +2,9 @@ import { venuePageTitle } from "@/lib/page-title";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { MANUAL_UPDATED, manualAsText, searchManual } from "@/lib/manual";
+import { MANUAL_UPDATED, manualAsText, searchManual, type ManualMode } from "@/lib/manual";
+import { useQuery } from "@tanstack/react-query";
+import { venueModeQuery } from "@/lib/venue-mode";
 
 export const Route = createFileRoute("/manuale")({
   head: ({ matches }) => ({ meta: [
@@ -15,25 +17,26 @@ export const Route = createFileRoute("/manuale")({
   component: Manuale,
 });
 
-function download() {
-  const blob = new Blob([manualAsText()], { type: "text/plain;charset=utf-8" });
+function download(mode?: ManualMode) {
+  const blob = new Blob([manualAsText(mode)], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "manuale-totem-burger.txt";
+  a.href = url; a.download = "manuale.txt";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 function Manuale() {
   const [q, setQ] = useState("");
-  const sections = searchManual(q);
+  const { data: mode } = useQuery(venueModeQuery);
+  const sections = searchManual(q, mode as ManualMode | undefined);
   return <main className="mx-auto min-h-screen max-w-5xl p-6 print:p-0">
     <header className="mb-6 flex flex-wrap items-center gap-4 print:hidden">
       <h1 className="mr-auto font-display text-7xl text-accent">Manuale</h1>
       <Button asChild variant="secondary"><Link to="/admin">Admin</Link></Button>
       <Button asChild variant="secondary"><Link to="/menu">Gestione menu</Link></Button>
     </header>
-    <h1 className="hidden font-display text-4xl print:block">Manuale Totem Burger</h1>
+    <h1 className="hidden font-display text-4xl print:block">Manuale</h1>
     <p className="mb-4 text-xl text-muted-foreground">Aggiornato al {MANUAL_UPDATED}</p>
     <div className="mb-6 flex flex-wrap gap-3 print:hidden">
       <input
@@ -41,7 +44,7 @@ function Manuale() {
         placeholder="🔍 Cerca una funzione (es. suoneria, PIN, foto)…" aria-label="Cerca nel manuale"
         className="h-16 min-w-0 flex-1 rounded-2xl border border-input bg-background px-5 text-2xl"
       />
-      <Button className="h-16 px-6 text-xl" onClick={download}>⬇️ Scarica (testo)</Button>
+      <Button className="h-16 px-6 text-xl" onClick={() => download(mode as ManualMode | undefined)}>⬇️ Scarica (testo)</Button>
       <Button variant="secondary" className="h-16 px-6 text-xl" onClick={() => window.print()}>🖨️ Stampa / PDF</Button>
     </div>
     {!q && <nav className="mb-6 flex flex-wrap gap-2 print:hidden">
