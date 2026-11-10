@@ -19,7 +19,7 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
   };
   const setDish = (id: string, p: Record<string, unknown>) => {
     const all = (banner?.["dishLayout"] && typeof banner["dishLayout"] === "object" ? banner["dishLayout"] : {}) as Record<string, unknown>;
-    void setLayout({ dishLayout: { ...all, [id]: { ...dishLayoutFor(banner, id), ...p } } });
+    void setLayout({ dishLayout: { ...all, [id]: { scroll: dishLayoutFor(banner, id).scroll, size: dishLayoutFor(banner, id).size - 1, ...p } } });
   };
   const dishRow = (id: string, name: string) => {
     const d = dishLayoutFor(banner, id);
@@ -28,7 +28,7 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
         <span className="text-muted-foreground">Piatti:</span>
         <button onClick={() => setDish(id, { scroll: false })} aria-label={`Piatti a griglia per ${name}`} className={`tap rounded-lg px-3 py-1 ${!d.scroll ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>▦ Griglia</button>
         <button onClick={() => setDish(id, { scroll: true })} aria-label={`Piatti scorrevoli per ${name}`} className={`tap rounded-lg px-3 py-1 ${d.scroll ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>↔️ Scorrevoli</button>
-        <select value={d.size} onChange={(e) => setDish(id, { size: Number(e.target.value) })} aria-label={`Grandezza piatti di ${name}`} className="rounded-lg bg-secondary px-3 py-1">
+        <select value={d.size} onChange={(e) => setDish(id, { size: Number(e.target.value) - 1 })} aria-label={`Grandezza piatti di ${name}`} className="rounded-lg bg-secondary px-3 py-1">
           {DISH_SIZES.map((l, i) => <option key={l} value={i}>{l}</option>)}
         </select>
       </div>
@@ -70,7 +70,7 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
         </div>
         <div>
           <p className="mb-2 text-xl font-bold">Grandezza delle categorie</p>
-          <div className="flex flex-wrap gap-2">{CATEGORY_SIZES.map((l, i) => <button key={l} onClick={() => void setLayout({ catSize: i })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.size === i ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{l}</button>)}</div>
+          <div className="flex flex-wrap gap-2">{CATEGORY_SIZES.map((l, i) => <button key={l} onClick={() => void setLayout({ catSize: i - 1 })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.size === i ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{l}</button>)}</div>
         </div>
       </div>}
       <p className="mb-3 text-lg text-muted-foreground">Striscia: le categorie con lo stesso numero stanno sulla stessa riga scorrevole del tablet. «Nessuna» = riquadri normali.</p>
