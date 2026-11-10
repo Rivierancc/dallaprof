@@ -12,19 +12,35 @@ export type KitchenInfo = { partial_notes?: string[]; checked_items?: string[]; 
  * In Cassa si usa con compact: le schede stanno in colonna singola e i
  * riquadri ingredienti si aprono sotto l'ordine invece che a fianco.
  */
+const KITCHEN_WIDTHS = [
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,24rem),1fr))]",
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,33rem),1fr))]",
+  "grid-cols-[repeat(auto-fill,minmax(min(100%,43rem),1fr))]",
+];
+
 export function KitchenBoard({
   orders,
   features,
   onStatus,
   onInfo,
   compact = false,
+  width = 0,
+  twoCols = false,
+  hideDrinks = false,
 }: {
   orders: Order[];
   features: KitchenFeatures;
   onStatus: (id: string, status: string) => void;
   onInfo: (id: string, d: KitchenInfo) => void;
   compact?: boolean;
+  /** Larghezza schede: 0 normale, 1 larga, 2 extra larga. */
+  width?: number;
+  /** Piatti su due colonne dentro la scheda. */
+  twoCols?: boolean;
+  /** Nasconde le bibite (resta il badge 🥤 N bibite, toccabile). */
+  hideDrinks?: boolean;
 }) {
+  const [peek, setPeek] = useState<string[]>([]);
   const { data: menu } = useQuery(menuQueryOptions);
   // Piatto toccato: apre il riquadro ingredienti accanto al suo ordine.
   const [sel, setSelList] = useState<{ o: string; i: string }[]>([]);
@@ -73,7 +89,7 @@ export function KitchenBoard({
           </div>
         </div>
       ) : (
-        <div className={`grid gap-5 ${compact ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(24rem,1fr))]"}`}>
+        <div className={`grid gap-5 ${compact ? "grid-cols-1" : KITCHEN_WIDTHS[width] ?? KITCHEN_WIDTHS[0]}`}>
           {orders.map((o) => card(o))}
         </div>
       )}
@@ -83,6 +99,12 @@ export function KitchenBoard({
   function card(o: Order) {
     const delivered = o.delivered_items ?? [];
     const allDelivered = o.items.length > 0 && delivered.length >= o.items.length;
+    const cats = menu?.categories ?? [];
+    const drinkCount = o.items.reduce((n, i) => {
+      if (isStandaloneDrink(productOf(i), cats)) return n + i.qty;
+      return splitMenu(i, productOf(i), menu?.products ?? [], cats).drink.length > 0 ? n + i.qty : n;
+    }, 0);
+    const hidden = hideDrinks && !peek.includes(o.id);
     return (
       <article
         key={o.id}
@@ -95,6 +117,11 @@ export function KitchenBoard({
         <p className="text-2xl font-bold">
           🕒 {new Date(o.created_at).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}
         </p>
+        {hideDrinks && drinkCount > 0 && (
+          <button onClick={() => setPeek(peek.includes(o.id) ? peek.filter((x) => x !== o.id) : [...peek, o.id])} className="tap mt-2 self-start rounded-full bg-success px-4 py-1 text-2xl font-bold text-success-foreground">
+            🥤 {drinkCount} {drinkCount === 1 ? "bibita" : "bibite"} {hidden ? "▸" : "▾"}
+          </button>
+        )}
         {features.delivery && (
           <p className={`text-xl font-bold ${allDelivered ? "text-success" : "text-muted-foreground"}`}>
             🚚 {delivered.length}/{o.items.length} consegnati
@@ -109,7 +136,7 @@ export function KitchenBoard({
             setSelList([...sel.filter((s) => s.o !== o.id), ...ids]);
           }} className="tap mt-3 rounded-2xl bg-shared px-4 py-2 text-xl font-bold text-shared-foreground">📖 Apri tutti gli ingredienti</button>
         )}
-        <ul className="my-4 flex-1 divide-y-2 divide-border text-4xl font-bold leading-tight [&>li]:py-3">
+        <ul className={`my-4 flex-1 text-4xl font-bold leading-tight [&>li]:py-3 ${twoCols ? "grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-x-6 [&>li]:border-b-2 [&>li]:border-border" : "divide-y-2 divide-border"}`}>
           {o.items.map((i) => {
             const done = (o.checked_items ?? []).includes(i.id);
             const gave = delivered.includes(i.id);
@@ -126,6 +153,7 @@ export function KitchenBoard({
             };
             const tappable = features.checklist || features.delivery;
             const drinkSolo = isStandaloneDrink(productOf(i), menu?.categories ?? []);
+            if (hidden && drinkSolo) return null;
             return (
               <li key={i.id} className="flex items-start gap-3">
                 <div
@@ -140,7 +168,7 @@ export function KitchenBoard({
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                     {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
                     {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-2xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
-                    {m.drink.length > 0 && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
+                    {m.drink.length > 0 && !hidden && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
                   </>; })()}
                   {step === "ready" && <span className="block text-xl font-bold text-success no-underline">✓ Pronto</span>}
                   {step === "delivered" && <span className="block text-xl font-bold text-muted-foreground">🚚 Consegnato</span>}

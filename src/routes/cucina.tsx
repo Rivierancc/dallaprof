@@ -2,7 +2,7 @@ import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLiveOrders } from "@/hooks/use-orders";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen, setOrderStatus } from "@/lib/kitchen.functions";
@@ -68,6 +68,15 @@ function Kitchen() {
   const features = useKitchenFeatures();
   const info = useServerFn(setOrderKitchenInfo);
   const [showHistory, setShowHistory] = useState(false);
+  const [layout, setLayout] = useState({ width: 0, twoCols: false, hideDrinks: false });
+  useEffect(() => {
+    try { const v = JSON.parse(localStorage.getItem("kitchen-layout") ?? "{}"); setLayout((l) => ({ ...l, ...v })); } catch { /* ignora */ }
+  }, []);
+  const setL = (p: Partial<typeof layout>) => setLayout((l) => {
+    const n = { ...l, ...p };
+    localStorage.setItem("kitchen-layout", JSON.stringify(n));
+    return n;
+  });
 
   const saveInfo = (id: string, d: { partial_notes?: string[]; checked_items?: string[]; delivered_items?: string[] }) =>
     info({ data: { id, ...d } }).catch((e) => alert(`Non salvato: ${e.message}`));
@@ -86,6 +95,15 @@ function Kitchen() {
         <StaffFullscreenButton />
         <StaffChip onClick={() => changeTextScale(nextTextScaleIndex(textScale))} aria-label="Ingrandisci il testo">
           🔠 {TEXT_SCALES[textScale]?.label}
+        </StaffChip>
+        <StaffChip onClick={() => setL({ width: (layout.width + 1) % 3 })} aria-label="Larghezza comande">
+          ↔️ {["Normale", "Larga", "Extra larga"][layout.width]}
+        </StaffChip>
+        <StaffChip onClick={() => setL({ twoCols: !layout.twoCols })} aria-label="Colonne dei piatti">
+          {layout.twoCols ? "▥ 2 colonne" : "▯ 1 colonna"}
+        </StaffChip>
+        <StaffChip onClick={() => setL({ hideDrinks: !layout.hideDrinks })} aria-label="Bibite">
+          {layout.hideDrinks ? "🥤 Bibite nascoste" : "🥤 Bibite visibili"}
         </StaffChip>
         <StaffChip
           onClick={() => {
@@ -111,7 +129,7 @@ function Kitchen() {
       </header>
       <StaffDisplayPreview page="cucina" />
       {showHistory && features.history ? <History /> : (
-        <KitchenBoard orders={orders} features={features} onStatus={setStatus} onInfo={saveInfo} />
+        <KitchenBoard orders={orders} features={features} onStatus={setStatus} onInfo={saveInfo} width={layout.width} twoCols={layout.twoCols} hideDrinks={layout.hideDrinks} />
       )}
     </main>
   );
