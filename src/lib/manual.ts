@@ -1,4 +1,5 @@
 // Manuale d'uso: va aggiornato a ogni nuova funzione o cambiamento dell'app.
+// 10 novembre 2026: manuale fornitore aggiornato con il rientro dopo scadenza Master.
 export type ManualMode = "fast_food" | "restaurant" | "both";
 export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };

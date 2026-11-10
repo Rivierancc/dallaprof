@@ -2,6 +2,7 @@ import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
 import { useSession } from "@tanstack/react-start/server";
 import { cleanDemo, cleanMode, cleanPublicLicense, PLANS } from "@/lib/license";
 import { slugFromPath, validSlug } from "@/lib/venue";
+import { MASTER_ACCESS_EXPIRED } from "@/lib/master-access";
 
 type Flags = { secure?: boolean; partitioned?: boolean };
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -18,7 +19,7 @@ async function masterHash() {
 async function requireMaster() {
   const s = await useSession<{ master?: string }>(await masterConfig());
   const hash = await masterHash();
-  if (!hash || s.data.master !== hash.slice(-16)) throw new Error("Accesso riservato");
+  if (!hash || s.data.master !== hash.slice(-16)) throw new Error(MASTER_ACCESS_EXPIRED);
 }
 
 const venueDb = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
