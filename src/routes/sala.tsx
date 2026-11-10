@@ -48,7 +48,7 @@ function Sala() {
   return <Floor me={s.me} tables={s.settings.tables} required={s.settings.table_required} t={t} lang={lang} langBtn={Lang} />;
 }
 
-function Login({ tablets, t, lang }: { tablets: { id: string; label: string; waiter: string }[]; t: typeof T.IT; lang: React.ReactNode }) {
+function Login({ tablets, t, lang }: { tablets: { id: string; label: string; waiter: string; fullscreen: boolean }[]; t: typeof T.IT; lang: React.ReactNode }) {
   const router = useRouter();
   const login = useServerFn(salaLogin);
   const [id, setId] = useState<string | null>(null);
@@ -60,8 +60,11 @@ function Login({ tablets, t, lang }: { tablets: { id: string; label: string; wai
     const next = (pin + k).slice(0, 4);
     setPin(next);
     if (next.length === 4 && id) {
+      // Schermo intero va chiesto subito, dentro il tocco; se il PIN è errato si esce.
+      const wantFull = tablets.find((x) => x.id === id)?.fullscreen && document.fullscreenEnabled && !document.fullscreenElement;
+      if (wantFull) void document.documentElement.requestFullscreen().catch(() => {});
       const r = await login({ data: { id, pin: next, ...gateFlags() } }).catch(() => ({ ok: false }));
-      if (r.ok) router.invalidate(); else { setErr(true); setPin(""); }
+      if (r.ok) router.invalidate(); else { setErr(true); setPin(""); if (wantFull && document.fullscreenElement) void document.exitFullscreen().catch(() => {}); }
     }
   };
   return (
