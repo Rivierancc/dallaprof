@@ -98,7 +98,8 @@ export function KitchenBoard({
 
   function card(o: Order) {
     const delivered = o.delivered_items ?? [];
-    const allDelivered = o.items.length > 0 && delivered.length >= o.items.length;
+    const mainDelivered = delivered.filter((x) => !x.includes("#")).length;
+    const allDelivered = o.items.length > 0 && mainDelivered >= o.items.length;
     const cats = menu?.categories ?? [];
     const drinkCount = o.items.reduce((n, i) => {
       if (isStandaloneDrink(productOf(i), cats)) return n + i.qty;
@@ -124,7 +125,7 @@ export function KitchenBoard({
         )}
         {features.delivery && (
           <p className={`text-xl font-bold ${allDelivered ? "text-success" : "text-muted-foreground"}`}>
-            🚚 {delivered.length}/{o.items.length} consegnati
+            🚚 {mainDelivered}/{o.items.length} consegnati
           </p>
         )}
         {features.checklist && features.delivery && (
@@ -138,20 +139,38 @@ export function KitchenBoard({
         )}
         <ul className={`my-4 flex-1 text-4xl font-bold leading-tight [&>li]:py-3 ${twoCols ? "grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-x-6 [&>li]:border-b-2 [&>li]:border-border" : "divide-y-2 divide-border"}`}>
           {o.items.map((i) => {
-            const done = (o.checked_items ?? []).includes(i.id);
-            const gave = delivered.includes(i.id);
-            const step: ItemStep = gave ? "delivered" : done ? "ready" : "todo";
-            const checked = (o.checked_items ?? []).filter((x) => x !== i.id);
-            const dlv = delivered.filter((x) => x !== i.id);
-            // Un tocco sulla riga: da fare → pronto → consegnato (sbarrato) → di nuovo da fare.
-            const tap = () => {
+            // Ogni parte del menu (piatto, contorno, bevanda) ha un suo stato: id, id#side, id#drink.
+            const stepOf = (id: string): ItemStep => delivered.includes(id) ? "delivered" : (o.checked_items ?? []).includes(id) ? "ready" : "todo";
+            const tapId = (id: string) => {
+              const s = stepOf(id);
+              const checked = (o.checked_items ?? []).filter((x) => x !== id);
+              const dlv = delivered.filter((x) => x !== id);
               if (features.checklist && features.delivery) {
-                const n = nextStep(step);
-                onInfo(o.id, { checked_items: n === "todo" ? checked : [...checked, i.id], delivered_items: n === "delivered" ? [...dlv, i.id] : dlv });
-              } else if (features.checklist) onInfo(o.id, { checked_items: done ? checked : [...checked, i.id] });
-              else if (features.delivery) onInfo(o.id, { delivered_items: gave ? dlv : [...dlv, i.id] });
+                const n = nextStep(s);
+                onInfo(o.id, { checked_items: n === "todo" ? checked : [...checked, id], delivered_items: n === "delivered" ? [...dlv, id] : dlv });
+              } else if (features.checklist) onInfo(o.id, { checked_items: s !== "todo" ? checked : [...checked, id] });
+              else if (features.delivery) onInfo(o.id, { delivered_items: s === "delivered" ? dlv : [...dlv, id] });
             };
+            const step = stepOf(i.id);
+            const tap = () => tapId(i.id);
             const tappable = features.checklist || features.delivery;
+            const part = (id: string, cls: string, text: string) => {
+              const s = stepOf(id);
+              return (
+                <span
+                  role={tappable ? "button" : undefined}
+                  tabIndex={tappable ? 0 : undefined}
+                  aria-label={tappable ? `${text}: ${s === "todo" ? "da fare" : s === "ready" ? "pronto" : "consegnato"}` : undefined}
+                  onClick={tappable ? (e) => { e.stopPropagation(); tapId(id); } : undefined}
+                  onKeyDown={tappable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); tapId(id); } } : undefined}
+                  className={`mt-2 block rounded-xl pt-2 text-2xl font-bold ${cls} ${tappable ? "tap cursor-pointer select-none" : ""} ${s === "ready" ? "bg-success/15 px-2" : ""} ${s === "delivered" ? "line-through opacity-50" : ""}`}
+                >
+                  {text}
+                  {s === "ready" && <span className="block text-lg text-success">✓ Pronto</span>}
+                  {s === "delivered" && <span className="block text-lg text-muted-foreground">🚚 Consegnato</span>}
+                </span>
+              );
+            };
             const drinkSolo = isStandaloneDrink(productOf(i), menu?.categories ?? []);
             if (hidden && drinkSolo) return null;
             return (
@@ -167,8 +186,8 @@ export function KitchenBoard({
                   <span className={drinkSolo ? "text-2xl text-kitchen-drink" : ""}>{i.qty} × {drinkSolo && "🥤 "}{itemTitle(i, dishOf(i))}</span>
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
                     {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
-                    {m.side.length > 0 && <span className="mt-2 block border-t-4 border-shared pt-2 text-2xl font-bold text-kitchen-side">🍟 {m.side.join(" · ")}</span>}
-                    {m.drink.length > 0 && !hidden && <span className="mt-2 block border-t-4 border-success pt-2 text-2xl font-bold text-success">🥤 {m.drink.join(" · ")}</span>}
+                    {m.side.length > 0 && part(`${i.id}#side`, "border-t-4 border-shared text-kitchen-side", `🍟 ${m.side.join(" · ")}`)}
+                    {m.drink.length > 0 && !hidden && part(`${i.id}#drink`, "border-t-4 border-success text-success", `🥤 ${m.drink.join(" · ")}`)}
                   </>; })()}
                   {step === "ready" && <span className="block text-xl font-bold text-success no-underline">✓ Pronto</span>}
                   {step === "delivered" && <span className="block text-xl font-bold text-muted-foreground">🚚 Consegnato</span>}
