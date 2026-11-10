@@ -185,7 +185,8 @@ export function KitchenBoard({
                 >
                   <span className={drinkSolo ? "text-2xl text-kitchen-drink" : ""}>{i.qty} × {drinkSolo && "🥤 "}{itemTitle(i, dishOf(i))}</span>
                   {(() => { const m = splitMenu(i, productOf(i), menu?.products ?? [], menu?.categories ?? []); return <>
-                    {m.dish.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dish.join(" · ")}</span>}
+                    {m.dishExtras.length > 0 && <span className="mt-1 block text-2xl font-bold text-accent">{m.dishExtras.map((e) => `+ ${e}`).join(" · ")}</span>}
+                    {(i.removed ?? []).length > 0 && <span className="mt-1 block text-2xl font-bold text-destructive">{(i.removed ?? []).map((r) => `✕ senza ${r}`).join(" · ")}</span>}
                     {m.side.length > 0 && part(`${i.id}#side`, "border-t-4 border-shared text-kitchen-side", `🍟 ${m.side.join(" · ")}`)}
                     {m.drink.length > 0 && !hidden && part(`${i.id}#drink`, "border-t-4 border-success text-success", `🥤 ${m.drink.join(" · ")}`)}
                   </>; })()}
