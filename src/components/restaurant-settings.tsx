@@ -25,7 +25,7 @@ function TabletRow({ t, onDone }: { t: Tablet; onDone: () => void }) {
     <input aria-label="Nome tablet" value={label} onChange={(e) => setLabel(e.target.value)} className={`${inp} w-40`} />
     <input aria-label="Cameriere" placeholder="Cameriere" value={waiter} onChange={(e) => setWaiter(e.target.value)} className={`${inp} w-40`} />
     <input aria-label="Nuovo PIN" placeholder="Nuovo PIN" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))} className={`${inp} w-36`} />
-    <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="size-6" checked={full} onChange={(e) => setFull(e.target.checked)} />⛶ Schermo intero all'accesso</label>
+    <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="size-6" checked={full} onChange={(e) => { const v = e.target.checked; setFull(v); void run(() => updateTablet({ data: { id: t.id, label: t.label, waiter: t.waiter, fullscreen: v } }), v ? "Schermo intero attivo ✓" : "Schermo intero spento ✓"); }} />⛶ Schermo intero all'accesso</label>
     <Button onClick={() => run(() => updateTablet({ data: { id: t.id, label, waiter, pin, fullscreen: full } }), pin ? "PIN reimpostato ✓" : "Salvato ✓")}>Salva</Button>
     <Button variant="destructive" onClick={() => confirm(`Eliminare ${t.label}?`) && run(() => deleteTablet({ data: { id: t.id } }), "")}>🗑️</Button>
     {msg && <span className="text-lg text-muted-foreground">{msg}</span>}
