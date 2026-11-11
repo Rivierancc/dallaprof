@@ -3,7 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getLanguages } from "@/lib/menu.functions";
-import { canExitKiosk, EXIT_TAPS, EXIT_WINDOW, isLanguage, isRtl, LANGUAGES, isOrderType, type Language, type OrderType } from "@/lib/customer";
+import { canExitKiosk, EXIT_TAPS, EXIT_WINDOW, isRtl, LANGUAGES, isOrderType, type Language, type OrderType } from "@/lib/customer";
 import { DEFAULT_EXIT_PIN, EXIT_PIN_KEY, validatePinChange } from "@/lib/access";
 
 function store(key: string, value: string | null) {
@@ -51,7 +51,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       const type = localStorage.getItem("order_type");
       const savedExit = localStorage.getItem(EXIT_PIN_KEY);
       if (savedExit && /^\d{4,12}$/.test(savedExit)) setExitPin(savedExit);
-      if (isLanguage(lang)) languageState(lang); else store("selected_lang", "IT");
+      // Ricaricando, il totem riparte sempre in italiano.
+      void lang; store("selected_lang", "IT");
       // Il totem riparte sempre dalla schermata iniziale: la scelta qui/asporto non sopravvive al ricaricamento.
       void type; store("order_type", null);
     } catch { /* Keep safe defaults. */ }
