@@ -928,16 +928,30 @@ function OptionsEditor({
 function TranslationField({ language, value, onSave }: { language: "EN" | "FR" | "ES" | "DE" | "AR"; value: string; onSave: (text: string) => Promise<unknown> }) {
   const [text, setText] = useState(value);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const latest = useRef({ text: value, saved: value, onSave });
+  latest.current.onSave = onSave;
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flush = async () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    const t = latest.current.text.trim();
+    if (t === latest.current.saved) return;
+    latest.current.saved = t;
+    setBusy(true); setError(""); setSaved(false);
+    try { await latest.current.onSave(t); setSaved(true); }
+    catch { latest.current.saved = ""; setError("Salvataggio non riuscito: riprova"); }
+    finally { setBusy(false); }
+  };
+  useEffect(() => () => { void flush(); }, []);
   return <label className="grid gap-2 text-xl">
-    <span>Descrizione {language} {busy ? "— Salvataggio…" : ""}</span>
-    <textarea aria-label={`Descrizione ${language}`} rows={3} maxLength={300} value={text} onChange={(event) => setText(event.target.value)} onBlur={async () => {
-      if (text.trim() === value) return;
-      setBusy(true); setError("");
-      try { await onSave(text.trim()); }
-      catch { setError("Salvataggio non riuscito: riprova"); }
-      finally { setBusy(false); }
-    }} className="w-full rounded-lg bg-muted px-4 py-3" />
+    <span>Descrizione {language} {busy ? "— Salvataggio…" : saved ? "— ✓ Salvata" : ""}</span>
+    <textarea aria-label={`Descrizione ${language}`} dir={language === "AR" ? "rtl" : "auto"} rows={3} maxLength={300} value={text} onChange={(event) => {
+      setText(event.target.value); setSaved(false);
+      latest.current.text = event.target.value;
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => { void flush(); }, 1200);
+    }} onBlur={() => { void flush(); }} className="w-full rounded-lg bg-muted px-4 py-3" />
     {error && <span role="alert" className="text-destructive">{error}</span>}
   </label>;
 }
