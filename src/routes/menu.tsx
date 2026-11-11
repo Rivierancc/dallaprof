@@ -787,6 +787,7 @@ function ProductRow({
   const [desc, setDesc] = useState(p.description);
   const [price, setPrice] = useState(fmt(p.price));
   const [open, setOpen] = useState(false);
+  const [trOpen, setTrOpen] = useState(false);
   const run = useSerial();
   const n = Number(price.replace(",", "."));
   const valid = !!name.trim() && Number.isFinite(n) && n >= 0;
@@ -884,6 +885,7 @@ function ProductRow({
       </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
       {toggleBtn}
+      <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       <textarea
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
@@ -893,16 +895,16 @@ function ProductRow({
         placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
         className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
       />
-      <div className="flex w-full basis-full flex-wrap items-center gap-3">
+      <button type="button" onClick={() => setTrOpen((o) => !o)} aria-expanded={trOpen} className="tap w-full basis-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">🌍 Traduzioni (EN, FR, ES, DE, AR) {trOpen ? "▲" : "▼"}</button>
+      {trOpen && <div className="flex w-full basis-full flex-wrap items-center gap-3">
         <button type="button" disabled={!p.description.trim()} onClick={() => void onRetranslate()} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold disabled:opacity-50" title="Traduce di nuovo la descrizione italiana in tutte le lingue">
           🔄 Ritraduci con IA
         </button>
         <span className="text-lg text-muted-foreground">Le lingue vuote si traducono da sole quando salvi la descrizione italiana.</span>
-      </div>
-      <div className="grid w-full basis-full gap-3 md:grid-cols-3">
+      </div>}
+      {trOpen && <div className="grid w-full basis-full gap-3 md:grid-cols-3">
         {(["EN", "FR", "ES", "DE", "AR"] as const).map((language) => <TranslationField key={language} language={language} value={({ EN: p.description_en, FR: p.description_fr, ES: p.description_es, DE: p.description_de, AR: p.description_ar })[language]} onSave={(text) => run(() => onTranslation(language, text))} />)}
-      </div>
-      <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
+      </div>}
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
       {open && <ProductRules p={p} />}
       <div className="flex w-full basis-full justify-end">
