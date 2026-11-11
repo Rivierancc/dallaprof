@@ -68,7 +68,7 @@ export function PhotoCrop({ file, onDone, onCancel }: { file: File | null; onDon
         </div>
         <div className="flex items-center gap-3 text-2xl">
           <span>－</span>
-          <Slider min={1} max={4} step={0.05} value={[zoom]} onValueChange={([z]) => setZ(z)} aria-label="Zoom" />
+          <Slider min={1} max={4} step={0.05} value={[zoom]} onValueChange={([z]) => setZ(z ?? 1)} aria-label="Zoom" />
           <span>＋</span>
         </div>
         <div className="flex justify-end gap-3">
