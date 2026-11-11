@@ -904,6 +904,9 @@ function ProductRow({
       <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
       {open && <ProductRules p={p} />}
+      <div className="flex w-full basis-full justify-end">
+        <button onClick={onToggle} aria-expanded={!collapsed} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold" title="Comprimi la scheda del piatto">▲ Comprimi piatto</button>
+      </div>
     </li>
   );
 }
