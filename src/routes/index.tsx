@@ -109,7 +109,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [askMember, setAskMember] = useState(false)
   useEffect(() => { if (!dineOption) setMember(null) }, [dineOption])
   // Inattività: dopo il tempo scelto in Admin il totem torna alla schermata iniziale.
-  const busy = !!dineOption || cart.length > 0 || !!custom || activeCat !== null
+  const busy = language !== "IT" || !!dineOption || cart.length > 0 || !!custom || activeCat !== null
   useEffect(() => {
     if (!busy || !idle || idle <= 0) return
     let timer = setTimeout(go, idle * 1000)

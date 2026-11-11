@@ -4,6 +4,7 @@ import { bannerQueryOptions } from "@/components/display-banner";
 import { getSaverPhotos, getSaverVideo, saveBanner, uploadSaverPhoto, uploadSaverVideo } from "@/lib/menu.functions";
 import { Button } from "@/components/ui/button";
 import { NewsTicker } from "@/components/news-ticker";
+import { useCustomer } from "@/components/customer-session";
 
 export type Saver = { on: boolean; after: number; kind: "photos" | "video"; video: string; photos: string[] };
 export function readSaver(s: Record<string, unknown> | undefined): Saver {
@@ -26,6 +27,9 @@ export function Screensaver() {
   const pics = mine && mine.length ? mine.map((x) => x.url) : [];
   const [show, setShow] = useState(false);
   const [i, setI] = useState(0);
+  const { reset } = useCustomer();
+  // Quando parte il salvaschermo il prossimo cliente ricomincia in italiano.
+  useEffect(() => { if (show) reset(); }, [show]);
   useEffect(() => {
     if (!data || !s.on) return;
     let t = setTimeout(() => setShow(true), s.after * 1000);
