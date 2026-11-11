@@ -71,6 +71,9 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const navigate = useNavigate()
   const [orderError, setOrderError] = useState("")
   const [activeCat, setActiveCat] = useState<string | null>(null)
+  // Ultima categoria aperta: la striscia torna centrata lì quando si esce dai piatti.
+  const [lastCat, setLastCat] = useState<string | null>(null)
+  useEffect(() => { if (activeCat) setLastCat(activeCat) }, [activeCat])
   const [cart, setCart] = useState<CartItem[]>([])
   const [custom, setCustom] = useState<Product | null>(null)
   const [startDish, setStartDish] = useState<string | null>(null)
@@ -113,7 +116,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   useEffect(() => {
     if (!busy || !idle || idle <= 0) return
     let timer = setTimeout(go, idle * 1000)
-    function go() { setCart([]); setCustom(null); setActiveCat(null); setShowCart(false); setShowSuggest(false); setSuggestSeen(false); setMember(null); setAskMember(false); setCompose(null); resetCustomer(); window.scrollTo({ top: 0 }) }
+    function go() { setCart([]); setCustom(null); setActiveCat(null); setLastCat(null); setShowCart(false); setShowSuggest(false); setSuggestSeen(false); setMember(null); setAskMember(false); setCompose(null); resetCustomer(); window.scrollTo({ top: 0 }) }
     const bump = () => { clearTimeout(timer); timer = setTimeout(go, idle * 1000) }
     const evs = ["pointerdown", "keydown", "scroll", "touchstart"] as const
     evs.forEach((e) => window.addEventListener(e, bump, { passive: true, capture: true }))
@@ -341,7 +344,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             </Button>
           ))}
           {catLayout.strips && [...new Set(categories.map((c) => c.strip).filter(Boolean))].sort((a, b) => a - b).map((n) => (
-            <CategoryStrip key={n} size={catLayout.size} cats={categories.filter((c) => c.strip === n)} onPick={setActiveCat} />
+            <CategoryStrip key={n} size={catLayout.size} cats={categories.filter((c) => c.strip === n)} initial={lastCat} onPick={setActiveCat} />
           ))}
         </div>
       ) : (
@@ -593,7 +596,7 @@ function KioskButton() {
   </div>
 }
 
-function CategoryStrip({ cats, onPick, size }: { cats: Category[]; onPick: (id: string) => void; size: number }) {
+function CategoryStrip({ cats, onPick, size, initial }: { cats: Category[]; onPick: (id: string) => void; size: number; initial?: string | null }) {
   const tile = TILE[size]!
   const { language } = useCustomer()
   const ref = useRef<HTMLDivElement>(null)
@@ -605,7 +608,16 @@ function CategoryStrip({ cats, onPick, size }: { cats: Category[]; onPick: (id: 
     Array.from(el.querySelectorAll("[data-strip-item]")).forEach((ch, i) => { const c = ch as HTMLElement; const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid); if (d < dist) { dist = d; best = i } })
     setCenter(best)
   }
-  useEffect(() => { update() }, [cats.length])
+  useEffect(() => {
+    const el = ref.current
+    const i = initial ? cats.findIndex((c) => c.id === initial) : -1
+    if (el && i >= 0) {
+      const item = el.querySelectorAll("[data-strip-item]")[i] as HTMLElement | undefined
+      if (item) { setCenter(i); requestAnimationFrame(() => { el.scrollLeft = item.offsetLeft + item.offsetWidth / 2 - el.clientWidth / 2; update() }) ; return }
+    }
+    update()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cats.length])
   return (
     <div ref={ref} onScroll={update} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
       <div aria-hidden className="w-[20%] shrink-0" />
