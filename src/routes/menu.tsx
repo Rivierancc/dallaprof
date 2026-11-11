@@ -1,6 +1,7 @@
 import { StaffFullscreenButton } from "@/components/staff-display";
 import { venuePageTitle } from "@/lib/page-title";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { translateDescriptions } from "@/lib/translate.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ProductRules } from "@/components/product-rules";
@@ -323,6 +324,16 @@ function MenuEditor() {
     photo: productPhoto,
     remove: removeProduct,
     move,
+    retranslate: async (p) => {
+      const filled = [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim());
+      if (filled && !window.confirm("Rifaccio la traduzione di questo piatto? Le descrizioni già scritte nelle altre lingue verranno sostituite.")) return;
+      const id = toast.loading("Traduzione in corso…");
+      try {
+        const r = await translateDescriptions({ data: { ids: [p.id], overwrite: true } });
+        await refresh();
+        toast[r.failed ? "error" : "success"](r.failed ? "Traduzione non riuscita, riprova" : "Traduzioni aggiornate", { id });
+      } catch (e) { toast.dismiss(id); err(e); }
+    },
     translate: async (p, language, description) => {
       await setTranslation({ data: { id: p.id, language, description } });
       await refresh();
@@ -332,6 +343,7 @@ function MenuEditor() {
         await setDescription({ data: { id: p.id, description } });
         refresh();
         toast.success("Descrizione salvata");
+        if (description.trim()) void translateDescriptions({ data: { ids: [p.id], overwrite: false } }).then(() => refresh()).catch(() => {});
       } catch (e) {
         err(e);
       }
@@ -396,6 +408,8 @@ function MenuEditor() {
       </p>
 
       <TextScaleToggle index={textScale} onChange={changeTextScale} />
+
+      <TranslateMenuButton hasManual={menu.products.some((p) => [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim()))} onDone={refresh} />
 
       <ViewToggle view={view} onChange={changeView} />
 
@@ -513,6 +527,7 @@ type ProductHandlers = {
   photo: (p: MenuProduct, file: File) => Promise<unknown>;
   remove: (p: MenuProduct) => Promise<unknown>;
   move: (p: MenuProduct, dir: -1 | 1) => void;
+  retranslate: (p: MenuProduct) => Promise<unknown>;
   translate: (p: MenuProduct, language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
   describe: (p: MenuProduct, description: string) => Promise<unknown>;
   options: (p: MenuProduct, ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
@@ -566,6 +581,7 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
               onDelete={() => h.remove(p)}
               onMove={(dir) => h.move(p, dir)}
               onTranslation={(language, description) => h.translate(p, language, description)}
+              onRetranslate={() => h.retranslate(p)}
               onDescription={(description) => h.describe(p, description)}
               onOptions={(ingredients, extras) => h.options(p, ingredients, extras)}
               onFeatured={(v) => h.feature(p, v)}
@@ -716,9 +732,11 @@ function ProductRow({
   onOptions,
   onDescription,
   onTranslation,
+  onRetranslate,
 }: {
   p: MenuProduct;
   onTranslation: (language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
+  onRetranslate: () => Promise<unknown>;
   onDescription: (d: string) => Promise<unknown>;
   onOptions: (ingredients: string[], extras: { name: string; price: number }[]) => Promise<unknown>;
   onSoldOut: (v: boolean) => Promise<unknown>;
@@ -822,6 +840,12 @@ function ProductRow({
         placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
         className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
       />
+      <div className="flex w-full basis-full flex-wrap items-center gap-3">
+        <button type="button" disabled={!p.description.trim()} onClick={() => void onRetranslate()} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold disabled:opacity-50" title="Traduce di nuovo la descrizione italiana in tutte le lingue">
+          🔄 Ritraduci con IA
+        </button>
+        <span className="text-lg text-muted-foreground">Le lingue vuote si traducono da sole quando salvi la descrizione italiana.</span>
+      </div>
       <div className="grid w-full basis-full gap-3 md:grid-cols-3">
         {(["EN", "FR", "ES", "DE", "AR"] as const).map((language) => <TranslationField key={language} language={language} value={({ EN: p.description_en, FR: p.description_fr, ES: p.description_es, DE: p.description_de, AR: p.description_ar })[language]} onSave={(text) => run(() => onTranslation(language, text))} />)}
       </div>
@@ -944,6 +968,11 @@ function TranslationField({ language, value, onSave }: { language: "EN" | "FR" |
     finally { setBusy(false); }
   };
   useEffect(() => () => { void flush(); }, []);
+  useEffect(() => {
+    if (latest.current.text.trim() === latest.current.saved && value !== latest.current.saved) {
+      latest.current.text = value; latest.current.saved = value; setText(value);
+    }
+  }, [value]);
   return <label className="grid gap-2 text-xl">
     <span>Descrizione {language} {busy ? "— Salvataggio…" : saved ? "— ✓ Salvata" : ""}</span>
     <textarea aria-label={`Descrizione ${language}`} dir={language === "AR" ? "rtl" : "auto"} rows={3} maxLength={300} value={text} onChange={(event) => {
@@ -1000,4 +1029,30 @@ function BadgeEditor({ p, onSave }: { p: MenuProduct; onSave: (on: boolean, text
       )}
     </div>
   );
+}
+
+function TranslateMenuButton({ hasManual, onDone }: { hasManual: boolean; onDone: () => unknown }) {
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const go = async (overwrite: boolean) => {
+    setAsk(false); setBusy(true);
+    const id = toast.loading("Traduco tutto il menu… può richiedere qualche minuto");
+    try {
+      const r = await translateDescriptions({ data: { overwrite } });
+      await onDone();
+      toast.success(`Tradotti ${r.done} piatti${r.failed ? ` · ${r.failed} non riusciti, riprova` : ""}`, { id });
+    } catch { toast.error("Traduzione non riuscita, riprova", { id }); }
+    finally { setBusy(false); }
+  };
+  return <div className="mb-4 flex flex-wrap items-center gap-3">
+    <button type="button" disabled={busy} onClick={() => (hasManual ? setAsk(true) : void go(false))} className="tap rounded-xl bg-secondary px-5 py-3 text-xl font-bold disabled:opacity-50">
+      {busy ? "⏳ Traduzione in corso…" : "🌍 Traduci tutto il menu con IA"}
+    </button>
+    {ask && <div role="alertdialog" className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 text-xl">
+      <span className="basis-full font-bold">⚠️ Alcuni piatti hanno già descrizioni nelle altre lingue. Cosa faccio?</span>
+      <button type="button" onClick={() => void go(false)} className="tap rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">Traduci solo le lingue vuote</button>
+      <button type="button" onClick={() => void go(true)} className="tap rounded-xl bg-destructive px-4 py-3 font-bold text-destructive-foreground">Sostituisci tutto</button>
+      <button type="button" onClick={() => setAsk(false)} className="tap rounded-xl bg-secondary px-4 py-3 font-bold">Annulla</button>
+    </div>}
+  </div>;
 }
