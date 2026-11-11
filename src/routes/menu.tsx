@@ -542,6 +542,9 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
   const qc = useQueryClient();
   const setRecipe = useServerFn(setCategoryRecipe);
   const [busy, setBusy] = useState(false);
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  const toggleRow = (id: string) => setClosed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allClosed = products.length > 0 && products.every((p) => closed.has(p.id));
   // Acceso se almeno un piatto ha la scheda ingredienti attiva: un tocco spegne tutto.
   const anyOn = products.some((p) => p.recipe_on !== false);
   const toggleAll = async () => {
@@ -569,6 +572,11 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
         <button disabled={busy} onClick={toggleAll} className={`tap rounded-xl px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>
           {anyOn ? "Acceso · tocca per spegnere tutto" : "Spento · tocca per accendere tutto"}
         </button>
+        {products.length > 0 && (
+          <button onClick={() => setClosed(allClosed ? new Set() : new Set(products.map((p) => p.id)))} className="tap ml-auto rounded-xl bg-secondary px-5 py-2 text-xl font-bold">
+            {allClosed ? "▼ Apri tutti i piatti" : "▲ Comprimi tutti i piatti"}
+          </button>
+        )}
       </div>
       <ul className="space-y-3">
         {products.map((p, i) => (
@@ -576,6 +584,8 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
             {i > 0 && <li aria-hidden className="list-none"><DividerView divider={divider} /></li>}
             <ProductRow
               p={p}
+              collapsed={closed.has(p.id)}
+              onToggle={() => toggleRow(p.id)}
               onSave={(name, price) => h.save(p, name, price)}
               onPhoto={(file) => h.photo(p, file)}
               onDelete={() => h.remove(p)}
@@ -733,8 +743,12 @@ function ProductRow({
   onDescription,
   onTranslation,
   onRetranslate,
+  collapsed,
+  onToggle,
 }: {
   p: MenuProduct;
+  collapsed: boolean;
+  onToggle: () => void;
   onTranslation: (language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
   onRetranslate: () => Promise<unknown>;
   onDescription: (d: string) => Promise<unknown>;
@@ -764,6 +778,22 @@ function ProductRow({
     if (dirty) run(() => onSave(name.trim(), Math.round(n * 100) / 100));
   };
 
+  const toggleBtn = (
+    <button onClick={onToggle} aria-expanded={!collapsed} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold" title={collapsed ? "Apri la scheda del piatto" : "Comprimi la scheda del piatto"}>
+      {collapsed ? "▼ Apri" : "▲ Comprimi"}
+    </button>
+  );
+  if (collapsed) {
+    return (
+      <li className="flex items-center gap-4 rounded-2xl bg-card p-3">
+        {p.image ? <img src={p.image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" /> : <div className="h-14 w-14 shrink-0 rounded-lg bg-muted" />}
+        <button onClick={onToggle} className="min-w-0 flex-1 truncate text-left text-2xl font-bold">{p.name || "Senza nome"}</button>
+        <span className="text-2xl font-bold">€ {fmt(p.price)}</span>
+        {p.sold_out && <span className="rounded-lg bg-destructive px-2 py-1 text-lg font-bold text-destructive-foreground">Esaurito</span>}
+        {toggleBtn}
+      </li>
+    );
+  }
   return (
     <li className="flex flex-wrap items-center gap-4 rounded-2xl bg-card p-4">
       <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={p.image} label="Foto" />
@@ -831,6 +861,7 @@ function ProductRow({
         Opzioni ({p.extras.length + p.ingredients.length + p.choice_groups.length}{p.combo_items.length ? " · 🍱" : ""}{p.suggest.on ? " · 💡" : ""}) {open ? "▲" : "▼"}
       </button>
       <DeleteButton onConfirm={() => void run(onDelete)} />
+      {toggleBtn}
       <textarea
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
