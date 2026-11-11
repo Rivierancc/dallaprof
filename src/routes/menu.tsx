@@ -29,6 +29,7 @@ import {
   type MenuProduct,
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
+import { PhotoCrop } from "@/components/photo-crop";
 import { IngredientsPanel } from "@/components/ingredients-panel";
 import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
@@ -163,12 +164,12 @@ function MenuEditor() {
     }
   };
 
-  const categoryPhoto = async (c: MenuCategory, file: File) => {
+  const categoryPhoto = async (c: MenuCategory, file: File | null) => {
     try {
-      const { path } = await uploadMenuPhoto({ data: { file: await fileToSmallJpeg(file) } });
+      const path = file ? (await uploadMenuPhoto({ data: { file: await fileToSmallJpeg(file) } })).path : "";
       await saveCategory({ data: { id: c.id, name: c.name, imagePath: path, position: c.position } });
       refresh();
-      toast.success("Foto aggiornata");
+      toast.success(file ? "Foto aggiornata" : "Foto rimossa");
     } catch (e) {
       err(e);
     }
@@ -263,9 +264,9 @@ function MenuEditor() {
     }
   };
 
-  const productPhoto = async (p: MenuProduct, file: File) => {
+  const productPhoto = async (p: MenuProduct, file: File | null) => {
     try {
-      const { path } = await uploadMenuPhoto({ data: { file: await fileToSmallJpeg(file) } });
+      const path = file ? (await uploadMenuPhoto({ data: { file: await fileToSmallJpeg(file) } })).path : "";
       await saveProduct({
         data: {
           id: p.id,
@@ -277,7 +278,7 @@ function MenuEditor() {
         },
       });
       refresh();
-      toast.success("Foto aggiornata");
+      toast.success(file ? "Foto aggiornata" : "Foto rimossa");
     } catch (e) {
       err(e);
     }
@@ -524,7 +525,7 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
 type ProductHandlers = {
   add: () => void;
   save: (p: MenuProduct, name: string, price: number) => Promise<unknown>;
-  photo: (p: MenuProduct, file: File) => Promise<unknown>;
+  photo: (p: MenuProduct, file: File | null) => Promise<unknown>;
   remove: (p: MenuProduct) => Promise<unknown>;
   move: (p: MenuProduct, dir: -1 | 1) => void;
   retranslate: (p: MenuProduct) => Promise<unknown>;
@@ -615,43 +616,63 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
 
 function PhotoPicker({
   onPick,
+  onRemove,
   src,
   label,
   size = "h-24 w-24",
 }: {
   onPick: (f: File) => Promise<unknown> | void;
+  onRemove?: () => Promise<unknown> | void;
   src: string;
   label?: string;
   size?: string;
 }) {
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<File | null>(null);
+  const go = async (fn: () => Promise<unknown> | void) => {
+    setBusy(true);
+    try { await fn(); } finally { setBusy(false); }
+  };
   return (
-    <label className={`tap relative ${size} shrink-0 cursor-pointer overflow-hidden rounded-xl bg-muted ${busy ? "opacity-50" : ""}`}>
-      {src ? (
-        <img src={src} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span className="flex h-full w-full items-center justify-center text-4xl">＋</span>
+    <div className={`relative ${size} shrink-0`}>
+      <label className={`tap relative block h-full w-full cursor-pointer overflow-hidden rounded-xl bg-muted ${busy ? "opacity-50" : ""}`}>
+        {src ? (
+          <img src={src} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-4xl">＋</span>
+        )}
+        {label && (
+          <span className="absolute inset-x-0 bottom-0 bg-background/80 py-1 text-center text-sm font-bold">{label}</span>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) setPending(f);
+          }}
+        />
+      </label>
+      {src && onRemove && (
+        <button
+          type="button"
+          aria-label="Rimuovi foto"
+          title="Rimuovi foto"
+          disabled={busy}
+          onClick={() => { if (window.confirm("Tolgo questa foto?")) go(onRemove); }}
+          className="tap absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-destructive text-xl font-bold text-destructive-foreground shadow"
+        >
+          ✕
+        </button>
       )}
-      {label && (
-        <span className="absolute inset-x-0 bottom-0 bg-background/80 py-1 text-center text-sm font-bold">{label}</span>
-      )}
-      <input
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={async (e) => {
-          const f = e.target.files?.[0];
-          e.target.value = "";
-          if (!f) return;
-          setBusy(true);
-          try {
-            await onPick(f);
-          } finally {
-            setBusy(false);
-          }
-        }}
+      <PhotoCrop
+        file={pending}
+        onCancel={() => setPending(null)}
+        onDone={(f) => { setPending(null); go(() => onPick(f)); }}
       />
-    </label>
+    </div>
   );
 }
 
@@ -694,7 +715,7 @@ function CategoryRow({
   selected: boolean;
   onOpen: () => void;
   onRename: (name: string) => Promise<unknown>;
-  onPhoto: (f: File) => Promise<unknown>;
+  onPhoto: (f: File | null) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
 }) {
   const [name, setName] = useState(c.name);
@@ -704,7 +725,7 @@ function CategoryRow({
   return (
     <div className={`rounded-2xl border-4 bg-card p-3 ${selected ? "border-accent" : "border-transparent"}`}>
       <div className="flex items-center gap-3">
-        <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={c.image} size="h-16 w-16" />
+        <PhotoPicker onPick={(f) => run(() => onPhoto(f))} onRemove={() => run(() => onPhoto(null))} src={c.image} size="h-16 w-16" />
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -757,7 +778,7 @@ function ProductRow({
   onFeatured: (v: boolean) => Promise<unknown>;
   onBadge: (on: boolean, text: string, blink: boolean) => Promise<unknown>;
   onSave: (name: string, price: number) => Promise<unknown>;
-  onPhoto: (f: File) => Promise<unknown>;
+  onPhoto: (f: File | null) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
   onMove: (dir: -1 | 1) => void;
 }) {
@@ -796,7 +817,7 @@ function ProductRow({
   }
   return (
     <li className="flex flex-wrap items-center gap-4 rounded-2xl bg-card p-4">
-      <PhotoPicker onPick={(f) => run(() => onPhoto(f))} src={p.image} label="Foto" />
+      <PhotoPicker onPick={(f) => run(() => onPhoto(f))} onRemove={() => run(() => onPhoto(null))} src={p.image} label="Foto" />
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
