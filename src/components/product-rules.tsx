@@ -37,6 +37,8 @@ export function ProductRules({ p }: { p: MenuProduct }) {
   const [gName, setGName] = useState("");
   const [sPrice, setSPrice] = useState(p.suggest.price === null ? "" : fmt(p.suggest.price));
   const [sMin, setSMin] = useState(fmt(p.suggest.min));
+  const [chOpen, setChOpen] = useState(false);
+  const chSummary = groups.length ? groups.map((g) => `${g.name}: ${g.options.map((o) => o.name).join(", ") || "—"}`).join(" · ") : "Nessuna scelta impostata";
 
   return (
     <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
@@ -52,6 +54,8 @@ export function ProductRules({ p }: { p: MenuProduct }) {
       </section>
 
       <section>
+        <button type="button" onClick={() => setChOpen((o) => !o)} aria-expanded={chOpen} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">📋 Scelte del cliente <span className="font-normal text-muted-foreground">({chSummary})</span> {chOpen ? "▲" : "▼"}</button>
+        {chOpen && <div className="mt-3">
         <h3 className="mb-1 text-2xl font-bold">Scelte del cliente (es. salse, condimenti)</h3>
         <p className="mb-3 text-lg text-muted-foreground">Con «minimo» 1 o più la scelta è obbligatoria: il totem non aggiunge il piatto finché il cliente non sceglie.</p>
         <div className="grid gap-3">
@@ -65,6 +69,8 @@ export function ProductRules({ p }: { p: MenuProduct }) {
           <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="Nome gruppo, es. Salsa" className={`${box} min-w-0 flex-1`} />
           <button disabled={busy || !gName.trim() || groups.some((g) => g.name === gName.trim())} onClick={() => { setGroups([...groups, { name: gName.trim(), min: 1, max: 1, options: [] }]); setGName(""); }} className={`${btn} bg-primary text-primary-foreground disabled:opacity-40`}>+ Nuovo gruppo</button>
         </div>
+        <div className="mt-3 flex justify-end"><button type="button" onClick={() => setChOpen(false)} className={`${btn} bg-secondary`}>▲ Chiudi scelte</button></div>
+        </div>}
       </section>
 
       <p className="text-lg text-muted-foreground">🍱 Il menu di questo piatto (scelte dalle categorie, prezzo, nome) si imposta nella sezione «🍱 Menu offerta» più in basso.</p>
@@ -182,9 +188,12 @@ function TagsEditor({ p }: { p: MenuProduct }) {
     try { await save({ data: { id: p.id, tags } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
   };
+  const [open, setOpen] = useState(false);
+  const active = list.filter((f) => p.food_tags.includes(f.id)).map((f) => `${f.emoji} ${f.label}`).join(", ") || "nessuno";
   return (
     <section>
-      <h3 className="mb-1 text-2xl font-bold">🔎 Filtri sul totem</h3>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">🔎 Filtri del totem <span className="font-normal text-muted-foreground">({active})</span> {open ? "▲" : "▼"}</button>
+      {open && <div className="mt-3">
       <p className="mb-3 text-lg text-muted-foreground">Spunta i filtri in cui deve comparire questo piatto. «Auto» vuol dire che è già riconosciuto dagli ingredienti.</p>
       <div className="flex flex-wrap gap-2">
         {list.map((f) => {
@@ -193,6 +202,7 @@ function TagsEditor({ p }: { p: MenuProduct }) {
           return <button key={f.id} onClick={() => toggle(f.id)} className={`${btn} ${on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{on ? "✓ " : ""}{f.emoji} {f.label}{auto ? " · auto" : ""}</button>;
         })}
       </div>
+      </div>}
     </section>
   );
 }
