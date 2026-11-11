@@ -322,7 +322,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         <span />
-        <Button variant="ghost" onClick={() => setDineOption(null)} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
+        <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
       </header>
       {memberDialog}
       {activeCat === null && memberBar}
