@@ -69,6 +69,20 @@ export function ProductRules({ p }: { p: MenuProduct }) {
           <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="Nome gruppo, es. Salsa" className={`${box} min-w-0 flex-1`} />
           <button disabled={busy || !gName.trim() || groups.some((g) => g.name === gName.trim())} onClick={() => { setGroups([...groups, { name: gName.trim(), min: 1, max: 1, options: [] }]); setGName(""); }} className={`${btn} bg-primary text-primary-foreground disabled:opacity-40`}>+ Nuovo gruppo</button>
         </div>
+        <select disabled={busy} value="" onChange={(e) => {
+          const [pi, gi] = e.target.value.split(":").map(Number);
+          const src = menu.products.filter((x) => x.id !== p.id && x.choice_groups.length)[pi]?.choice_groups[gi];
+          if (!src) return;
+          if (groups.some((g) => g.name === src.name)) { toast.error(`C'è già un gruppo «${src.name}»`); return; }
+          void run({ groups: [...groups, structuredClone(src)] }, `Gruppo «${src.name}» copiato`);
+        }} className={`${box} mt-3 w-full`}>
+          <option value="">📥 Copia un gruppo da un altro piatto…</option>
+          {menu.products.filter((x) => x.id !== p.id && x.choice_groups.length).map((x, pi) => (
+            <optgroup key={x.id} label={x.name}>
+              {x.choice_groups.map((g, gi) => <option key={gi} value={`${pi}:${gi}`}>{x.name} → {g.name} ({g.options.length})</option>)}
+            </optgroup>
+          ))}
+        </select>
         <div className="mt-3 flex justify-end"><button type="button" onClick={() => setChOpen(false)} className={`${btn} bg-secondary`}>▲ Chiudi scelte</button></div>
         </div>}
       </section>

@@ -921,6 +921,8 @@ function OptionsEditor({
   p: MenuProduct;
   onSave: (ingredients: string[], extras: { name: string; price: number }[]) => void;
 }) {
+  const { data: menuAll } = useSuspenseQuery(menuQueryOptions);
+  const exSources = menuAll.products.filter((x) => x.id !== p.id && x.extras.length);
   const [ing, setIng] = useState("");
   const [exName, setExName] = useState("");
   const [exPrice, setExPrice] = useState("");
@@ -1001,6 +1003,19 @@ function OptionsEditor({
           />
           <button onClick={addExtra} className="tap rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground">+ Aggiungi</button>
         </div>
+        {exSources.length > 0 && (
+          <select value="" onChange={(e) => {
+            const src = exSources.find((x) => x.id === e.target.value);
+            if (!src) return;
+            const fresh = src.extras.filter((x) => !p.extras.some((v) => v.name === x.name));
+            if (!fresh.length) { toast.error("Questi extra ci sono già"); return; }
+            onSave(p.ingredients, [...p.extras, ...fresh.map((x) => ({ name: x.name, price: x.price }))]);
+            toast.success(`Copiati ${fresh.length} extra da «${src.name}»`);
+          }} className="mt-2 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none">
+            <option value="">📥 Copia gli extra da un altro piatto…</option>
+            {exSources.map((x) => <option key={x.id} value={x.id}>{x.name} ({x.extras.map((v) => v.name).join(", ").slice(0, 60)})</option>)}
+          </select>
+        )}
       </div>
     </div>
   );
