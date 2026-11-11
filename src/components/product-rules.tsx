@@ -71,7 +71,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
         </div>
         <select disabled={busy} value="" onChange={(e) => {
           const [pi, gi] = e.target.value.split(":").map(Number);
-          const src = menu.products.filter((x) => x.id !== p.id && x.choice_groups.length)[pi]?.choice_groups[gi];
+          const src = menu.products.filter((x) => x.id !== p.id && x.choice_groups.length)[pi ?? -1]?.choice_groups[gi ?? -1];
           if (!src) return;
           if (groups.some((g) => g.name === src.name)) { toast.error(`C'è già un gruppo «${src.name}»`); return; }
           void run({ groups: [...groups, structuredClone(src)] }, `Gruppo «${src.name}» copiato`);
