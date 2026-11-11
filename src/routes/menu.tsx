@@ -5,6 +5,7 @@ import { translateDescriptions } from "@/lib/translate.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ProductRules } from "@/components/product-rules";
+import { EditOption } from "@/components/edit-option";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
@@ -969,11 +970,10 @@ function OptionsEditor({
       <div>
         <h3 className="mb-1 text-2xl font-bold">Extra a pagamento</h3>
         <div className="mb-3 flex flex-wrap gap-2">
-          {p.extras.map((e) => (
-            <span key={e.name} className={chip}>
-              {e.name} · € {fmt(e.price)}
-              <button className={x} title="Rimuovi" onClick={() => onSave(p.ingredients, p.extras.filter((v) => v.name !== e.name))}>✕</button>
-            </span>
+          {p.extras.map((e, i) => (
+            <EditOption key={e.name} name={e.name} price={e.price} taken={p.extras.map((v) => v.name)}
+              onSave={(name, price) => onSave(p.ingredients, p.extras.map((v, j) => (j === i ? { name, price } : v)))}
+              onRemove={() => onSave(p.ingredients, p.extras.filter((v) => v.name !== e.name))} />
           ))}
           {!p.extras.length && <span className="text-lg text-muted-foreground">Nessuno</span>}
         </div>

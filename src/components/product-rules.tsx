@@ -6,6 +6,7 @@ import { menuQueryOptions } from "@/lib/menu";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { cleanFilters, dishMatches } from "@/lib/food-filters";
 import { setProductTags, setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
+import { EditOption } from "@/components/edit-option";
 import type { ChoiceGroup, Suggest } from "@/lib/options";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -120,11 +121,10 @@ export function GroupEditor({ g, disabled, menu, onChange, onDelete }: { g: Choi
         <button disabled={disabled} onClick={() => confirm(`Eliminare il gruppo «${g.name}»?`) && onDelete()} className={`${btn} ml-auto bg-destructive text-destructive-foreground`}>Elimina gruppo</button>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {g.options.map((o) => (
-          <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
-            {o.name}{o.price > 0 ? ` · € ${fmt(o.price)}` : ""}
-            <button disabled={disabled} onClick={() => { const options = g.options.filter((x) => x.name !== o.name); onChange({ ...g, options, max: Math.min(g.max, Math.max(1, options.length)), min: Math.min(g.min, Math.max(1, options.length)) }); }} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button>
-          </span>
+        {g.options.map((o, oi) => (
+          <EditOption key={o.name} name={o.name} price={o.price} showZero={false} disabled={disabled} taken={g.options.map((x) => x.name)}
+            onSave={(name, price) => onChange({ ...g, options: g.options.map((x, j) => (j === oi ? { ...x, name, price } : x)) })}
+            onRemove={() => { const options = g.options.filter((x) => x.name !== o.name); onChange({ ...g, options, max: Math.min(g.max, Math.max(1, options.length)), min: Math.min(g.min, Math.max(1, options.length)) }); }} />
         ))}
         {!n && <span className="text-lg text-muted-foreground">Aggiungi le opzioni qui sotto</span>}
       </div>

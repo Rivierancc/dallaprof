@@ -1,3 +1,4 @@
+import { EditOption } from "@/components/edit-option";
 import { useState } from "react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -151,12 +152,12 @@ function MenuExtras({ p, busy, onChange }: { p: MenuProduct; busy: boolean; onCh
       <p className="mb-2 text-lg text-muted-foreground">Gli extra del panino restano uguali anche nel menu, li prendi dalle Opzioni del piatto. Qui aggiungi solo extra in più (es. salsa per le patatine → 🍟 Contorno).</p>
       {p.extras.length > 0 && <p className="mb-3 rounded-xl bg-muted p-3 text-lg">🍔 Extra del panino, già presenti nel menu: <b>{p.extras.map((e) => `${e.name} € ${fmt(e.price)}`).join(" · ")}</b></p>}
       <div className="flex flex-wrap gap-2">
-        {list.map((o) => (
-          <span key={o.name} className="flex items-center gap-2 rounded-full bg-muted py-1 pl-4 pr-1 text-xl font-bold">
-            {o.name} · € {fmt(o.price)}
+        {list.map((o, oi) => (
+          <EditOption key={o.name} name={o.name} price={o.price} disabled={busy} taken={list.map((x) => x.name)}
+            onSave={(name, price) => onChange(list.map((x, j) => (j === oi ? { ...x, name, price } : x)))}
+            onRemove={() => onChange(list.filter((x) => x.name !== o.name))}>
             {(["dish", "side"] as const).map((t) => <button key={t} disabled={busy} aria-pressed={(o.to ?? "dish") === t} onClick={() => onChange(list.map((x) => (x.name === o.name ? { ...x, to: t } : x)))} className={`tap rounded-full px-3 py-1 text-base ${(o.to ?? "dish") === t ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{t === "dish" ? "🍔 Panino" : "🍟 Contorno"}</button>)}
-            <button disabled={busy} onClick={() => onChange(list.filter((x) => x.name !== o.name))} className="tap h-8 w-8 rounded-full bg-secondary text-lg">✕</button>
-          </span>
+          </EditOption>
         ))}
         {!list.length && <span className="text-lg text-muted-foreground">Nessun extra solo-menu</span>}
       </div>
