@@ -424,6 +424,32 @@ export const deleteCategory = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// Duplica un piatto con tutti i dettagli in fondo alla categoria scelta.
+export const duplicateProduct = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; category_id: string }) => ({ id: String(d.id), category_id: String(d.category_id) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const supabase = await admin();
+    const { data: src } = await supabase.from("menu_products").select("*").eq("id", data.id).maybeSingle();
+    if (!src) throw new Error("Piatto non trovato");
+    const { data: cat } = await supabase.from("menu_categories").select("id").eq("id", data.category_id).maybeSingle();
+    if (!cat) throw new Error("Categoria non trovata");
+    await (await import("@/lib/license.functions")).assertProductAllowed();
+    const { data: last } = await supabase.from("menu_products").select("position").eq("category_id", data.category_id).order("position", { ascending: false }).limit(1);
+    const same = src.category_id === data.category_id;
+    const { id: _id, created_at: _c, featured_at: _f, ...rest } = src as Record<string, unknown> & { id: string };
+    const row = {
+      ...rest,
+      category_id: data.category_id,
+      name: same ? `${src.name} (copia)`.slice(0, 60) : src.name,
+      position: (last?.[0]?.position ?? 0) + 1,
+      is_featured: false,
+    };
+    const { data: ins, error } = await supabase.from("menu_products").insert(row as never).select("id").single();
+    if (error) throw new Error(error.message);
+    return { id: ins.id };
+  });
+
 export const saveProduct = createServerFn({ method: "POST" })
   .inputValidator((d: { id?: string; category_id: string; name: string; price: number; imagePath?: string; position?: number }) => {
     const name = String(d.name ?? "").trim().slice(0, 60);

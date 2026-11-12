@@ -18,6 +18,7 @@ import {
   deleteProduct,
   saveCategory,
   saveProduct,
+  duplicateProduct,
   setSoldOut as soldOut,
   setFeatured,
   setBadge,
@@ -326,6 +327,16 @@ function MenuEditor() {
     photo: productPhoto,
     remove: removeProduct,
     move,
+    categories: menu.categories,
+    duplicate: async (p, categoryId) => {
+      try {
+        await duplicateProduct({ data: { id: p.id, category_id: categoryId } });
+        refresh();
+        toast.success(categoryId === p.category_id ? "Copia creata in fondo alla categoria" : "Piatto copiato in fondo all'altra categoria");
+      } catch (e) {
+        err(e);
+      }
+    },
     retranslate: async (p) => {
       const filled = [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim());
       if (filled && !window.confirm("Rifaccio la traduzione di questo piatto? Le descrizioni già scritte nelle altre lingue verranno sostituite.")) return;
@@ -529,6 +540,8 @@ type ProductHandlers = {
   photo: (p: MenuProduct, file: File | null) => Promise<unknown>;
   remove: (p: MenuProduct) => Promise<unknown>;
   move: (p: MenuProduct, dir: -1 | 1) => void;
+  categories: MenuCategory[];
+  duplicate: (p: MenuProduct, categoryId: string) => Promise<unknown>;
   retranslate: (p: MenuProduct) => Promise<unknown>;
   translate: (p: MenuProduct, language: "EN" | "FR" | "ES" | "DE" | "AR", description: string) => Promise<unknown>;
   describe: (p: MenuProduct, description: string) => Promise<unknown>;
@@ -591,6 +604,8 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
               onSave={(name, price) => h.save(p, name, price)}
               onPhoto={(file) => h.photo(p, file)}
               onDelete={() => h.remove(p)}
+              categories={h.categories}
+              onDuplicate={(cid) => h.duplicate(p, cid)}
               onMove={(dir) => h.move(p, dir)}
               onTranslation={(language, description) => h.translate(p, language, description)}
               onRetranslate={() => h.retranslate(p)}
@@ -758,6 +773,8 @@ function ProductRow({
   onPhoto,
   onDelete,
   onMove,
+  categories,
+  onDuplicate,
   onSoldOut,
   onFeatured,
   onBadge,
@@ -782,6 +799,8 @@ function ProductRow({
   onPhoto: (f: File | null) => Promise<unknown>;
   onDelete: () => Promise<unknown>;
   onMove: (dir: -1 | 1) => void;
+  categories: MenuCategory[];
+  onDuplicate: (categoryId: string) => Promise<unknown>;
 }) {
   const [name, setName] = useState(p.name);
   const [desc, setDesc] = useState(p.description);
@@ -883,6 +902,22 @@ function ProductRow({
       >
         Opzioni ({p.extras.length + p.ingredients.length + p.choice_groups.length}{p.combo_items.length ? " · 🍱" : ""}{p.suggest.on ? " · 💡" : ""}) {open ? "▲" : "▼"}
       </button>
+      <select
+        value=""
+        onChange={(e) => {
+          const cid = e.target.value;
+          e.target.value = "";
+          if (cid) void run(() => onDuplicate(cid));
+        }}
+        className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold"
+        title="Crea una copia completa in fondo alla categoria scelta"
+      >
+        <option value="">📋 Duplica…</option>
+        <option value={p.category_id}>In questa categoria</option>
+        {categories.filter((c) => c.id !== p.category_id).map((c) => (
+          <option key={c.id} value={c.id}>In «{c.name}»</option>
+        ))}
+      </select>
       <DeleteButton onConfirm={() => void run(onDelete)} />
       {toggleBtn}
       <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
