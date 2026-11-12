@@ -338,7 +338,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             </Button>
           )}
           {categories.filter((c) => !catLayout.strips || !c.strip).map((c: Category) => (
-            <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} style={{ height: `${tile.h}rem` }} className="whitespace-normal tap relative overflow-hidden rounded-3xl bg-card">
+            <Button variant="ghost" key={c.id} onClick={() => setActiveCat(c.id)} style={{ height: `${tile.h}rem` }} className="whitespace-normal tap relative overflow-hidden rounded-3xl border-4 border-accent bg-card">
               {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
               <span style={{ fontSize: `${tile.text}rem` }} className="glow relative z-10 font-display leading-none text-accent">{translatedFor(c.name, c.name_tr, language).toUpperCase()}</span>
             </Button>
