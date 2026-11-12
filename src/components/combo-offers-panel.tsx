@@ -1,5 +1,6 @@
 import { EditOption } from "@/components/edit-option";
-import { useState } from "react";
+import { Fragment, useState, type ReactNode } from "react";
+import { DividerView, useDivider } from "@/components/menu-divider";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -25,6 +26,10 @@ export function ComboOffersPanel() {
   const menus = menu.products.filter((p) => p.combo_items.length || p.combo_groups.length || p.combo_offer || extra.includes(p.id));
   const rest = menu.products.filter((p) => !menus.includes(p));
   const offers = menu.products.filter((p) => p.combo_offer).length;
+  const divider = useDivider();
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  const toggle = (id: string) => setClosed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const allClosed = menus.length > 0 && menus.every((p) => closed.has(p.id));
   return (
     <div className="mx-auto mt-6 max-w-5xl">
       <Fold title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
@@ -36,7 +41,20 @@ export function ComboOffersPanel() {
             <button onClick={async () => { try { await saveTitle({ data: { title, tr: menu.offersTitleTr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Nome sezione salvato"); } catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); } }} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
             <div className="w-full"><TranslationsEditor label="🌍 Nome della sezione nelle altre lingue" value={menu.offersTitleTr} onSave={async (tr) => { await saveTitle({ data: { title, tr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }} /></div>
           </div>
-          {menus.map((p) => <ComboEditor key={p.id} p={p} />)}
+          {menus.length > 0 && <div className="flex justify-end"><button onClick={() => setClosed(allClosed ? new Set() : new Set(menus.map((p) => p.id)))} className={`${btn} bg-secondary`}>{allClosed ? "▼ Apri tutti i menu" : "▲ Comprimi tutti i menu"}</button></div>}
+          {menus.map((p, i) => (
+            <Fragment key={p.id}>
+              {i > 0 && <DividerView divider={divider} />}
+              {closed.has(p.id) ? (
+                <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
+                  <button onClick={() => toggle(p.id)} className="min-w-0 flex-1 truncate text-left font-display text-3xl">🍱 {menuName(p.name, p.combo_name)}</button>
+                  {p.combo_offer && <span className="rounded-full bg-accent px-3 py-1 text-lg font-bold text-accent-foreground">⭐ In evidenza</span>}
+                  <span className="text-2xl font-bold">€ {fmt(p.combo_price ?? p.price)}</span>
+                  <button onClick={() => toggle(p.id)} className={`${btn} bg-secondary`}>▼ Apri</button>
+                </div>
+              ) : <ComboEditor p={p} onCollapse={() => toggle(p.id)} />}
+            </Fragment>
+          ))}
           <select value="" onChange={(e) => e.target.value && setExtra((x) => [...x, e.target.value])} className={`${box} w-full`}>
             <option value="">+ Crea un menu da un piatto…</option>
             {menu.categories.map((c) => (
@@ -51,7 +69,7 @@ export function ComboOffersPanel() {
   );
 }
 
-function ComboEditor({ p }: { p: MenuProduct }) {
+function ComboEditor({ p, onCollapse }: { p: MenuProduct; onCollapse: () => void }) {
   const qc = useQueryClient();
   const { data: menu } = useSuspenseQuery(menuQueryOptions);
   const saveRules = useServerFn(setProductRules);
@@ -71,6 +89,7 @@ function ComboEditor({ p }: { p: MenuProduct }) {
       <div className="flex flex-wrap items-center gap-3">
         <strong className="font-display text-3xl">🍱 {menuName(p.name, p.combo_name)}</strong>
         <button disabled={busy} role="switch" aria-checked={p.combo_offer} onClick={() => go(() => saveOffer({ data: { id: p.id, on: !p.combo_offer, name } }))} className={`${btn} ml-auto ${p.combo_offer ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.combo_offer ? "⭐ In evidenza sul totem" : "☆ Metti in evidenza"}</button>
+        <button onClick={onCollapse} className={`${btn} bg-secondary`}>▲ Comprimi</button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome del menu
@@ -83,14 +102,21 @@ function ComboEditor({ p }: { p: MenuProduct }) {
           <button disabled={busy} onClick={() => rules({ combo: [] })} className={`${btn} bg-secondary`}>Togli</button>
         </div>
       )}
-      <MenuAlts p={p} busy={busy} menu={menu} onChange={(a) => rules({ comboAlts: a })} />
-      <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
-      <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
+      <Drawer title="🍔 Piatto principale a scelta" hint={[p.name, ...p.combo_alts.map((id) => menu.products.find((x) => x.id === id)?.name ?? "?")].join(", ")}>
+        <MenuAlts p={p} busy={busy} menu={menu} onChange={(a) => rules({ comboAlts: a })} />
+      </Drawer>
+      <Drawer title="🥤 Scelte del menu" hint={p.combo_groups.map((g) => g.name).join(", ") || "nessuna"}>
+        <MenuChoices p={p} busy={busy} menu={menu} onChange={(g) => rules({ comboGroups: g })} />
+      </Drawer>
+      <Drawer title="➕ Extra a pagamento nel menu" hint={p.combo_extras.map((e) => e.name).join(", ") || "nessuno"}>
+        <MenuExtras p={p} busy={busy} onChange={(e) => rules({ comboExtras: e })} />
+      </Drawer>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-xl">Prezzo totale del menu €<input value={cPrice} inputMode="decimal" onChange={(e) => setCPrice(e.target.value)} placeholder="—" className={`${box} w-28 text-center`} /></label>
         <button disabled={busy} onClick={() => { const v = cPrice.trim() === "" ? null : num(cPrice); if (v !== null && !(v >= 0)) { toast.error("Controlla il prezzo"); return; } void rules({ comboPrice: v }); }} className={`${btn} bg-primary text-primary-foreground`}>Salva prezzo</button>
         <span className="text-lg text-muted-foreground">Vuoto = costa come il piatto ({fmt(p.price)} €).</span>
       </div>
+      <div className="flex justify-end"><button onClick={onCollapse} className={`${btn} bg-secondary`}>▲ Comprimi menu</button></div>
     </div>
   );
 }
@@ -207,5 +233,16 @@ function MenuAlts({ p, busy, menu, onChange }: { p: MenuProduct; busy: boolean; 
         ))}
       </select>
     </section>
+  );
+}
+
+// Cassetto richiudibile: da chiuso mostra un riassunto di cosa contiene.
+function Drawer({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">{title} <span className="font-normal text-muted-foreground">({hint})</span> {open ? "▲" : "▼"}</button>
+      {open && <div className="mt-3">{children}<div className="mt-3 flex justify-end"><button type="button" onClick={() => setOpen(false)} className={`${btn} bg-secondary`}>▲ Chiudi</button></div></div>}
+    </div>
   );
 }
