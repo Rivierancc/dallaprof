@@ -625,7 +625,7 @@ function CategoryStrip({ cats, onPick, size, initial, light }: { cats: Category[
     <div ref={ref} onScroll={update} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
       <div aria-hidden className="w-[20%] shrink-0" />
       {cats.map((c, i) => (
-        <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl ${light ? "bg-secondary" : "bg-card"} transition-all duration-300 ${i === center ? `w-[60%] ${light ? "" : "border-4 border-accent"}` : "w-[45%] opacity-70"}`} style={{ height: `${i === center ? tile.h * 1.3 : tile.h}rem` }}>
+        <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl ${light ? "bg-secondary" : "bg-card"} transition-all duration-300 ${i === center ? `w-[60%] ${light ? "" : "border-4 border-accent"}` : "w-[45%] opacity-70"}`} style={{ height: `${(i === center ? tile.h * 1.3 : tile.h) * (light ? 0.5 : 1)}rem` }}>
           {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
           <span style={{ fontSize: `${i === center ? tile.text : tile.text * 0.7}rem` }} className="glow relative z-10 font-display leading-none text-accent">{translatedFor(c.name, c.name_tr, language).toUpperCase()}</span>
         </Button>
