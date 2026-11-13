@@ -338,7 +338,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       {activeCat === null? (
         <div className={`grid gap-6 ${tile.cols === 1 ? "grid-cols-1" : tile.cols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
           {catLayout.strips && (offerMenus.length > 0 || foodFilters.length > 0 || categories.some((c) => !c.strip)) && (
-            <CategoryStrip light size={catLayout.size} initial={lastCat} onPick={setActiveCat} cats={[...(offerMenus.length > 0 ? [{ id: OFFERS, name: `🍱 ${translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}`, name_tr: null, image: null } as unknown as Category] : []), ...categories.filter((c) => !c.strip), ...foodFilters.map((f) => ({ id: FF + f.id, name: `${f.emoji} ${f.label}`, name_tr: null, image: null } as unknown as Category))]} />
+            <div className="col-span-full flex items-center gap-3">
+              {offerMenus.length > 0 && <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${TILE[catLayout.size]!.h * 0.65}rem` }} className="whitespace-normal tap relative w-[26%] shrink-0 overflow-hidden rounded-3xl bg-secondary"><span style={{ fontSize: `${TILE[catLayout.size]!.text * 0.75}rem` }} className="glow font-display leading-none text-accent">🍱 {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span></Button>}
+              <div className="min-w-0 flex-1"><CategoryStrip light size={catLayout.size} initial={lastCat} onPick={setActiveCat} cats={[...categories.filter((c) => !c.strip), ...foodFilters.map((f) => ({ id: FF + f.id, name: `${f.emoji} ${f.label}`, name_tr: null, image: null } as unknown as Category))]} /></div>
+            </div>
           )}
           {!catLayout.strips && offerMenus.length > 0 && (
             <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${tile.h}rem` }} className="whitespace-normal tap relative overflow-hidden rounded-3xl bg-secondary">
@@ -628,14 +631,14 @@ function CategoryStrip({ cats, onPick, size, initial, light }: { cats: Category[
   }, [cats.length])
   return (
     <div ref={ref} onScroll={update} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
-      <div aria-hidden className="w-[20%] shrink-0" />
+      <div aria-hidden className={`${light ? "w-[4%]" : "w-[20%]"} shrink-0`} />
       {cats.map((c, i) => (
-        <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl ${light ? "bg-secondary" : "bg-card"} transition-all duration-300 ${i === center ? `w-[60%] ${light ? "" : "border-4 border-accent"}` : "w-[45%] opacity-70"}`} style={{ height: `${(i === center ? tile.h * 1.3 : tile.h) * (light ? 0.5 : 1)}rem` }}>
+        <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl ${light ? "bg-secondary" : "bg-card"} transition-all duration-300 ${i === center ? `${light ? "w-[42%]" : "w-[60%] border-4 border-accent"}` : `${light ? "w-[32%]" : "w-[45%]"} opacity-70`}`} style={{ height: `${(i === center ? tile.h * 1.3 : tile.h) * (light ? 0.5 : 1)}rem` }}>
           {c.image && <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
           <span style={{ fontSize: `${i === center ? tile.text : tile.text * 0.7}rem` }} className="glow relative z-10 font-display leading-none text-accent">{translatedFor(c.name, c.name_tr, language).toUpperCase()}</span>
         </Button>
       ))}
-      <div aria-hidden className="w-[20%] shrink-0" />
+      <div aria-hidden className={`${light ? "w-[4%]" : "w-[20%]"} shrink-0`} />
     </div>
   )
 }
