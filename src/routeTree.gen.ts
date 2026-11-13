@@ -15,6 +15,7 @@ import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as ManualeRouteImport } from './routes/manuale'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as MenuDigitaleRouteImport } from './routes/menu-digitale'
 import { Route as SalaRouteImport } from './routes/sala'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -50,6 +51,11 @@ const ManualeRoute = ManualeRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MenuDigitaleRoute = MenuDigitaleRouteImport.update({
+  id: '/menu-digitale',
+  path: '/menu-digitale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalaRoute = SalaRouteImport.update({
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
+  '/menu-digitale': typeof MenuDigitaleRoute
   '/sala': typeof SalaRoute
   '/superadmin': typeof SuperadminRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
+  '/menu-digitale': typeof MenuDigitaleRoute
   '/sala': typeof SalaRoute
   '/superadmin': typeof SuperadminRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
   '/menu': typeof MenuRoute
+  '/menu-digitale': typeof MenuDigitaleRoute
   '/sala': typeof SalaRoute
   '/superadmin': typeof SuperadminRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/manuale'
     | '/menu'
+    | '/menu-digitale'
     | '/sala'
     | '/superadmin'
     | '/ordine-confermato/$id'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/manuale'
     | '/menu'
+    | '/menu-digitale'
     | '/sala'
     | '/superadmin'
     | '/ordine-confermato/$id'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/manuale'
     | '/menu'
+    | '/menu-digitale'
     | '/sala'
     | '/superadmin'
     | '/ordine-confermato/$id'
@@ -178,6 +190,7 @@ export interface RootRouteChildren {
   DisplayRoute: typeof DisplayRoute
   ManualeRoute: typeof ManualeRoute
   MenuRoute: typeof MenuRoute
+  MenuDigitaleRoute: typeof MenuDigitaleRoute
   SalaRoute: typeof SalaRoute
   SuperadminRoute: typeof SuperadminRoute
   OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/menu-digitale': {
+      id: '/menu-digitale'
+      path: '/menu-digitale'
+      fullPath: '/menu-digitale'
+      preLoaderRoute: typeof MenuDigitaleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sala': {
@@ -282,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisplayRoute: DisplayRoute,
   ManualeRoute: ManualeRoute,
   MenuRoute: MenuRoute,
+  MenuDigitaleRoute: MenuDigitaleRoute,
   SalaRoute: SalaRoute,
   SuperadminRoute: SuperadminRoute,
   OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,

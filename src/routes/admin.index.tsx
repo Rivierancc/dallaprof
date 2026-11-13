@@ -24,6 +24,7 @@ import { OrderNumberSettings } from "@/components/order-number-settings";
 import { LicenseSummary } from "@/components/license-summary";
 import { LoyaltySettings } from "@/components/loyalty-settings";
 import { RestaurantSettings } from "@/components/restaurant-settings";
+import { DigitalMenuSettings } from "@/components/digital-menu-settings";
 import { StaffFullscreenButton } from "@/components/staff-display";
 
 export const Route = createFileRoute("/admin/")({
@@ -77,6 +78,7 @@ function Admin() {
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>}
       {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></div>}
+      <div className="mx-auto mt-6 max-w-5xl"><Fold title="📱 Menu digitale (sito e QR code)"><DigitalMenuSettings /></Fold></div>
       <div className="mx-auto mt-6 max-w-5xl"><Fold title="👨‍🍳 Funzioni cucina"><KitchenFeaturesSettings /></Fold></div>
     </div>
   </main>;
