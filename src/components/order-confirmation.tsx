@@ -5,22 +5,16 @@ import { useCustomer } from "@/components/customer-session";
 import { Button } from "@/components/ui/button";
 import { getCustomerOrder } from "@/lib/menu.functions";
 import { CONFIRMATION_DELAY, copy, isPaidOrder } from "@/lib/customer";
-import { supabase } from "@/integrations/supabase/client";
 
 export function OrderConfirmation({ id }: { id: string }) {
   const { language, reset } = useCustomer();
   const t = copy[language];
   const navigate = useNavigate();
   const valid = /^[0-9a-f-]{36}$/i.test(id);
-  const { data: order, isLoading, error, refetch } = useQuery({
+  const { data: order, isLoading, error } = useQuery({
     queryKey: ["customer-order", id], queryFn: () => getCustomerOrder({ data: { id } }), enabled: valid, refetchInterval: 2_000,
   });
   const paid = !!order && isPaidOrder(order);
-  useEffect(() => {
-    if (!valid) return;
-    const channel = supabase.channel(`confirmation-${id}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${id}` }, () => void refetch()).subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [id, valid, refetch]);
   useEffect(() => {
     if (!paid) return;
     const timer = setTimeout(() => { reset(); localStorage.removeItem("last_order_id"); void navigate({ to: "/" }); }, CONFIRMATION_DELAY);

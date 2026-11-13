@@ -94,3 +94,25 @@ export const changeStaffPin = createServerFn({ method: "POST" })
     await session.update({ unlocked: true, version });
     return { ok: true };
   });
+
+const PUBLIC_STATUSES = ["preparing", "ready"];
+// Orders are not readable from the browser: staff get full rows, the public display only numbers.
+export const listLiveOrders = createServerFn({ method: "GET" })
+  .inputValidator((d: { statuses: string[] }) => {
+    const ok = ["awaiting_payment", "preparing", "ready", "done", "cancelled"];
+    const statuses = (Array.isArray(d?.statuses) ? d.statuses : []).filter((s) => ok.includes(s));
+    return { statuses };
+  })
+  .handler(async ({ data }) => {
+    const { staffStatus } = await import("@/lib/staff.server");
+    const staff = (await staffStatus()).unlocked;
+    const statuses = staff ? data.statuses : data.statuses.filter((s) => PUBLIC_STATUSES.includes(s));
+    if (!statuses.length) return [];
+    const db = await (await import("@/lib/venue.server")).venueAdmin();
+    const since = new Date(Date.now() - 12 * 3600 * 1000).toISOString();
+    const { data: rows, error } = await db.from("orders")
+      .select(staff ? "*" : "id, order_number, status, created_at")
+      .in("status", statuses).gte("created_at", since).order("created_at", { ascending: true });
+    if (error) throw new Error("Impossibile leggere gli ordini");
+    return (rows ?? []) as unknown as Record<string, unknown>[];
+  });

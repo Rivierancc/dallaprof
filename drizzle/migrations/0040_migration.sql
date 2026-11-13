@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "kiosk read" ON public.orders;

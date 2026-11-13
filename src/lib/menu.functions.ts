@@ -603,7 +603,7 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
     return { id: d.id };
   })
   .handler(async ({ data }) => {
-    const { data: order, error } = await (await publishable()).from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
+    const { data: order, error } = await (await admin()).from("orders").select("id, order_number, status, paid_at, total").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     return order;
   });

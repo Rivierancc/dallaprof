@@ -157,8 +157,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       setOrderError("")
       const payload = { ...orderPayload(dineOption, priced, method), total: toPay, discount: disc.amount }
       if (simulate) return null
-      const { data: order, error } = await supabase.from("orders").insert({ ...payload, venue_id: await browserVenueId() }).select("id, order_number").single()
+      const newId = crypto.randomUUID()
+      const { error } = await supabase.from("orders").insert({ ...payload, id: newId, venue_id: await browserVenueId() })
       if (error) throw error
+      const order = { id: newId }
       if (member) await linkOrderCustomer({ data: { orderId: order.id, customerId: member.id } }).catch(() => undefined)
       return order
     },
