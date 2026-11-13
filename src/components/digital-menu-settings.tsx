@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { saveBanner } from "@/lib/menu.functions";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { Button } from "@/components/ui/button";
+import QRCode from "qrcode";
 
 /** Admin: il menu digitale per il sito mostra o nasconde i prezzi (salvato con le impostazioni condivise). */
 export function DigitalMenuSettings() {
@@ -16,7 +17,14 @@ export function DigitalMenuSettings() {
     const seg = window.location.pathname.split("/").filter(Boolean)[0];
     setUrl(`${window.location.origin}${seg && seg !== "admin" ? `/${seg}` : ""}/menu-digitale`);
   }, []);
+  const [qr, setQr] = useState("");
+  useEffect(() => { if (url) void QRCode.toDataURL(url, { width: 600, margin: 2 }).then(setQr); }, [url]);
   if (show === null || !saved) return null;
+  const print = () => {
+    const w = window.open("", "_blank"); if (!w) return;
+    w.document.write(`<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h1>Menu digitale</h1><img src="${qr}" style="width:360px"/><p style="font-size:22px">Inquadra per consultare il nostro menu</p><p>${url}</p><script>onload=()=>print()</script></body></html>`);
+    w.document.close();
+  };
   const save = async (v: boolean) => {
     setShow(v); setMsg("Salvo…");
     try { await saveBanner({ data: { settings: { ...saved, digital_prices: v } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
@@ -29,6 +37,8 @@ export function DigitalMenuSettings() {
       <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setMsg("Indirizzo copiato ✓"); }}>📋 Copia indirizzo</Button>
       <Button asChild variant="secondary"><a href={url} target="_blank" rel="noreferrer">↗ Apri menu digitale</a></Button>
     </div>
+    {qr && <div className="flex flex-wrap items-center gap-6"><img src={qr} alt="QR code del menu digitale" className="h-56 w-56 rounded-lg bg-background" />
+      <div className="flex flex-col gap-3"><Button asChild variant="secondary"><a href={qr} download="qr-menu-digitale.png">⬇️ Scarica QR Code</a></Button><Button variant="secondary" onClick={print}>🖨️ Stampa QR Code</Button></div></div>}
     {msg && <p>{msg}</p>}
   </div>;
 }
