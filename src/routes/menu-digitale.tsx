@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import { menuQueryOptions, euro } from "@/lib/menu";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { LANGUAGES, descriptionFor, translatedFor, isRtl, type Language } from "@/lib/customer";
@@ -13,20 +14,43 @@ export const Route = createFileRoute("/menu-digitale")({
     { property: "og:title", content: venuePageTitle("Menu digitale", matches) }, { property: "og:description", content: "Il nostro menu completo da consultare: piatti, foto e descrizioni." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
   ] }),
-  errorComponent: () => <p className="p-8 text-2xl">Menu non disponibile al momento.</p>,
-  notFoundComponent: () => <p className="p-8 text-2xl">Menu non trovato.</p>,
+  errorComponent: () => <MenuProblem text="Menu non disponibile al momento." />,
+  notFoundComponent: () => <MenuProblem text="Menu non trovato." />,
   component: DigitalMenu,
 });
+
+/** Indirizzo del sito del locale (Admin → Menu digitale); vuoto = nessun link, mai il totem. */
+export function siteUrl(settings: Record<string, unknown> | undefined): string {
+  const raw = String(settings?.["website_url"] ?? "").trim();
+  if (!raw) return "";
+  return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+}
+
+function MenuProblem({ text }: { text: string }) {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const site = siteUrl(qc.getQueryData(bannerQueryOptions.queryKey));
+  return <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 text-center">
+    <p className="text-3xl">{text}</p>
+    <div className="flex flex-wrap justify-center gap-3 text-xl">
+      <button onClick={() => window.location.reload()} className="rounded-lg bg-secondary px-5 py-3 text-secondary-foreground">↻ Riprova</button>
+      {site ? <a href={site} className="rounded-lg bg-accent px-5 py-3 text-accent-foreground">← Torna al sito</a>
+        : <button onClick={() => router.history.back()} className="rounded-lg bg-accent px-5 py-3 text-accent-foreground">← Indietro</button>}
+    </div>
+  </main>;
+}
 
 function DigitalMenu() {
   const { data: menu } = useSuspenseQuery(menuQueryOptions);
   const { data: banner } = useQuery(bannerQueryOptions);
   const showPrices = banner?.["digital_prices"] !== false;
+  const site = siteUrl(banner);
   const [lang, setLang] = useState<Language>("IT");
   const cats = menu.categories.filter((c) => menu.products.some((p) => p.category_id === c.id));
   return <main dir={isRtl(lang) ? "rtl" : "ltr"} className="mx-auto min-h-screen max-w-4xl px-4 pb-16">
     <header className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur">
       <div className="flex flex-wrap items-center gap-2">
+        {site && <a href={site} className="rounded-lg bg-secondary px-3 py-1 text-lg text-secondary-foreground">← Torna al sito</a>}
         <h1 className="mr-auto font-display text-5xl text-accent">Menu</h1>
         {LANGUAGES.map((l) => <button key={l.code} aria-label={l.name} onClick={() => setLang(l.code)} className={`rounded-md px-2 py-1 text-2xl ${lang === l.code ? "bg-accent/30" : ""}`}>{l.flag}</button>)}
       </div>

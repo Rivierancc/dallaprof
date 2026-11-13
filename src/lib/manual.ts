@@ -4,11 +4,11 @@ export type ManualMode = "fast_food" | "restaurant" | "both";
 export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "13 novembre 2026";
+export const MANUAL_UPDATED = "14 novembre 2026";
 
 export const MANUAL: ManualSection[] = [
   { id: "menu-digitale", title: "📱 Menu digitale per il sito", entries: [
-    { title: "Listino consultabile senza acquisto", where: "Admin → Menu digitale (sito e QR code)", steps: ["Copia l'indirizzo del menu digitale e mettilo sul sito, sui social o in un QR code.", "I clienti vedono categorie, foto e descrizioni nella loro lingua, ma non possono ordinare.", "Sotto l'indirizzo c'è il QR Code: «⬇️ Scarica QR Code» salva l'immagine, «🖨️ Stampa QR Code» lo stampa con la scritta per i clienti.", "Spunta o togli «Mostra i prezzi nel menu digitale» per far vedere o nascondere i prezzi."] },
+    { title: "Listino consultabile senza acquisto", where: "Admin → Menu digitale (sito e QR code)", steps: ["Copia l'indirizzo del menu digitale e mettilo sul sito, sui social o in un QR code.", "I clienti vedono categorie, foto e descrizioni nella loro lingua, ma non possono ordinare.", "Sotto l'indirizzo c'è il QR Code: «⬇️ Scarica QR Code» salva l'immagine, «🖨️ Stampa QR Code» lo stampa con la scritta per i clienti.", "Spunta o togli «Mostra i prezzi nel menu digitale» per far vedere o nascondere i prezzi.", "In «Sito web del locale» scrivi l'indirizzo del tuo sito e premi «Salva sito»: in alto nel menu digitale compare «← Torna al sito», che riporta lì anche se il menu non si carica. Se lo lasci vuoto il tasto non compare."] },
   ] },
   { id: "ristorante", title: "🍽️ Ristorante: sala e tablet", only: "restaurant", entries: [
     { title: "Modalità ristorante: tavoli, coperto e tablet", where: "Admin → Ristorante: tavoli, coperto e tablet", steps: ["La modalità del locale (Solo Fast Food, Solo Ristorante, Fast Food + Ristorante) la decide il fornitore; la sezione si attiva solo con Ristorante.", "Imposta il numero di tavoli, se il numero del tavolo è obbligatorio, il coperto a persona e se i piatti escono tutti insieme o divisi per portate.", "Accendi o spegni la campanella dalla cucina e i messaggi tra cucina e camerieri, poi premi «Salva impostazioni».", "In «Tablet dei camerieri» aggiungi ogni tablet con un nome (es. Tablet 1), il cameriere facoltativo e un PIN di 4 cifre; per reimpostare un PIN scrivine uno nuovo e premi Salva."], tips: ["La schermata della sala per i camerieri è su /sala."] },

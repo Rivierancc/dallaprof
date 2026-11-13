@@ -12,6 +12,8 @@ export function DigitalMenuSettings() {
   const [show, setShow] = useState<boolean | null>(null);
   const [msg, setMsg] = useState("");
   const [url, setUrl] = useState("");
+  const [site, setSite] = useState<string | null>(null);
+  useEffect(() => { if (site === null && saved) setSite(String(saved["website_url"] ?? "")); }, [saved, site]);
   useEffect(() => { if (show === null && saved) setShow(saved["digital_prices"] !== false); }, [saved, show]);
   useEffect(() => {
     const seg = window.location.pathname.split("/").filter(Boolean)[0];
@@ -19,7 +21,12 @@ export function DigitalMenuSettings() {
   }, []);
   const [qr, setQr] = useState("");
   useEffect(() => { if (url) void QRCode.toDataURL(url, { width: 600, margin: 2 }).then(setQr); }, [url]);
-  if (show === null || !saved) return null;
+  if (show === null || site === null || !saved) return null;
+  const saveSite = async () => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, website_url: site.trim() } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Sito salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore"); }
+  };
   const print = () => {
     const w = window.open("", "_blank"); if (!w) return;
     w.document.write(`<html><body style="font-family:sans-serif;text-align:center;padding:40px"><h1>Menu digitale</h1><img src="${qr}" style="width:360px"/><p style="font-size:22px">Inquadra per consultare il nostro menu</p><p>${url}</p><script>onload=()=>print()</script></body></html>`);
@@ -32,6 +39,10 @@ export function DigitalMenuSettings() {
   };
   return <div className="space-y-4 text-2xl">
     <label className="flex items-center gap-4"><input type="checkbox" className="h-8 w-8" checked={show} onChange={(e) => save(e.target.checked)} /> Mostra i prezzi nel menu digitale</label>
+    <div className="space-y-2">
+      <p>Sito web del locale <span className="text-muted-foreground">(per il tasto «← Torna al sito»; lascia vuoto se non hai un sito)</span></p>
+      <div className="flex flex-wrap gap-3"><input value={site} onChange={(e) => setSite(e.target.value)} placeholder="https://www.tuosito.it" className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2" /><Button onClick={saveSite}>Salva sito</Button></div>
+    </div>
     <p className="text-muted-foreground">Indirizzo da mettere sul sito o nel QR code: <b className="break-all text-foreground">{url}</b></p>
     <div className="flex flex-wrap gap-3">
       <Button variant="secondary" onClick={() => { void navigator.clipboard?.writeText(url); setMsg("Indirizzo copiato ✓"); }}>📋 Copia indirizzo</Button>
