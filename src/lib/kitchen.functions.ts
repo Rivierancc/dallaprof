@@ -114,5 +114,5 @@ export const listLiveOrders = createServerFn({ method: "GET" })
       .select(staff ? "*" : "id, order_number, status, created_at")
       .in("status", statuses).gte("created_at", since).order("created_at", { ascending: true });
     if (error) throw new Error("Impossibile leggere gli ordini");
-    return (rows ?? []) as unknown as Record<string, unknown>[];
+    return (rows ?? []) as unknown as import("@/lib/menu").Order[];
   });
