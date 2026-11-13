@@ -38,8 +38,10 @@ export const newFilter = (label: string, emoji: string, list: FoodFilter[]): Foo
 export const filtersOn = (s: Record<string, unknown> | undefined) => s?.["food_filters_on"] === true;
 
 type Dish = { name: string; description: string; ingredients: string[]; food_tags?: string[] };
+/** «!id» nelle etichette = escluso a mano, vince sul riconoscimento automatico. */
 /** Un piatto rientra se ha l'etichetta spuntata o se nome/ingredienti/descrizione contengono una parola chiave. */
 export function dishMatches(d: Dish, f: FoodFilter): boolean {
+  if (d.food_tags?.includes(`!${f.id}`)) return false;
   if (d.food_tags?.includes(f.id)) return true;
   const text = [d.name, d.description, ...d.ingredients].join(" ").toLowerCase();
   return f.words.some((w) => text.includes(w));

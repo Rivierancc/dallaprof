@@ -198,22 +198,25 @@ function TagsEditor({ p }: { p: MenuProduct }) {
   const { data: banner } = useQuery(bannerQueryOptions);
   const list = cleanFilters(banner?.["food_filters"]);
   const toggle = async (id: string) => {
-    const tags = p.food_tags.includes(id) ? p.food_tags.filter((t) => t !== id) : [...p.food_tags, id];
+    // Ciclo: automatico → incluso → escluso → automatico
+    const rest = p.food_tags.filter((t) => t !== id && t !== `!${id}`);
+    const tags = p.food_tags.includes(id) ? [...rest, `!${id}`] : p.food_tags.includes(`!${id}`) ? rest : [...rest, id];
     try { await save({ data: { id: p.id, tags } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
   };
   const [open, setOpen] = useState(false);
-  const active = list.filter((f) => p.food_tags.includes(f.id)).map((f) => `${f.emoji} ${f.label}`).join(", ") || "nessuno";
+  const active = list.filter((f) => p.food_tags.includes(f.id) || p.food_tags.includes(`!${f.id}`)).map((f) => `${p.food_tags.includes(`!${f.id}`) ? "✕ " : ""}${f.emoji} ${f.label}`).join(", ") || "automatici";
   return (
     <section>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">🔎 Filtri del totem <span className="font-normal text-muted-foreground">({active})</span> {open ? "▲" : "▼"}</button>
       {open && <div className="mt-3">
-      <p className="mb-3 text-lg text-muted-foreground">Spunta i filtri in cui deve comparire questo piatto. «Auto» vuol dire che è già riconosciuto dagli ingredienti.</p>
+      <p className="mb-3 text-lg text-muted-foreground">Tocca un filtro per cambiarlo: grigio = automatico (segue gli ingredienti, «· auto» se riconosciuto), ✓ = incluso sempre, ✕ rosso = escluso anche se gli ingredienti lo farebbero entrare.</p>
       <div className="flex flex-wrap gap-2">
         {list.map((f) => {
           const on = p.food_tags.includes(f.id);
-          const auto = !on && dishMatches({ ...p, food_tags: [] }, f);
-          return <button key={f.id} onClick={() => toggle(f.id)} className={`${btn} ${on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{on ? "✓ " : ""}{f.emoji} {f.label}{auto ? " · auto" : ""}</button>;
+          const off = p.food_tags.includes(`!${f.id}`);
+          const auto = !on && !off && dishMatches({ ...p, food_tags: [] }, f);
+          return <button key={f.id} onClick={() => toggle(f.id)} className={`${btn} ${on ? "bg-accent text-accent-foreground" : off ? "bg-destructive text-destructive-foreground line-through" : "bg-secondary"}`}>{on ? "✓ " : off ? "✕ " : ""}{f.emoji} {f.label}{auto ? " · auto" : ""}</button>;
         })}
       </div>
       </div>}

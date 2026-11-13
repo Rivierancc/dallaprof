@@ -316,7 +316,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const cat = categories.find((c) => c.id === activeCat)
   const foodFilters = filtersOn(bannerSettings) ? cleanFilters(bannerSettings?.["food_filters"]).filter((f) => f.on) : []
   const ffOn = foodFilters.find((f) => f.id === foodFilter)
-  const inCat = activeCat === OFFERS ? offerMenus : activeCat? products.filter((p) => p.category_id === activeCat) : []
+  // Filtri sulla prima striscia: «__ff:id» raccoglie i piatti adatti da tutte le categorie.
+  const FF = "__ff:"
+  const ffCat = activeCat?.startsWith(FF) ? foodFilters.find((f) => FF + f.id === activeCat) : undefined
+  const inCat = activeCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : activeCat? products.filter((p) => p.category_id === activeCat) : []
   const shown = ffOn ? inCat.filter((p) => dishMatches(p, ffOn)) : inCat
   const isOffers = activeCat === OFFERS
   const dl = dishLayoutFor(bannerSettings, activeCat ?? "")
@@ -334,8 +337,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
       {activeCat === null? (
         <div className={`grid gap-6 ${tile.cols === 1 ? "grid-cols-1" : tile.cols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
-          {catLayout.strips && (offerMenus.length > 0 || categories.some((c) => !c.strip)) && (
-            <CategoryStrip light size={catLayout.size} initial={lastCat} onPick={setActiveCat} cats={[...(offerMenus.length > 0 ? [{ id: OFFERS, name: `🍱 ${translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}`, name_tr: null, image: null } as unknown as Category] : []), ...categories.filter((c) => !c.strip)]} />
+          {catLayout.strips && (offerMenus.length > 0 || foodFilters.length > 0 || categories.some((c) => !c.strip)) && (
+            <CategoryStrip light size={catLayout.size} initial={lastCat} onPick={setActiveCat} cats={[...(offerMenus.length > 0 ? [{ id: OFFERS, name: `🍱 ${translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}`, name_tr: null, image: null } as unknown as Category] : []), ...categories.filter((c) => !c.strip), ...foodFilters.map((f) => ({ id: FF + f.id, name: `${f.emoji} ${f.label}`, name_tr: null, image: null } as unknown as Category))]} />
           )}
           {!catLayout.strips && offerMenus.length > 0 && (
             <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${tile.h}rem` }} className="whitespace-normal tap relative overflow-hidden rounded-3xl bg-secondary">
@@ -354,8 +357,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         </div>
       ) : (
         <>
-          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
-          {foodFilters.length > 0 && (
+          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
+          {foodFilters.length > 0 && !ffCat && (
             <div dir="ltr" className="mb-6 flex gap-3 overflow-x-auto pb-2">
               {foodFilters.map((f) => (
                 <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-6 py-3 font-display text-3xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>

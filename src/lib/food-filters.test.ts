@@ -14,4 +14,7 @@ describe("filtri piatti", () => {
   it("pollo riconosciuto dagli ingredienti", () => {
     expect(dishMatches({ name: "Crispy", description: "", ingredients: ["Petto di pollo"] }, pollo)).toBe(true);
   });
+  it("piatto escluso a mano non compare anche se gli ingredienti lo riconoscono", () => {
+    expect(dishMatches({ name: "Crispy", description: "", ingredients: ["Petto di pollo"], food_tags: ["!pollo"] }, pollo)).toBe(false);
+  });
 });
