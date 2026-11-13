@@ -4,7 +4,7 @@ export const MAIN_VENUE = "dallaprof";
 export const VENUE_HEADER = "x-venue";
 
 const RESERVED = new Set([
-  "cucina", "cassa", "display", "menu", "admin", "manuale", "ordine-confermato", "superadmin",
+  "cucina", "cassa", "display", "menu", "menu-digitale", "sala", "admin", "manuale", "ordine-confermato", "superadmin",
   "api", "_serverFn", "assets", "src", "node_modules", "@vite", "@id", "@fs", "@react-refresh",
 ]);
 
