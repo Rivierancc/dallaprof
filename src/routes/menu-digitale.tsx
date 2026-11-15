@@ -47,26 +47,26 @@ function DigitalMenu() {
   const site = siteUrl(banner);
   const [lang, setLang] = useState<Language>("IT");
   const cats = menu.categories.filter((c) => menu.products.some((p) => p.category_id === c.id));
-  return <main dir={isRtl(lang) ? "rtl" : "ltr"} className="mx-auto min-h-screen max-w-4xl px-4 pb-16">
+  return <main dir={isRtl(lang) ? "rtl" : "ltr"} className="mx-auto min-h-screen max-w-5xl px-4 pb-16">
     <header className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur">
       <div className="flex flex-wrap items-center gap-2">
-        {site && <a href={site} className="rounded-lg bg-secondary px-3 py-1 text-lg text-secondary-foreground">← Torna al sito</a>}
-        <h1 className="mr-auto font-display text-5xl text-accent">Menu</h1>
-        {LANGUAGES.map((l) => <button key={l.code} aria-label={l.name} onClick={() => setLang(l.code)} className={`rounded-md px-2 py-1 text-2xl ${lang === l.code ? "bg-accent/30" : ""}`}>{l.flag}</button>)}
+        {site && <a href={site} className="rounded-lg bg-secondary px-4 py-2 text-2xl text-secondary-foreground">← Torna al sito</a>}
+        <h1 className="mr-auto font-display text-6xl text-accent">Menu</h1>
+        {LANGUAGES.map((l) => <button key={l.code} aria-label={l.name} onClick={() => setLang(l.code)} className={`rounded-md px-2 py-1 text-3xl ${lang === l.code ? "bg-accent/30" : ""}`}>{l.flag}</button>)}
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
-        {cats.map((c) => <a key={c.id} href={`#c-${c.slug}`} className="shrink-0 rounded-full bg-secondary px-4 py-1 text-lg text-secondary-foreground">{translatedFor(c.name, c.name_tr, lang)}</a>)}
+        {cats.map((c) => <a key={c.id} href={`#c-${c.slug}`} className="shrink-0 rounded-full bg-secondary px-5 py-2 text-2xl text-secondary-foreground">{translatedFor(c.name, c.name_tr, lang)}</a>)}
       </nav>
     </header>
-    {cats.map((c) => <section key={c.id} id={`c-${c.slug}`} className="scroll-mt-32 pt-8">
-      <h2 className="mb-4 font-display text-4xl text-accent">{translatedFor(c.name, c.name_tr, lang)}</h2>
+    {cats.map((c) => <section key={c.id} id={`c-${c.slug}`} className="scroll-mt-40 pt-8">
+      <h2 className="mb-4 font-display text-5xl text-accent">{translatedFor(c.name, c.name_tr, lang)}</h2>
       <ul className="grid gap-4 sm:grid-cols-2">
-        {menu.products.filter((p) => p.category_id === c.id).map((p) => <li key={p.id} className={`flex gap-3 rounded-xl bg-card p-3 text-card-foreground ${p.sold_out ? "opacity-50" : ""}`}>
-          {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-24 w-24 shrink-0 rounded-lg object-cover" />}
+        {menu.products.filter((p) => p.category_id === c.id).map((p) => <li key={p.id} className={`flex gap-4 rounded-xl bg-card p-4 text-card-foreground ${p.sold_out ? "opacity-50" : ""}`}>
+          {p.image && <img src={p.image} alt={p.name} loading="lazy" className="h-32 w-32 shrink-0 rounded-lg object-cover" />}
           <div className="min-w-0 flex-1">
-            <div className="flex items-start gap-2"><h3 className="mr-auto text-xl font-bold">{p.name}</h3>{showPrices && <span className="shrink-0 text-xl font-bold text-accent">{euro(p.price)}</span>}</div>
-            {descriptionFor(p, lang) && <p className="mt-1 text-base text-muted-foreground">{descriptionFor(p, lang)}</p>}
-            {p.sold_out && <p className="mt-1 text-sm font-bold text-destructive">Esaurito</p>}
+            <div className="flex items-start gap-2"><h3 className="mr-auto text-2xl font-bold">{p.name}</h3>{showPrices && <span className="shrink-0 text-2xl font-bold text-accent">{euro(p.price)}</span>}</div>
+            {descriptionFor(p, lang) && <p className="mt-1 text-xl text-muted-foreground">{descriptionFor(p, lang)}</p>}
+            {p.sold_out && <p className="mt-1 text-lg font-bold text-destructive">Esaurito</p>}
           </div>
         </li>)}
       </ul>
