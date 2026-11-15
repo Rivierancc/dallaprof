@@ -4,7 +4,7 @@ export type ManualMode = "fast_food" | "restaurant" | "both";
 export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "15 novembre 2026";
+export const MANUAL_UPDATED = "16 novembre 2026";
 
 export const MANUAL: ManualSection[] = [
   { id: "menu-digitale", title: "📱 Menu digitale per il sito", entries: [

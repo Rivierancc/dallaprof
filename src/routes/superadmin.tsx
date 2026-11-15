@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { PasskeyLogin, PasskeyManager } from "@/components/passkey";
 import { SuperManual } from "@/components/super-manual";
 import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { MODES, PLANS, cleanMode } from "@/lib/license";
@@ -52,6 +53,7 @@ function Login({ configured }: { configured: boolean }) {
   return <div className="superadmin-page"><main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-5 p-6">
     <h1 className="font-display text-6xl text-accent">Area riservata</h1>
     <p className="text-lg text-muted-foreground">{configured ? "Inserisci la password Master." : "Prima volta: scegli la password Master (almeno 8 caratteri). Devi essere già entrato in Admin con il PIN del personale su questo dispositivo."}</p>
+    {configured && <PasskeyLogin />}
     <form onSubmit={submit} className="flex flex-col gap-4">
       <PwInput value={pw} onChange={setPw} placeholder="Password Master" auto={configured ? "current-password" : "new-password"} />
       {!configured && <PwInput value={pw2} onChange={setPw2} placeholder="Ripeti la password" auto="new-password" />}
@@ -88,7 +90,7 @@ function Venues() {
     </div>
     <div className="flex flex-wrap gap-3">
       <Button onClick={() => setAdding(!adding)} className="h-14 px-8 text-xl">{adding ? "Chiudi" : "+ Nuovo locale"}</Button>
-      <Button variant="secondary" onClick={() => setPwOpen(true)} className="h-14 px-8 text-xl">🔑 La mia password</Button>
+      <Button variant="secondary" onClick={() => setPwOpen(true)} className="h-14 px-8 text-xl">🔑 Password e Face ID</Button>
       <Button variant="secondary" onClick={() => setManual(true)} className="h-14 px-8 text-xl">📖 Manuale fornitore</Button>
     </div>
     {adding && <NewVenue onDone={(id) => { setAdding(false); void refetch(); setOpen(id); }} />}
@@ -260,6 +262,7 @@ function MasterPassword({ onBack }: { onBack: () => void }) {
       <Button onClick={changePw} className="h-14 text-xl">Cambia password</Button>
       {msg && <p className="rounded-xl bg-background px-4 py-2 text-lg">{msg}</p>}
     </section>
+    <PasskeyManager />
   </main></div>;
 }
 

@@ -218,6 +218,33 @@ export type Database = {
           },
         ]
       }
+      master_passkeys: {
+        Row: {
+          counter: number
+          created_at: string
+          id: string
+          label: string
+          public_key: string
+          transports: string[]
+        }
+        Insert: {
+          counter?: number
+          created_at?: string
+          id: string
+          label?: string
+          public_key: string
+          transports?: string[]
+        }
+        Update: {
+          counter?: number
+          created_at?: string
+          id?: string
+          label?: string
+          public_key?: string
+          transports?: string[]
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean

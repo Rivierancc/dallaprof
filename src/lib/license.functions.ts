@@ -183,3 +183,106 @@ export const getSuperManual = createServerFn({ method: "GET" }).handler(async ()
   await requireMaster();
   return (await import("@/lib/superadmin-manual.server")).superManual();
 });
+
+// ---- Accesso con Face ID / impronta (passkey) ----
+async function rp() {
+  const { getRequest } = await import("@tanstack/react-start/server");
+  const req = getRequest();
+  const origin = req.headers.get("origin") || new URL(req.url).origin;
+  return { origin, rpID: new URL(origin).hostname };
+}
+async function challengeSession(flags: Flags = {}) {
+  const { staffSessionConfig } = await import("@/lib/staff.server");
+  return useSession<{ ch?: string }>({ ...staffSessionConfig(flags), name: "master-pk", maxAge: 300 });
+}
+type PkRow = { id: string; public_key: string; counter: number; transports: string[]; label: string };
+async function passkeys(): Promise<PkRow[]> {
+  const { data } = await (await admin()).from("master_passkeys").select("*");
+  return (data ?? []) as PkRow[];
+}
+
+export const passkeyInfo = createServerFn({ method: "GET" }).handler(async () => {
+  const list = await passkeys();
+  return { count: list.length };
+});
+
+export const listPasskeys = createServerFn({ method: "GET" }).handler(async () => {
+  await requireMaster();
+  const { data } = await (await admin()).from("master_passkeys").select("id,label,created_at").order("created_at");
+  return (data ?? []) as { id: string; label: string; created_at: string }[];
+});
+
+export const deletePasskey = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data }) => {
+    await requireMaster();
+    await (await admin()).from("master_passkeys").delete().eq("id", data.id);
+    return { ok: true };
+  });
+
+export const passkeyRegisterStart = createServerFn({ method: "POST" })
+  .inputValidator((d: Flags) => ({ secure: !!d.secure, partitioned: !!d.partitioned }))
+  .handler(async ({ data }) => {
+    await requireMaster();
+    const { generateRegistrationOptions } = await import("@simplewebauthn/server");
+    const { rpID } = await rp();
+    const opts = await generateRegistrationOptions({
+      rpName: "Super Admin", rpID, userName: "superadmin", userDisplayName: "Super Admin",
+      excludeCredentials: (await passkeys()).map((p) => ({ id: p.id, transports: p.transports as never })),
+      authenticatorSelection: { residentKey: "preferred", userVerification: "required", authenticatorAttachment: "platform" },
+    });
+    await (await challengeSession(data)).update({ ch: opts.challenge });
+    return JSON.stringify(opts);
+  });
+
+export const passkeyRegisterFinish = createServerFn({ method: "POST" })
+  .inputValidator((d: { response: unknown; label: string } & Flags) => ({ response: d.response, label: String(d.label ?? "").slice(0, 60), secure: !!d.secure, partitioned: !!d.partitioned }))
+  .handler(async ({ data }) => {
+    await requireMaster();
+    const { verifyRegistrationResponse } = await import("@simplewebauthn/server");
+    const { isoBase64URL } = await import("@simplewebauthn/server/helpers");
+    const s = await challengeSession(data); const ch = s.data.ch; await s.clear();
+    if (!ch) return { ok: false as const, reason: "Tempo scaduto, riprova" };
+    const { origin, rpID } = await rp();
+    try {
+      const v = await verifyRegistrationResponse({ response: data.response as never, expectedChallenge: ch, expectedOrigin: origin, expectedRPID: rpID, requireUserVerification: true });
+      if (!v.verified || !v.registrationInfo) return { ok: false as const, reason: "Verifica non riuscita" };
+      const c = v.registrationInfo.credential;
+      const { error } = await (await admin()).from("master_passkeys").insert({ id: c.id, public_key: isoBase64URL.fromBuffer(c.publicKey), counter: c.counter, transports: c.transports ?? [], label: data.label || "Dispositivo" });
+      if (error) return { ok: false as const, reason: "Dispositivo già collegato" };
+      return { ok: true as const, reason: "" };
+    } catch { return { ok: false as const, reason: "Verifica non riuscita" }; }
+  });
+
+export const passkeyLoginStart = createServerFn({ method: "POST" })
+  .inputValidator((d: Flags) => ({ secure: !!d.secure, partitioned: !!d.partitioned }))
+  .handler(async ({ data }) => {
+    const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
+    const { rpID } = await rp();
+    const opts = await generateAuthenticationOptions({ rpID, userVerification: "required", allowCredentials: (await passkeys()).map((p) => ({ id: p.id, transports: p.transports as never })) });
+    await (await challengeSession(data)).update({ ch: opts.challenge });
+    return JSON.stringify(opts);
+  });
+
+export const passkeyLoginFinish = createServerFn({ method: "POST" })
+  .inputValidator((d: { response: { id?: string } } & Flags) => ({ response: d.response, secure: !!d.secure, partitioned: !!d.partitioned }))
+  .handler(async ({ data }) => {
+    const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
+    const { isoBase64URL } = await import("@simplewebauthn/server/helpers");
+    const s = await challengeSession(data); const ch = s.data.ch; await s.clear();
+    if (!ch) return { ok: false as const, reason: "Tempo scaduto, riprova" };
+    const hash = await masterHash();
+    if (!hash) return { ok: false as const, reason: "Imposta prima la password Master" };
+    const pk = (await passkeys()).find((p) => p.id === String(data.response?.id ?? ""));
+    if (!pk) return { ok: false as const, reason: "Dispositivo non riconosciuto" };
+    const { origin, rpID } = await rp();
+    try {
+      const v = await verifyAuthenticationResponse({ response: data.response as never, expectedChallenge: ch, expectedOrigin: origin, expectedRPID: rpID, requireUserVerification: true,
+        credential: { id: pk.id, publicKey: isoBase64URL.toBuffer(pk.public_key), counter: Number(pk.counter), transports: pk.transports as never } });
+      if (!v.verified) return { ok: false as const, reason: "Verifica non riuscita" };
+      await (await admin()).from("master_passkeys").update({ counter: v.authenticationInfo.newCounter }).eq("id", pk.id);
+    } catch { return { ok: false as const, reason: "Verifica non riuscita" }; }
+    const m = await useSession<{ master?: string }>(await masterConfig(data));
+    await m.update({ master: hash.slice(-16) });
+    return { ok: true as const, reason: "" };
+  });
