@@ -13,6 +13,7 @@ export const Route = createFileRoute("/menu-digitale")({
     { title: venuePageTitle("Menu digitale", matches) }, { name: "description", content: "Il nostro menu completo da consultare: piatti, foto e descrizioni." },
     { property: "og:title", content: venuePageTitle("Menu digitale", matches) }, { property: "og:description", content: "Il nostro menu completo da consultare: piatti, foto e descrizioni." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" },
+    { name: "viewport", content: "width=device-width, initial-scale=1" },
   ] }),
   errorComponent: () => <MenuProblem text="Menu non disponibile al momento." />,
   notFoundComponent: () => <MenuProblem text="Menu non trovato." />,
@@ -47,7 +48,7 @@ function DigitalMenu() {
   const site = siteUrl(banner);
   const [lang, setLang] = useState<Language>("IT");
   const cats = menu.categories.filter((c) => menu.products.some((p) => p.category_id === c.id));
-  return <main dir={isRtl(lang) ? "rtl" : "ltr"} className="mx-auto min-h-screen max-w-5xl px-4 pb-16">
+  return <main dir={isRtl(lang) ? "rtl" : "ltr"} className="digital-menu mx-auto min-h-screen max-w-5xl px-4 pb-16">
     <header className="sticky top-0 z-10 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur">
       <div className="flex flex-wrap items-center gap-2">
         {site && <a href={site} className="rounded-lg bg-secondary px-4 py-2 text-2xl text-secondary-foreground">← Torna al sito</a>}
