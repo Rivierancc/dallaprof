@@ -37,7 +37,15 @@ export function DigitalMenuSettings() {
     try { await saveBanner({ data: { settings: { ...saved, digital_prices: v } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
     catch (e) { setMsg(e instanceof Error ? e.message : "Errore"); }
   };
+  const size = String(saved?.["digital_size"] ?? "m");
+  const saveSize = async (v: string) => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, digital_size: v } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore"); }
+  };
   return <div className="space-y-4 text-2xl">
+    <div className="space-y-2"><p>Dimensione delle scritte nel menu digitale</p>
+      <div className="flex flex-wrap gap-2">{([["xs","Piccole"],["s","Medie"],["m","Normali"],["l","Grandi"],["xl","Molto grandi"]] as const).map(([k,l]) => <Button key={k} variant={size===k?"default":"secondary"} onClick={() => saveSize(k)}>{l}</Button>)}</div></div>
     <label className="flex items-center gap-4"><input type="checkbox" className="h-8 w-8" checked={show} onChange={(e) => save(e.target.checked)} /> Mostra i prezzi nel menu digitale</label>
     <div className="space-y-2">
       <p>Sito web del locale <span className="text-muted-foreground">(per il tasto «← Torna al sito»; lascia vuoto se non hai un sito)</span></p>
