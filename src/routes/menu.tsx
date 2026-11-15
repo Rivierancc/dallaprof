@@ -496,7 +496,7 @@ function MenuEditor() {
               </div>
               {view === "inline" && active?.id === c.id && (
                 <div data-dishes={c.id} className="ml-8 rounded-3xl border-l-4 border-accent bg-card/40 p-5">
-                  <ProductsSection active={active} products={products} h={handlers} />
+                  <ProductsSection active={active} products={products} h={handlers} onClose={() => closeCategory(c.id)} />
                 </div>
               )}
             </div>
@@ -552,7 +552,7 @@ type ProductHandlers = {
 };
 
 // La lista dei piatti di una categoria: la stessa sia sotto la categoria sia nella pagina a sé.
-function ProductsSection({ active, products, h }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers }) {
+function ProductsSection({ active, products, h, onClose }: { active: MenuCategory; products: MenuProduct[]; h: ProductHandlers; onClose?: () => void }) {
   const divider = useDivider();
   const qc = useQueryClient();
   const setRecipe = useServerFn(setCategoryRecipe);
@@ -618,13 +618,18 @@ function ProductsSection({ active, products, h }: { active: MenuCategory; produc
           </Fragment>
         ))}
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
-        {products.length > 0 && (
-          <li className="list-none pt-2">
+        <li className="list-none flex flex-wrap gap-3 pt-2">
+          {products.length > 0 && (
             <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
               + Aggiungi altro piatto
             </button>
-          </li>
-        )}
+          )}
+          {onClose && (
+            <button onClick={onClose} className="tap ml-auto rounded-xl bg-secondary px-6 py-4 text-2xl font-bold">
+              ▲ Chiudi categoria
+            </button>
+          )}
+        </li>
       </ul>
     </>
   );
