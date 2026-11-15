@@ -16,6 +16,7 @@ const reflectFirst = {
     if (/node_modules[\\/]tsyringe[\\/].*\.js$/.test(id) && !code.includes("reflect-metadata")) {
       return { code: `import "reflect-metadata";\n${code}`, map: null };
     }
+    return null;
   },
 };
 
