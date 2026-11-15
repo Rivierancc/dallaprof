@@ -224,7 +224,7 @@ export const passkeyRegisterStart = createServerFn({ method: "POST" })
   .inputValidator((d: Flags) => ({ secure: !!d.secure, partitioned: !!d.partitioned }))
   .handler(async ({ data }) => {
     await requireMaster();
-    const { generateRegistrationOptions } = await import("@simplewebauthn/server");
+    const { generateRegistrationOptions } = (await import("reflect-metadata"), await import("@simplewebauthn/server"));
     const { rpID } = await rp();
     const opts = await generateRegistrationOptions({
       rpName: "Super Admin", rpID, userName: "superadmin", userDisplayName: "Super Admin",
@@ -239,8 +239,8 @@ export const passkeyRegisterFinish = createServerFn({ method: "POST" })
   .inputValidator((d: { response: unknown; label: string } & Flags) => ({ response: d.response, label: String(d.label ?? "").slice(0, 60), secure: !!d.secure, partitioned: !!d.partitioned }))
   .handler(async ({ data }) => {
     await requireMaster();
-    const { verifyRegistrationResponse } = await import("@simplewebauthn/server");
-    const { isoBase64URL } = await import("@simplewebauthn/server/helpers");
+    const { verifyRegistrationResponse } = (await import("reflect-metadata"), await import("@simplewebauthn/server"));
+    const { isoBase64URL } = (await import("reflect-metadata"), await import("@simplewebauthn/server/helpers"));
     const s = await challengeSession(data); const ch = s.data.ch; await s.clear();
     if (!ch) return { ok: false as const, reason: "Tempo scaduto, riprova" };
     const { origin, rpID } = await rp();
@@ -257,7 +257,7 @@ export const passkeyRegisterFinish = createServerFn({ method: "POST" })
 export const passkeyLoginStart = createServerFn({ method: "POST" })
   .inputValidator((d: Flags) => ({ secure: !!d.secure, partitioned: !!d.partitioned }))
   .handler(async ({ data }) => {
-    const { generateAuthenticationOptions } = await import("@simplewebauthn/server");
+    const { generateAuthenticationOptions } = (await import("reflect-metadata"), await import("@simplewebauthn/server"));
     const { rpID } = await rp();
     const opts = await generateAuthenticationOptions({ rpID, userVerification: "required", allowCredentials: (await passkeys()).map((p) => ({ id: p.id, transports: p.transports as never })) });
     await (await challengeSession(data)).update({ ch: opts.challenge });
@@ -267,8 +267,8 @@ export const passkeyLoginStart = createServerFn({ method: "POST" })
 export const passkeyLoginFinish = createServerFn({ method: "POST" })
   .inputValidator((d: { response: { id?: string } } & Flags) => ({ response: d.response, secure: !!d.secure, partitioned: !!d.partitioned }))
   .handler(async ({ data }) => {
-    const { verifyAuthenticationResponse } = await import("@simplewebauthn/server");
-    const { isoBase64URL } = await import("@simplewebauthn/server/helpers");
+    const { verifyAuthenticationResponse } = (await import("reflect-metadata"), await import("@simplewebauthn/server"));
+    const { isoBase64URL } = (await import("reflect-metadata"), await import("@simplewebauthn/server/helpers"));
     const s = await challengeSession(data); const ch = s.data.ch; await s.clear();
     if (!ch) return { ok: false as const, reason: "Tempo scaduto, riprova" };
     const hash = await masterHash();
