@@ -92,6 +92,6 @@ function mixHex(a: string, b: string, pct: number): string {
   };
   const x = p(a), y = p(b);
   if (!x || !y) return a;
-  const r = x.map((v, i) => Math.round(v + (y[i] - v) * (pct / 100)));
+  const r = x.map((v, i) => Math.round(v + ((y[i] ?? v) - v) * (pct / 100)));
   return "#" + r.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
