@@ -476,8 +476,8 @@ function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: 
     return list.length >= g.max ? cur : { ...cur, [g.name]: [...list, o] }
   })
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
-      <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-background/90 pt-[12vh]" onClick={onClose}>
+      <div className="flex max-h-[80vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
           <Button variant="secondary" onClick={onClose} className="tap float-right ml-4 rounded-full px-6 py-3 font-display text-3xl">✕ {t.exit}</Button>
           <h2 className="font-display text-7xl">{menuOn ? menuName(dish.name, product.combo_name) : product.name}</h2>
@@ -567,8 +567,8 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
     return [...names.map((n) => ({ k: `${k}-${n}`, icon: k === "dolce" ? "🍫" : "🧀", title: n, items: items.filter((g) => g.group === n) })), { k, icon: k === "dolce" ? "🍫" : "🧀", title, items: items.filter((g) => !g.group) }]
   }).filter((g) => g.items.length)
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/90" onClick={onClose}>
-      <div className="flex max-h-[85vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-t-3xl bg-card" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-background/90 pt-[12vh]" onClick={onClose}>
+      <div className="flex max-h-[80vh] w-full max-w-[52rem] flex-col overflow-hidden rounded-3xl bg-card" onClick={(e) => e.stopPropagation()}>
         <div className="min-h-0 overflow-auto p-8">
           <h2 className="break-words font-display text-5xl sm:text-7xl">✨ {customTitleFor(category, language)}</h2>
           <p className="mt-2 text-2xl text-muted-foreground">{t.pickIngredients}</p>
