@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { deleteCustomer, getLoyalty, listCustomers, saveLoyalty, setBirthdayGift, type CustomerRow } from "@/lib/loyalty.functions";
 import { birthdayNear, type Loyalty } from "@/lib/loyalty";
@@ -11,8 +12,8 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("it-
 
 function csv(rows: CustomerRow[]) {
   const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = [["Nome", "Cellulare", "Compleanno", "Iscritto il", "Ordini", "Spesa totale", "Ultimo ordine", "Piatti preferiti"].join(";"),
-    ...rows.map((c) => [c.name, c.phone, bday(c), day(c.created_at), c.orders, c.spent.toFixed(2).replace(".", ","), day(c.last), c.top.map((t) => `${t.name} (${t.qty})`).join(", ")].map(q).join(";"))];
+  const lines = [["Nome", "Cognome", "Cellulare", "Email", "Compleanno", "Iscritto il", "Ordini", "Spesa totale", "Ultimo ordine", "Piatti preferiti"].join(";"),
+    ...rows.map((c) => [c.name, c.surname, c.phone, c.email, bday(c), day(c.created_at), c.orders, c.spent.toFixed(2).replace(".", ","), day(c.last), c.top.map((t) => `${t.name} (${t.qty})`).join(", ")].map(q).join(";"))];
   const url = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a"); a.href = url; a.download = `clienti-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(url);
 }
@@ -56,13 +57,8 @@ function GiftPicker({ c, onDone }: { c: CustomerRow; onDone: () => void }) {
 export function LoyaltySettings() {
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["loyalty"], queryFn: () => getLoyalty() });
-  const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => listCustomers() });
   const [draft, setDraft] = useState<Loyalty | null>(null);
   const [msg, setMsg] = useState("");
-  const [search, setSearch] = useState("");
-  const [onlyBday, setOnlyBday] = useState(false);
-  const [open, setOpen] = useState<string | null>(null);
-  const [giftFor, setGiftFor] = useState<string | null>(null);
   useEffect(() => { if (!draft && data) setDraft(data); }, [data, draft]);
   if (!draft) return <p className="text-xl text-muted-foreground">Caricamento…</p>;
   const set = (p: Partial<Loyalty>) => { setMsg(""); setDraft({ ...draft, ...p }); };
@@ -71,12 +67,6 @@ export function LoyaltySettings() {
     try { await saveLoyalty({ data: { loyalty: draft } }); await qc.invalidateQueries({ queryKey: ["loyalty"] }); setMsg("Salvato ✓"); }
     catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
   };
-  const remove = async (c: CustomerRow) => {
-    if (!confirm(`Cancellare ${c.name} (${c.phone})? Non si può annullare.`)) return;
-    await deleteCustomer({ data: { id: c.id } }); await qc.invalidateQueries({ queryKey: ["customers"] });
-  };
-  const s = search.trim().toLowerCase();
-  const rows = (customers ?? []).filter((c) => (!s || c.name.toLowerCase().includes(s) || c.phone.includes(s)) && (!onlyBday || birthdayNear(c.birth_day, c.birth_month, 30)));
   return <div className="space-y-6">
     <p className="text-xl text-muted-foreground">I clienti si iscrivono dal totem con cellulare e nome (compleanno facoltativo). Sono solo di questo locale: in un altro locale non vengono riconosciuti.</p>
     <div className="flex items-center gap-3 rounded-2xl bg-background/40 p-3 text-2xl font-bold">
@@ -103,19 +93,54 @@ export function LoyaltySettings() {
     <p className="text-lg text-muted-foreground">Il benvenuto vale una sola volta, sul primo ordine. Dal secondo ordine vale lo sconto fedeltà (es. 1 € ogni 10 €: con 24 € di spesa lo sconto è 2 €). Lo sconto compleanno vale un solo ordine all'anno (anche se valido 3 giorni o una settimana), prevale sempre e non si somma mai agli altri; negli altri casi si applica solo lo sconto più alto. Lascia 0 per non dare sconti e raccogliere solo i contatti.</p>
     <div className="flex items-center gap-3"><Button onClick={save}>Salva</Button><span className="text-lg text-muted-foreground">{msg}</span></div>
 
+    <Link to="/clienti" className="inline-flex rounded-2xl bg-primary px-6 py-4 text-2xl font-bold text-primary-foreground">👥 Apri anagrafica clienti e messaggi →</Link>
+  </div>;
+}
+
+const waLink = (phone: string, text: string) => { const d = phone.replace(/\D/g, ""); return `https://wa.me/${d.length <= 10 ? "39" + d : d}?text=${encodeURIComponent(text)}`; };
+const fill = (t: string, c: CustomerRow) => t.replace(/\{nome\}/gi, c.name);
+
+/** Pagina Clienti: anagrafica del solo locale, storico, regali, esportazione e messaggi. */
+export function CustomersPanel() {
+  const qc = useQueryClient();
+  const { data: customers } = useQuery({ queryKey: ["customers"], queryFn: () => listCustomers() });
+  const [search, setSearch] = useState("");
+  const [onlyBday, setOnlyBday] = useState(false);
+  const [open, setOpen] = useState<string | null>(null);
+  const [giftFor, setGiftFor] = useState<string | null>(null);
+  const [subject, setSubject] = useState("");
+  const [text, setText] = useState("Ciao {nome}, ");
+  const remove = async (c: CustomerRow) => {
+    if (!confirm(`Cancellare ${c.name} ${c.surname}? Non si può annullare.`)) return;
+    await deleteCustomer({ data: { id: c.id } }); await qc.invalidateQueries({ queryKey: ["customers"] });
+  };
+  const s = search.trim().toLowerCase();
+  const rows = (customers ?? []).filter((c) => (!s || `${c.name} ${c.surname}`.toLowerCase().includes(s) || c.phone.includes(s) || c.email.includes(s)) && (!onlyBday || birthdayNear(c.birth_day, c.birth_month, 30)));
+  const mails = rows.filter((c) => c.email).map((c) => c.email);
+  const mailAll = () => { window.location.href = `mailto:?bcc=${mails.join(",")}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text.replace(/\{nome\}/gi, "").replace(/^Ciao\s*,?\s*/i, "Ciao, "))}`; };
+  return <div className="space-y-6">
+    <section className="space-y-3 rounded-2xl bg-card p-5">
+      <h3 className="font-display text-4xl">📢 Messaggio</h3>
+      <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Oggetto (per le email)" className="h-14 w-full rounded-2xl bg-background px-4 text-xl" />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} className="w-full rounded-2xl bg-background p-4 text-xl" />
+      <p className="text-lg text-muted-foreground">Scrivi {"{nome}"} e verrà sostituito con il nome del cliente. Usa i pulsanti WhatsApp ed Email accanto a ogni cliente, oppure scrivi a tutti quelli con email (in copia nascosta, nessuno vede gli altri indirizzi).</p>
+      <Button disabled={!mails.length} onClick={mailAll}>✉️ Email a tutti quelli in elenco ({mails.length})</Button>
+    </section>
     <div className="border-t border-border pt-6">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="mr-auto font-display text-4xl">👥 Clienti ({customers?.length ?? 0})</h3>
         <Button variant={onlyBday ? "default" : "secondary"} onClick={() => setOnlyBday(!onlyBday)}>🎉 Compleanni nei prossimi 30 giorni</Button>
         <Button variant="secondary" disabled={!rows.length} onClick={() => csv(rows)}>📥 Scarica elenco (Excel)</Button>
       </div>
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca per nome o cellulare" className="mt-4 h-14 w-full rounded-2xl bg-background px-4 text-xl" />
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca per nome, cognome, cellulare o email" className="mt-4 h-14 w-full rounded-2xl bg-background px-4 text-xl" />
       <ul className="mt-4 space-y-3">
         {rows.map((c) => <li key={c.id} className="rounded-2xl bg-background/40 p-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xl">
-            <span className="text-2xl font-bold">{c.name}</span><span>📱 {c.phone}</span><span>🎂 {bday(c)}{c.bdayUsed ? " · sconto compleanno già usato quest'anno" : ""}</span>
+            <span className="text-2xl font-bold">{c.name} {c.surname}</span>{c.phone && <span>📱 {c.phone}</span>}{c.email && <span>✉️ {c.email}</span>}<span>🎂 {bday(c)}{c.bdayUsed ? " · sconto compleanno già usato quest'anno" : ""}</span>
             <span>{c.orders} ordini · {euro(c.spent)}</span><span className="text-muted-foreground">iscritto il {day(c.created_at)}</span>
-            <span className="ml-auto flex gap-2">
+            <span className="ml-auto flex flex-wrap gap-2">
+              {c.phone && <Button asChild variant="secondary"><a href={waLink(c.phone, fill(text, c))} target="_blank" rel="noreferrer">💬 WhatsApp</a></Button>}
+              {c.email && <Button asChild variant="secondary"><a href={`mailto:${c.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fill(text, c))}`}>✉️ Email</a></Button>}
               <Button variant={c.gift && c.gift.year === new Date().getFullYear() && c.gift.ids.length ? "default" : "secondary"} onClick={() => setGiftFor(giftFor === c.id ? null : c.id)}>🎁 Regalo{c.gift && c.gift.year === new Date().getFullYear() ? (c.gift.used ? " (consegnato)" : ` (${c.gift.ids.length})`) : ""}</Button>
               <Button variant="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>📜 Storico</Button>
               <Button variant="destructive" aria-label={`Cancella ${c.name}`} onClick={() => void remove(c)}>🗑️</Button>

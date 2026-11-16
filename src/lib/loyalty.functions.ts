@@ -40,31 +40,46 @@ function giftsFor(c: { birth_day: number | null; birth_month: number | null; bir
   return g && !g.used && g.year === giftYear() && birthdayNear(c.birth_day, c.birth_month, days) ? g.ids : [];
 }
 
-/** Il totem riconosce il cliente dal cellulare, solo dentro questo locale. */
+const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,24}$/i;
+const cleanEmail = (v: unknown) => String(v ?? "").trim().toLowerCase().slice(0, 254);
+/** Chi si iscrive solo con l'email ha un cellulare segnaposto unico, mai mostrato né cercato. */
+const mailKey = (e: string) => `mail:${e}`;
+const COLS = "id, name, birth_day, birth_month, birthday_gift";
+
+/** Il totem riconosce il cliente dal cellulare o dall'email, solo dentro questo locale. */
 export const findCustomer = createServerFn({ method: "POST" })
-  .inputValidator((d: { phone: string }) => ({ phone: normalizePhone(d?.phone) }))
+  .inputValidator((d: { phone?: string; email?: string }) => ({ phone: normalizePhone(d?.phone ?? ""), email: cleanEmail(d?.email) }))
   .handler(async ({ data }) => {
+    const q = await db();
+    if (EMAIL.test(data.email)) {
+      const { data: c } = await q.from("venue_customers").select(COLS).ilike("email", data.email).maybeSingle();
+      return c ? profile(c) : null;
+    }
     if (!validPhone(data.phone)) return null;
-    const { data: c } = await (await db()).from("venue_customers").select("id, name, birth_day, birth_month, birthday_gift").eq("phone", data.phone).maybeSingle();
+    const { data: c } = await q.from("venue_customers").select(COLS).eq("phone", data.phone).maybeSingle();
     return c ? profile(c) : null;
   });
 
 export const registerCustomer = createServerFn({ method: "POST" })
-  .inputValidator((d: { phone: string; name: string; day?: unknown; month?: unknown; consent: boolean }) => {
-    const phone = normalizePhone(d?.phone);
+  .inputValidator((d: { phone?: string; email?: string; name: string; surname?: string; day?: unknown; month?: unknown; consent: boolean }) => {
+    const rawPhone = normalizePhone(d?.phone ?? "");
+    const email = cleanEmail(d?.email);
     const name = String(d?.name ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
-    if (!validPhone(phone)) throw new Error("Numero di cellulare non valido");
+    const surname = String(d?.surname ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+    if (rawPhone && !validPhone(rawPhone)) throw new Error("Numero di cellulare non valido");
+    if (email && !EMAIL.test(email)) throw new Error("Email non valida");
+    if (!rawPhone && !email) throw new Error("Serve il cellulare o l'email");
     if (name.length < 2) throw new Error("Scrivi il tuo nome");
     if (d?.consent !== true) throw new Error("Serve il consenso privacy");
     const b = d.day || d.month ? validBirthday(d.day, d.month) : null;
     if ((d.day || d.month) && !b) throw new Error("Data di nascita non valida");
-    return { phone, name, b };
+    return { phone: rawPhone, email, name, surname, b };
   })
   .handler(async ({ data }) => {
     const q = await db();
-    const { data: existing } = await q.from("venue_customers").select("id, name, birth_day, birth_month, birthday_gift").eq("phone", data.phone).maybeSingle();
-    if (existing) return profile(existing);
-    const { data: c, error } = await q.from("venue_customers").insert({ phone: data.phone, name: data.name, birth_day: data.b?.day ?? null, birth_month: data.b?.month ?? null } as never).select("id, name, birth_day, birth_month, birthday_gift").single();
+    if (data.phone) { const { data: e } = await q.from("venue_customers").select(COLS).eq("phone", data.phone).maybeSingle(); if (e) return profile(e); }
+    if (data.email) { const { data: e } = await q.from("venue_customers").select(COLS).ilike("email", data.email).maybeSingle(); if (e) return profile(e); }
+    const { data: c, error } = await q.from("venue_customers").insert({ phone: data.phone || mailKey(data.email), email: data.email, name: data.name, surname: data.surname, birth_day: data.b?.day ?? null, birth_month: data.b?.month ?? null } as never).select(COLS).single();
     if (error || !c) throw new Error("Registrazione non riuscita");
     return profile(c);
   });
@@ -92,12 +107,12 @@ export const linkOrderCustomer = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export type CustomerRow = { id: string; name: string; phone: string; birth_day: number | null; birth_month: number | null; created_at: string; gift: Gift | null; bdayUsed: boolean; orders: number; spent: number; last: string | null; history: { at: string; total: number; items: { name: string; qty: number }[] }[]; top: { name: string; qty: number }[] };
+export type CustomerRow = { id: string; name: string; surname: string; phone: string; email: string; birth_day: number | null; birth_month: number | null; created_at: string; gift: Gift | null; bdayUsed: boolean; orders: number; spent: number; last: string | null; history: { at: string; total: number; items: { name: string; qty: number }[] }[]; top: { name: string; qty: number }[] };
 
 export const listCustomers = createServerFn({ method: "GET" }).handler(async (): Promise<CustomerRow[]> => {
   await staffOnly();
   const q = await db();
-  const { data: cs } = await q.from("venue_customers").select("id, name, phone, birth_day, birth_month, created_at, birthday_gift").order("created_at", { ascending: false });
+  const { data: cs } = await q.from("venue_customers").select("id, name, surname, phone, email, birth_day, birth_month, created_at, birthday_gift").order("created_at", { ascending: false });
   const { data: os } = await q.from("orders").select("customer_id, items, total, created_at").not("customer_id", "is", null).in("status", PAID_STATUSES).order("created_at", { ascending: false });
   return (cs ?? []).map((c) => {
     const mine = (os ?? []).filter((o) => o.customer_id === c.id);
@@ -108,7 +123,7 @@ export const listCustomers = createServerFn({ method: "GET" }).handler(async ():
       return { at: o.created_at, total: Number(o.total), items };
     });
     const { birthday_gift, ...rest } = c;
-    return { ...rest, gift: cleanGift(birthday_gift), bdayUsed: discYear(birthday_gift) === giftYear(), orders: mine.length, spent: Math.round(mine.reduce((s, o) => s + Number(o.total), 0) * 100) / 100, last: mine[0]?.created_at ?? null, history: history.slice(0, 30), top: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })) };
+    return { ...rest, phone: rest.phone.startsWith("mail:") ? "" : rest.phone, gift: cleanGift(birthday_gift), bdayUsed: discYear(birthday_gift) === giftYear(), orders: mine.length, spent: Math.round(mine.reduce((s, o) => s + Number(o.total), 0) * 100) / 100, last: mine[0]?.created_at ?? null, history: history.slice(0, 30), top: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })) };
   });
 });
 

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CassaRouteImport } from './routes/cassa'
+import { Route as ClientiRouteImport } from './routes/clienti'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as ManualeRouteImport } from './routes/manuale'
@@ -31,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const CassaRoute = CassaRouteImport.update({
   id: '/cassa',
   path: '/cassa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientiRoute = ClientiRouteImport.update({
+  id: '/clienti',
+  path: '/clienti',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CucinaRoute = CucinaRouteImport.update({
@@ -92,6 +98,7 @@ const ApiPublicIconRoute = ApiPublicIconRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
   '/manuale': typeof ManualeRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cassa'
+    | '/clienti'
     | '/cucina'
     | '/display'
     | '/manuale'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cassa'
+    | '/clienti'
     | '/cucina'
     | '/display'
     | '/manuale'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cassa'
+    | '/clienti'
     | '/cucina'
     | '/display'
     | '/manuale'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CassaRoute: typeof CassaRoute
+  ClientiRoute: typeof ClientiRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
   ManualeRoute: typeof ManualeRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/cassa'
       fullPath: '/cassa'
       preLoaderRoute: typeof CassaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clienti': {
+      id: '/clienti'
+      path: '/clienti'
+      fullPath: '/clienti'
+      preLoaderRoute: typeof ClientiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cucina': {
@@ -298,6 +318,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CassaRoute: CassaRoute,
+  ClientiRoute: ClientiRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,
   ManualeRoute: ManualeRoute,

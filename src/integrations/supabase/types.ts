@@ -707,9 +707,11 @@ export type Database = {
           birthday_gift: Json | null
           consent_at: string
           created_at: string
+          email: string
           id: string
           name: string
           phone: string
+          surname: string
           venue_id: string
         }
         Insert: {
@@ -718,9 +720,11 @@ export type Database = {
           birthday_gift?: Json | null
           consent_at?: string
           created_at?: string
+          email?: string
           id?: string
           name: string
           phone: string
+          surname?: string
           venue_id: string
         }
         Update: {
@@ -729,9 +733,11 @@ export type Database = {
           birthday_gift?: Json | null
           consent_at?: string
           created_at?: string
+          email?: string
           id?: string
           name?: string
           phone?: string
+          surname?: string
           venue_id?: string
         }
         Relationships: [
