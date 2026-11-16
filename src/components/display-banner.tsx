@@ -95,3 +95,23 @@ export function IdleSettings() {
     {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
 }
+
+const LIFT_CHOICES: [number, string][] = [[0, "Sul bordo"], [2, "Poco"], [4, "Normale"], [7, "Alto"], [10, "Molto alto"], [14, "Altissimo"]];
+/** Admin: quanto sollevare la barra del carrello dal bordo inferiore del totem (rem). */
+export function CartLiftSettings() {
+  const { data: saved } = useQuery(bannerQueryOptions);
+  const qc = useQueryClient();
+  const [msg, setMsg] = useState("");
+  if (!saved) return null;
+  const current = Number(saved["cart_lift"] ?? 4);
+  const pick = async (cart_lift: number) => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, cart_lift } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
+  };
+  return <div className="space-y-4">
+    <p className="text-xl text-muted-foreground">Scegli quanto sollevare la barra del carrello dal bordo in basso, così si vede e si tocca meglio sul tuo totem.</p>
+    <div className="flex flex-wrap gap-2">{LIFT_CHOICES.map(([v, l]) => <Button key={v} variant={current === v ? "default" : "secondary"} onClick={() => void pick(v)}>{l}</Button>)}</div>
+    {msg && <p role="status" className="text-xl">{msg}</p>}
+  </div>;
+}

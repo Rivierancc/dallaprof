@@ -324,9 +324,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const isOffers = activeCat === OFFERS
   const dl = dishLayoutFor(bannerSettings, activeCat ?? "")
   const dt = DISH_TILE[dl.size]!
+  const cartLift = Math.min(20, Math.max(0, Number(bannerSettings?.["cart_lift"] ?? 4) || 0))
 
   return (
-    <main className="min-h-screen p-8 pb-36">
+    <main className="min-h-screen p-8" style={{ paddingBottom: `${12 + cartLift}rem` }}>
       
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         <span />
@@ -422,12 +423,12 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       )}
 
       {cart.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center justify-between bg-card p-6 shadow-lg">
+        <div style={{ bottom: `${cartLift}rem` }} className="fixed inset-x-6 z-40 flex items-center justify-between rounded-3xl border-4 border-accent bg-card p-6 shadow-2xl">
           <div>
             <p className="text-2xl text-muted-foreground">{cart.length} {t.products} · {dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</p>
             <p className="font-display text-6xl text-accent">{euro(total)}</p>
           </div>
-          <Button variant="ghost" onClick={openCart} className="whitespace-normal tap rounded-full bg-primary px-12 py-6 font-display text-5xl text-primary-foreground">🛒 {t.cart}</Button>
+          <Button variant="ghost" onClick={openCart} className="whitespace-normal tap h-auto rounded-full bg-primary px-14 py-8 font-display text-6xl text-primary-foreground">🛒 {t.cart}</Button>
         </div>
       )}
     </main>
