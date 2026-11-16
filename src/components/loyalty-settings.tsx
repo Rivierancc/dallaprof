@@ -93,8 +93,14 @@ export function LoyaltySettings() {
         <select value={draft.birthday_days} onChange={(e) => set({ birthday_days: Number(e.target.value) })} className="h-12 rounded-xl bg-background px-3 text-xl">
           <option value={0}>solo il giorno</option><option value={3}>anche 3 giorni dopo</option><option value={7}>tutta la settimana</option>
         </select></label>
+      <label className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-background/40 p-3 text-xl sm:col-span-2">🎉 Scritta di auguri
+        <input value={draft.birthday_msg} maxLength={80} onChange={(e) => set({ birthday_msg: e.target.value })} className="h-12 min-w-0 flex-1 rounded-xl bg-background px-3 text-2xl" /></label>
+      <div className="flex items-center gap-3 rounded-2xl bg-background/40 p-3 text-xl sm:col-span-2">
+        <span className="flex-1">🎵 Musichetta «Tanti auguri a te»</span>
+        <Button variant={draft.birthday_song ? "default" : "secondary"} aria-pressed={draft.birthday_song} onClick={() => set({ birthday_song: !draft.birthday_song })}>{draft.birthday_song ? "Accesa" : "Spenta"}</Button>
+      </div>
     </div>
-    <p className="text-lg text-muted-foreground">Il benvenuto vale una sola volta, sul primo ordine. Dal secondo ordine vale lo sconto fedeltà (es. 1 € ogni 10 €: con 24 € di spesa lo sconto è 2 €). Si applica solo lo sconto più alto. Lascia 0 per non dare sconti e raccogliere solo i contatti.</p>
+    <p className="text-lg text-muted-foreground">Il benvenuto vale una sola volta, sul primo ordine. Dal secondo ordine vale lo sconto fedeltà (es. 1 € ogni 10 €: con 24 € di spesa lo sconto è 2 €). Lo sconto compleanno vale un solo ordine all'anno (anche se valido 3 giorni o una settimana), prevale sempre e non si somma mai agli altri; negli altri casi si applica solo lo sconto più alto. Lascia 0 per non dare sconti e raccogliere solo i contatti.</p>
     <div className="flex items-center gap-3"><Button onClick={save}>Salva</Button><span className="text-lg text-muted-foreground">{msg}</span></div>
 
     <div className="border-t border-border pt-6">
@@ -107,7 +113,7 @@ export function LoyaltySettings() {
       <ul className="mt-4 space-y-3">
         {rows.map((c) => <li key={c.id} className="rounded-2xl bg-background/40 p-4">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xl">
-            <span className="text-2xl font-bold">{c.name}</span><span>📱 {c.phone}</span><span>🎂 {bday(c)}</span>
+            <span className="text-2xl font-bold">{c.name}</span><span>📱 {c.phone}</span><span>🎂 {bday(c)}{c.bdayUsed ? " · sconto compleanno già usato quest'anno" : ""}</span>
             <span>{c.orders} ordini · {euro(c.spent)}</span><span className="text-muted-foreground">iscritto il {day(c.created_at)}</span>
             <span className="ml-auto flex gap-2">
               <Button variant={c.gift && c.gift.year === new Date().getFullYear() && c.gift.ids.length ? "default" : "secondary"} onClick={() => setGiftFor(giftFor === c.id ? null : c.id)}>🎁 Regalo{c.gift && c.gift.year === new Date().getFullYear() ? (c.gift.used ? " (consegnato)" : ` (${c.gift.ids.length})`) : ""}</Button>

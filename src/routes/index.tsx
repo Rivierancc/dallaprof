@@ -22,6 +22,7 @@ import { basePrice, canAddExtra, groupsValid, isCombo, menuName, suggestPrice } 
 import { LoyaltyDialog, loyaltyCopy, type Member } from "@/components/loyalty-kiosk"
 import { getLoyalty, linkOrderCustomer } from "@/lib/loyalty.functions"
 import { discountFor } from "@/lib/loyalty"
+import { playBirthdaySong } from "@/lib/sounds"
 import { copy, translatedFor, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -124,6 +125,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     return () => { clearTimeout(timer); evs.forEach((e) => window.removeEventListener(e, bump, { capture: true })) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy, idle])
+  const [party, setParty] = useState(false)
   const lt = loyaltyCopy(language)
   const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0, step: false }
   const toPay = Math.round((total - disc.amount) * 100) / 100
@@ -151,7 +153,8 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   ) : (
     <Button variant="ghost" onClick={() => setAskMember(true)} className="tap mb-6 h-auto w-full whitespace-normal rounded-3xl border-4 border-dashed border-accent bg-card py-5 font-display text-4xl text-accent">{lt.ask}</Button>
   )) : null
-  const memberDialog = askMember ? <LoyaltyDialog language={language} onClose={() => setAskMember(false)} onMember={(m) => { setMember(m); setAskMember(false); addGifts(m) }} /> : null
+  const memberDialog = askMember ? <LoyaltyDialog language={language} onClose={() => setAskMember(false)} onMember={(m) => { setMember(m); setAskMember(false); addGifts(m); if (m.greet) { setParty(true); setTimeout(() => setParty(false), 6000); if (loyalty?.birthday_song) playBirthdaySong() } }} /> : null
+  const partyBanner = party && loyalty ? <div role="status" onClick={() => setParty(false)} className="fixed inset-0 z-[80] grid place-items-center bg-background/70 p-10"><p className="animate-pulse rounded-[3rem] border-8 border-accent bg-card px-12 py-16 text-center font-display text-8xl text-accent shadow-2xl">🎂 {loyalty.birthday_msg}{member ? ` ${member.firstName}!` : ""}</p></div> : null
 
   const createOrder = useMutation({
     mutationFn: async (method: PaymentMethod) => {
@@ -278,6 +281,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <Button variant="ghost" onClick={() => setShowCart(false)} className="whitespace-normal tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ {t.close}</Button>
       </header>
       {memberDialog}
+      {partyBanner}
       <h1 className="mb-8 font-display text-8xl">{t.yourOrder}</h1>
       {memberBar}
       <div className="grid gap-4">
@@ -335,6 +339,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
       </header>
       {memberDialog}
+      {partyBanner}
       {activeCat === null && memberBar}
 
       {activeCat === null? (

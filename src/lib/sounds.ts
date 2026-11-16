@@ -61,3 +61,15 @@ function schedule(ctx: AudioContext, sound: Exclude<ReadySound, "nessuno">) {
 
 // Nome storico: la suoneria «pronto» e quella «parzialmente pronto» usano la stessa funzione.
 export const playReadySound = playSound;
+
+// «Tanti auguri a te»: note in Do maggiore [frequenza, battiti].
+const HB: [number, number][] = [[392,.75],[392,.25],[440,1],[392,1],[523,1],[494,2],[392,.75],[392,.25],[440,1],[392,1],[587,1],[523,2],[392,.75],[392,.25],[784,1],[659,1],[523,1],[494,1],[440,2],[698,.75],[698,.25],[659,1],[523,1],[587,1],[523,2]];
+export function playBirthdaySong() {
+  if (typeof window === "undefined") return;
+  try {
+    ctx ??= new AudioContext();
+    const c = ctx;
+    const run = () => { let t = c.currentTime + 0.05; for (const [f, b] of HB) { const d = b * 0.42; const o = c.createOscillator(), g = c.createGain(); o.type = "triangle"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + d * 0.95); o.connect(g).connect(c.destination); o.start(t); o.stop(t + d); t += d; } };
+    if (c.state !== "running") void c.resume().then(run).catch(() => {}); else run();
+  } catch { /* audio non disponibile */ }
+}

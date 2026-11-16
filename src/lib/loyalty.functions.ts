@@ -20,16 +20,19 @@ export const saveLoyalty = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-type Found = { id: string; firstName: string; favourites: string[]; firstOrder: boolean; birthday: boolean; gifts: string[] };
+type Found = { id: string; firstName: string; favourites: string[]; firstOrder: boolean; birthday: boolean; greet: boolean; gifts: string[] };
 type Gift = { year: number; ids: string[]; used: boolean };
 const cleanGift = (v: unknown): Gift | null => { const o = v as Partial<Gift> | null; return o && typeof o === "object" && Array.isArray(o.ids) ? { year: Number(o.year) || 0, ids: o.ids.filter((x): x is string => typeof x === "string" && UUID.test(x)).slice(0, 10), used: o.used === true } : null; };
 const giftYear = () => new Date().getFullYear();
+/** Anno in cui il cliente ha già usato lo sconto compleanno (salvato accanto al regalo). */
+const discYear = (v: unknown) => Number((v as { disc_year?: unknown } | null)?.disc_year) || 0;
 async function profile(c: { id: string; name: string; birth_day: number | null; birth_month: number | null; birthday_gift?: unknown }): Promise<Found> {
   const rules = cleanLoyalty((await (await db()).from("kiosk_banner").select("loyalty").maybeSingle()).data?.loyalty);
   const { data: orders } = await (await db()).from("orders").select("items").eq("customer_id", c.id).in("status", PAID_STATUSES).order("created_at", { ascending: false }).limit(50);
   // Benvenuto una sola volta: basta un qualsiasi ordine già collegato (anche non ancora pagato).
+  const near = birthdayNear(c.birth_day, c.birth_month, rules.birthday_days);
   const { count } = await (await db()).from("orders").select("id", { count: "exact", head: true }).eq("customer_id", c.id);
-  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !count, birthday: birthdayNear(c.birth_day, c.birth_month, rules.birthday_days), gifts: giftsFor(c, rules.birthday_days) };
+  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !count, birthday: near && discYear(c.birthday_gift) !== giftYear(), greet: birthdayNear(c.birth_day, c.birth_month, 0) || (near && discYear(c.birthday_gift) !== giftYear()), gifts: giftsFor(c, rules.birthday_days) };
 }
 /** Regali scelti dal ristoratore: valgono solo nei giorni del compleanno di quest'anno e una volta sola. */
 function giftsFor(c: { birth_day: number | null; birth_month: number | null; birthday_gift?: unknown }, days: number) {
@@ -74,16 +77,22 @@ export const linkOrderCustomer = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const q = await db();
-    const { data: c } = await q.from("venue_customers").select("id, birthday_gift").eq("id", data.customerId).maybeSingle();
+    const { data: c } = await q.from("venue_customers").select("id, birth_day, birth_month, birthday_gift").eq("id", data.customerId).maybeSingle();
     if (!c) return { ok: false };
-    const { data: linked } = await q.from("orders").update({ customer_id: c.id }).eq("id", data.orderId).is("customer_id", null).eq("status", "awaiting_payment").gte("created_at", new Date(Date.now() - 10 * 60_000).toISOString()).select("items");
+    const { data: linked } = await q.from("orders").update({ customer_id: c.id }).eq("id", data.orderId).is("customer_id", null).eq("status", "awaiting_payment").gte("created_at", new Date(Date.now() - 10 * 60_000).toISOString()).select("items, discount");
     const g = cleanGift(c.birthday_gift);
     const usedGift = (linked ?? []).some((o) => (Array.isArray(o.items) ? o.items : []).some((i) => (i as { gift?: unknown }).gift === true));
-    if (g && usedGift) await q.from("venue_customers").update({ birthday_gift: { ...g, used: true } as never }).eq("id", c.id);
+    const rules = cleanLoyalty((await q.from("kiosk_banner").select("loyalty").maybeSingle()).data?.loyalty);
+    // Nel periodo del compleanno lo sconto è sempre quello di compleanno: un ordine scontato lo consuma per quest'anno.
+    const usedDisc = rules.birthday_pct > 0 && discYear(c.birthday_gift) !== giftYear() && birthdayNear(c.birth_day, c.birth_month, rules.birthday_days) && (linked ?? []).some((o) => Number(o.discount) > 0);
+    if ((g && usedGift) || usedDisc) {
+      const raw = (c.birthday_gift && typeof c.birthday_gift === "object" ? c.birthday_gift : {}) as Record<string, unknown>;
+      await q.from("venue_customers").update({ birthday_gift: { ...raw, ...(g ? { ...g, used: g.used || usedGift } : { ids: [] }), ...(usedDisc ? { disc_year: giftYear() } : {}) } as never }).eq("id", c.id);
+    }
     return { ok: true };
   });
 
-export type CustomerRow = { id: string; name: string; phone: string; birth_day: number | null; birth_month: number | null; created_at: string; gift: Gift | null; orders: number; spent: number; last: string | null; history: { at: string; total: number; items: { name: string; qty: number }[] }[]; top: { name: string; qty: number }[] };
+export type CustomerRow = { id: string; name: string; phone: string; birth_day: number | null; birth_month: number | null; created_at: string; gift: Gift | null; bdayUsed: boolean; orders: number; spent: number; last: string | null; history: { at: string; total: number; items: { name: string; qty: number }[] }[]; top: { name: string; qty: number }[] };
 
 export const listCustomers = createServerFn({ method: "GET" }).handler(async (): Promise<CustomerRow[]> => {
   await staffOnly();
@@ -99,7 +108,7 @@ export const listCustomers = createServerFn({ method: "GET" }).handler(async ():
       return { at: o.created_at, total: Number(o.total), items };
     });
     const { birthday_gift, ...rest } = c;
-    return { ...rest, gift: cleanGift(birthday_gift), orders: mine.length, spent: Math.round(mine.reduce((s, o) => s + Number(o.total), 0) * 100) / 100, last: mine[0]?.created_at ?? null, history: history.slice(0, 30), top: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })) };
+    return { ...rest, gift: cleanGift(birthday_gift), bdayUsed: discYear(birthday_gift) === giftYear(), orders: mine.length, spent: Math.round(mine.reduce((s, o) => s + Number(o.total), 0) * 100) / 100, last: mine[0]?.created_at ?? null, history: history.slice(0, 30), top: [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })) };
   });
 });
 
@@ -123,7 +132,9 @@ export const setBirthdayGift = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     await staffOnly();
-    const gift = data.ids.length ? { year: giftYear(), ids: data.ids, used: false } : null;
+    const { data: cur } = await (await db()).from("venue_customers").select("birthday_gift").eq("id", data.id).maybeSingle();
+    const dy = discYear(cur?.birthday_gift);
+    const gift = data.ids.length ? { year: giftYear(), ids: data.ids, used: false, ...(dy ? { disc_year: dy } : {}) } : dy ? { ids: [], year: 0, used: true, disc_year: dy } : null;
     const { error } = await (await db()).from("venue_customers").update({ birthday_gift: gift as never }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };

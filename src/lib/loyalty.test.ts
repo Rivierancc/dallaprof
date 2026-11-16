@@ -27,6 +27,10 @@ describe("programma clienti", () => {
     expect(discountFor(r, { firstOrder: false, birthday: false }, 24)).toMatchObject({ reason: "member", amount: 2 });
     expect(discountFor(r, { firstOrder: false, birthday: false }, 9.5).amount).toBe(0);
   });
+  it("birthday wins over loyalty and never adds up", () => {
+    const r = cleanLoyalty({ on: true, birthday_pct: 10, step_off: 5, step_every: 10 });
+    expect(discountFor(r, { firstOrder: false, birthday: true }, 100)).toMatchObject({ reason: "birthday", amount: 10 });
+  });
   it("no discount when the programme is off", () => {
     expect(discountFor({ ...rules, on: false }, { firstOrder: true, birthday: true }, 100).amount).toBe(0);
   });
