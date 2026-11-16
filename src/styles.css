@@ -42,32 +42,32 @@
 
 :root {
   --radius: 1.5rem;
-  --background: oklch(0.17 0.02 40);
-  --foreground: oklch(0.97 0.02 85);
-  --card: oklch(0.23 0.03 40);
-  --card-foreground: oklch(0.97 0.02 85);
-  --popover: oklch(0.23 0.03 40);
-  --popover-foreground: oklch(0.97 0.02 85);
-  --shared: oklch(0.55 0.2 255);
-  --shared-foreground: oklch(0.98 0.01 85);
-  --kitchen-side: oklch(0.78 0.16 305);
-  --primary: oklch(0.6 0.22 28);
-  --primary-foreground: oklch(0.98 0.01 85);
-  --secondary: oklch(0.3 0.03 40);
-  --secondary-foreground: oklch(0.97 0.02 85);
-  --muted: oklch(0.27 0.03 40);
-  --muted-foreground: oklch(0.72 0.03 70);
-  --accent: oklch(0.86 0.17 90);
-  --accent-foreground: oklch(0.2 0.03 40);
-  --success: oklch(0.72 0.18 150);
-  --success-foreground: oklch(0.15 0.03 150);
-  --kitchen-drink: oklch(0.88 0.15 155);
-  --destructive: oklch(0.6 0.22 25);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.34 0.03 40);
-  --input: oklch(0.34 0.03 40);
-  --ring: oklch(0.86 0.17 90);
-  --shadow-glow: 0 20px 60px -15px color-mix(in oklab, var(--primary) 60%, transparent);
+  --background: #170c09;
+  --foreground: #fbf4e6;
+  --card: #291812;
+  --card-foreground: #fbf4e6;
+  --popover: #291812;
+  --popover-foreground: #fbf4e6;
+  --shared: #006de2;
+  --shared-foreground: #fbf8f1;
+  --kitchen-side: #cf9bff;
+  --primary: #e62d28;
+  --primary-foreground: #fbf8f1;
+  --secondary: #3b2922;
+  --secondary-foreground: #fbf4e6;
+  --muted: #33211b;
+  --muted-foreground: #b1a291;
+  --accent: #fcca21;
+  --accent-foreground: #22110b;
+  --success: #32c364;
+  --success-foreground: #030f05;
+  --kitchen-drink: #7cf4ab;
+  --destructive: #e62b34;
+  --destructive-foreground: #f8f8f8;
+  --border: #46332c;
+  --input: #46332c;
+  --ring: #fcca21;
+  --shadow-glow: 0 20px 60px -15px rgba(230, 45, 40, 0.6);
 }
 
 @layer base {
@@ -132,11 +132,11 @@
 @keyframes news-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
 /* Pagina riservata /superadmin: sfondo grigio scuro, campi grigio chiaro con testo nero */
-.superadmin-page { background: oklch(0.3 0 0); min-height: 100vh; }
-.superadmin-page section { background: oklch(0.36 0 0); }
-.superadmin-field { background: oklch(0.88 0 0) !important; color: oklch(0.15 0 0) !important; border-color: oklch(0.7 0 0) !important; }
-.superadmin-field::placeholder { color: oklch(0.45 0 0); }
-.superadmin-field option { color: oklch(0.15 0 0); background: oklch(0.92 0 0); }
+.superadmin-page { background: #2e2e2e; min-height: 100vh; }
+.superadmin-page section { background: #3d3d3d; }
+.superadmin-field { background: #d7d7d7 !important; color: #0b0b0b !important; border-color: #9e9e9e !important; }
+.superadmin-field::placeholder { color: #555555; }
+.superadmin-field option { color: #0b0b0b; background: #e4e4e4; }
 
 /* Menu digitale: su telefono e computer misure normali da sito, non quelle del totem. */
 html:has(.digital-menu) { font-size: 18px; }

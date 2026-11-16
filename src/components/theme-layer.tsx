@@ -42,12 +42,12 @@ export function ThemeLayer() {
     const root = document.documentElement;
     if (!theme) return;
     const fg = light(theme.bg) ? "#1a1410" : "#fbf5e6";
-    const mix = (pct: number) => `color-mix(in oklab, ${theme.bg}, ${fg} ${pct}%)`;
+    const mix = (pct: number) => mixHex(theme.bg, fg, pct);
     const set: Record<string, string> = {
       "--background": theme.bg, "--card": mix(9), "--popover": mix(9), "--muted": mix(14), "--secondary": mix(18),
       "--border": mix(24), "--input": mix(24), "--primary": theme.primary_color, "--accent": theme.accent, "--ring": theme.accent,
       "--foreground": fg, "--card-foreground": fg, "--popover-foreground": fg, "--secondary-foreground": fg,
-      "--muted-foreground": `color-mix(in oklab, ${fg}, ${theme.bg} 30%)`,
+      "--muted-foreground": mixHex(fg, theme.bg, 30),
       "--primary-foreground": light(theme.primary_color) ? "#1a1410" : "#ffffff",
       "--accent-foreground": light(theme.accent) ? "#1a1410" : "#ffffff",
     };
@@ -80,4 +80,18 @@ export function ThemeGreeting({ className = "" }: { className?: string }) {
   const text = theme ? greetingFor(theme, language) : "";
   if (!text) return null;
   return <p className={`animate-pop mx-auto w-fit rounded-full bg-primary px-8 py-2 text-center font-display text-5xl text-primary-foreground [@media(max-height:900px)]:text-3xl ${className}`}>{text}</p>;
+}
+
+// Miscela due colori esadecimali senza color-mix (non supportato dai browser su Windows 7).
+function mixHex(a: string, b: string, pct: number): string {
+  const p = (h: string) => {
+    let s = h.replace("#", "");
+    if (s.length === 3) s = s.split("").map((c) => c + c).join("");
+    const n = parseInt(s.slice(0, 6), 16);
+    return Number.isNaN(n) ? null : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const x = p(a), y = p(b);
+  if (!x || !y) return a;
+  const r = x.map((v, i) => Math.round(v + (y[i] - v) * (pct / 100)));
+  return "#" + r.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
