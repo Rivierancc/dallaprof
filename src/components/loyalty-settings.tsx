@@ -84,7 +84,9 @@ export function LoyaltySettings() {
       <Button variant={draft.on ? "default" : "secondary"} aria-pressed={draft.on} onClick={() => set({ on: !draft.on })}>{draft.on ? "Acceso" : "Spento"}</Button>
     </div>
     <div className="grid gap-3 sm:grid-cols-2">
-      <Pct label="Sconto fedeltà (ogni ordine)" value={draft.pct} onChange={(n) => set({ pct: n })} />
+      <label className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-background/40 p-3 text-xl sm:col-span-2">Sconto fedeltà (dal 2° ordine)
+        <span className="flex items-center gap-2">€ <input type="number" min={0} step={0.5} value={draft.step_off} onChange={(e) => set({ step_off: Number(e.target.value) })} className="h-12 w-24 rounded-xl bg-background px-3 text-2xl" /> ogni € <input type="number" min={1} step={1} value={draft.step_every} onChange={(e) => set({ step_every: Number(e.target.value) })} className="h-12 w-24 rounded-xl bg-background px-3 text-2xl" /> di spesa</span></label>
+      <Pct label="Sconto fedeltà in % (alternativo)" value={draft.pct} onChange={(n) => set({ pct: n })} />
       <Pct label="Sconto benvenuto (primo ordine)" value={draft.welcome_pct} onChange={(n) => set({ welcome_pct: n })} />
       <Pct label="🎂 Sconto compleanno" value={draft.birthday_pct} onChange={(n) => set({ birthday_pct: n })} />
       <label className="flex items-center justify-between gap-3 rounded-2xl bg-background/40 p-3 text-xl">Compleanno valido
@@ -92,7 +94,7 @@ export function LoyaltySettings() {
           <option value={0}>solo il giorno</option><option value={3}>anche 3 giorni dopo</option><option value={7}>tutta la settimana</option>
         </select></label>
     </div>
-    <p className="text-lg text-muted-foreground">Si applica solo lo sconto più alto. Lascia 0 per non dare sconti e raccogliere solo i contatti.</p>
+    <p className="text-lg text-muted-foreground">Il benvenuto vale una sola volta, sul primo ordine. Dal secondo ordine vale lo sconto fedeltà (es. 1 € ogni 10 €: con 24 € di spesa lo sconto è 2 €). Si applica solo lo sconto più alto. Lascia 0 per non dare sconti e raccogliere solo i contatti.</p>
     <div className="flex items-center gap-3"><Button onClick={save}>Salva</Button><span className="text-lg text-muted-foreground">{msg}</span></div>
 
     <div className="border-t border-border pt-6">

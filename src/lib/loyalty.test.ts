@@ -21,6 +21,12 @@ describe("programma clienti", () => {
     expect(discountFor(rules, { firstOrder: true, birthday: false }, 100).pct).toBe(10);
     expect(discountFor(rules, { firstOrder: false, birthday: false }, 30).amount).toBe(1.5);
   });
+  it("welcome only on first order, then 1 € every 10 €", () => {
+    const r = cleanLoyalty({ on: true, welcome_pct: 10, step_off: 1, step_every: 10 });
+    expect(discountFor(r, { firstOrder: true, birthday: false }, 30)).toMatchObject({ reason: "welcome", amount: 3 });
+    expect(discountFor(r, { firstOrder: false, birthday: false }, 24)).toMatchObject({ reason: "member", amount: 2 });
+    expect(discountFor(r, { firstOrder: false, birthday: false }, 9.5).amount).toBe(0);
+  });
   it("no discount when the programme is off", () => {
     expect(discountFor({ ...rules, on: false }, { firstOrder: true, birthday: true }, 100).amount).toBe(0);
   });

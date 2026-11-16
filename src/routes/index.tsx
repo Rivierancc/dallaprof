@@ -125,7 +125,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy, idle])
   const lt = loyaltyCopy(language)
-  const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0 }
+  const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0, step: false }
   const toPay = Math.round((total - disc.amount) * 100) / 100
   const favs = member ? member.favourites.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p) : []
   const addFav = (p: Product) => {
@@ -143,7 +143,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <p className="font-display text-4xl text-success">{member.firstOrder ? lt.welcome : lt.hi} {member.firstName}! {member.birthday && loyalty.birthday_pct > 0 ? "🎂" : "🎉"}</p>
         <Button variant="ghost" onClick={() => { setMember(null); setCart((c) => c.filter((i) => !i.gift)) }} className="tap rounded-full bg-secondary px-5 py-2 text-xl">✕ {lt.out}</Button>
       </div>
-      {disc.pct > 0 && <p className="mt-2 text-2xl text-accent">{disc.reason === "birthday" ? lt.birthday : `${lt.discount} ${disc.reason === "welcome" ? lt.welcomeD : lt.member}`} -{disc.pct}%</p>}
+      {disc.amount > 0 && <p className="mt-2 text-2xl text-accent">{disc.reason === "birthday" ? lt.birthday : `${lt.discount} ${disc.reason === "welcome" ? lt.welcomeD : lt.member}`} {disc.step ? `-${euro(disc.amount)} (${euro(loyalty.step_off)} / ${euro(loyalty.step_every)})` : `-${disc.pct}%`}</p>}
       {member.gifts.length > 0 && <p className="mt-2 text-2xl text-accent">{lt.gift}: {member.gifts.map((id) => products.find((p) => p.id === id)?.name).filter(Boolean).join(", ")}</p>}
       {favs.length > 0 && <div className="mt-4"><p className="font-display text-3xl">{lt.favs}</p>
         <div className="mt-2 flex flex-wrap gap-3">{favs.map((p) => <Button key={p.id} variant="ghost" onClick={() => addFav(p)} className="tap h-auto rounded-full bg-accent px-6 py-3 font-display text-3xl text-accent-foreground">+ {p.name} · {euro(p.price)}</Button>)}</div></div>}
@@ -296,7 +296,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       </div>
       <div className="mt-10 border-t-4 border-border pt-8">
         {disc.amount > 0 && <div className="mb-4 flex items-baseline justify-between text-success">
-          <p className="font-display text-4xl">🎁 {lt.discount} -{disc.pct}%</p>
+          <p className="font-display text-4xl">🎁 {lt.discount}{disc.step ? "" : ` -${disc.pct}%`}</p>
           <p className="font-display text-5xl">-{euro(disc.amount)}</p>
         </div>}
         <div className="flex items-baseline justify-between">

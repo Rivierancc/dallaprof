@@ -27,7 +27,9 @@ const giftYear = () => new Date().getFullYear();
 async function profile(c: { id: string; name: string; birth_day: number | null; birth_month: number | null; birthday_gift?: unknown }): Promise<Found> {
   const rules = cleanLoyalty((await (await db()).from("kiosk_banner").select("loyalty").maybeSingle()).data?.loyalty);
   const { data: orders } = await (await db()).from("orders").select("items").eq("customer_id", c.id).in("status", PAID_STATUSES).order("created_at", { ascending: false }).limit(50);
-  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !orders?.length, birthday: birthdayNear(c.birth_day, c.birth_month, rules.birthday_days), gifts: giftsFor(c, rules.birthday_days) };
+  // Benvenuto una sola volta: basta un qualsiasi ordine già collegato (anche non ancora pagato).
+  const { count } = await (await db()).from("orders").select("id", { count: "exact", head: true }).eq("customer_id", c.id);
+  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !count, birthday: birthdayNear(c.birth_day, c.birth_month, rules.birthday_days), gifts: giftsFor(c, rules.birthday_days) };
 }
 /** Regali scelti dal ristoratore: valgono solo nei giorni del compleanno di quest'anno e una volta sola. */
 function giftsFor(c: { birth_day: number | null; birth_month: number | null; birthday_gift?: unknown }, days: number) {
