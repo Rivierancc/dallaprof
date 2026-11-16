@@ -1,3 +1,4 @@
+import { Flag } from "@/components/compat-icons";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -103,8 +104,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     {customerPage && <>
       <Clock onTap={tapCorner} />
       {shown.length > 1 && <div dir="ltr" className="fixed right-2 top-2 z-[100] flex max-w-[calc(100vw-7.5rem)] flex-wrap justify-end gap-1 rounded-2xl border-2 border-border bg-card p-1 sm:right-3 sm:top-3 sm:max-w-none sm:gap-2 sm:p-2" aria-label="Lingua">
-        {shown.map(({ code, flag }) =>
-          <Button key={code} title={code} aria-label={code} aria-pressed={language === code} variant={language === code ? "default" : "ghost"} onClick={() => setLanguage(code)} className="tap h-10 min-w-10 gap-2 rounded-xl px-1.5 sm:h-16 sm:min-w-16 sm:px-3"><span aria-hidden="true" className="text-2xl leading-none sm:text-4xl">{flag}</span><span className="hidden font-sans text-xl font-bold sm:inline">{code}</span></Button>)}
+        {shown.map(({ code }) =>
+          <Button key={code} title={code} aria-label={code} aria-pressed={language === code} variant={language === code ? "default" : "ghost"} onClick={() => setLanguage(code)} className="tap h-10 min-w-10 gap-2 rounded-xl px-1.5 sm:h-16 sm:min-w-16 sm:px-3"><span aria-hidden="true" className="text-2xl leading-none sm:text-4xl"><Flag code={code} /></span><span className="hidden font-sans text-xl font-bold sm:inline">{code}</span></Button>)}
       </div>}
     </>}
     {!customerPage && fullscreen && <Button aria-label="Accesso uscita chiosco" variant="ghost" className="fixed left-0 top-0 z-[100] h-12 w-12" onClick={tapCorner}>•</Button>}

@@ -1,3 +1,4 @@
+import { HereIcon, TakeawayIcon, OffersIcon, CartIcon } from "@/components/compat-icons";
 import { Screensaver } from "@/components/screensaver"
 import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
@@ -42,7 +43,7 @@ function Totem() {
   const restaurantOnly = useRestaurantOnly()
   if (restaurantOnly) return (
     <main className="grid min-h-dvh place-items-center p-10 text-center">
-      <div><p className="font-display text-7xl text-accent">🍽️ Servizio al tavolo</p>
+      <div><p className="font-display text-7xl text-accent"><HereIcon /> Servizio al tavolo</p>
       <p className="mt-6 text-3xl text-muted-foreground">In questo locale le ordinazioni le prende il cameriere.</p>
       <SalaLink to="/sala" className="tap mt-10 inline-block rounded-2xl bg-primary px-8 py-4 text-3xl font-bold text-primary-foreground">Apri la sala camerieri</SalaLink></div>
     </main>
@@ -209,10 +210,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         )}
         <div className="mt-10 grid grid-cols-2 gap-6 [@media(max-height:900px)]:mt-4 [@media(max-height:900px)]:gap-3">
           <Button variant="ghost" onClick={() => setDineOption("qui")} className={`whitespace-normal tap flex h-28 items-center justify-center gap-4 rounded-3xl border-4 border-accent bg-card px-4 [@media(max-height:900px)]:h-16 [@media(max-height:900px)]:gap-2 ${custom ? "glow ring-4 ring-accent" : ""}`}>
-            <span className="text-5xl [@media(max-height:900px)]:text-3xl">🍽️</span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.here}</span>
+            <span className="text-5xl [@media(max-height:900px)]:text-3xl"><HereIcon /></span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.here}</span>
           </Button>
           <Button variant="ghost" onClick={() => setDineOption("asporto")} className={`whitespace-normal tap flex h-28 items-center justify-center gap-4 rounded-3xl border-4 border-primary bg-card px-4 [@media(max-height:900px)]:h-16 [@media(max-height:900px)]:gap-2 ${custom ? "glow ring-4 ring-primary" : ""}`}>
-            <span className="text-5xl [@media(max-height:900px)]:text-3xl">🥡</span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.takeaway}</span>
+            <span className="text-5xl [@media(max-height:900px)]:text-3xl"><TakeawayIcon /></span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.takeaway}</span>
           </Button>
         </div>
         {featured.length > 0 && (
@@ -222,7 +223,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
               {featured.map((p) => (
                 <Button variant="ghost" key={p.id} onClick={() => { setActiveCat(p.category_id); setCustom(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="whitespace-normal tap relative flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
                   <Badge p={p} />
-                  {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover [@media(max-height:900px)]:aspect-[4/3]" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl [@media(max-height:900px)]:aspect-[4/3] [@media(max-height:900px)]:text-4xl">🍽️</div>}
+                  {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover [@media(max-height:900px)]:aspect-[4/3]" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl [@media(max-height:900px)]:aspect-[4/3] [@media(max-height:900px)]:text-4xl"><HereIcon /></div>}
                   <div className="p-3 [@media(max-height:900px)]:p-2">
                     <h3 className="line-clamp-2 font-display text-3xl leading-tight [@media(max-height:900px)]:text-xl">{p.name}</h3>
                     <span className="mt-2 inline-block rounded-full bg-primary px-4 py-1 font-display text-2xl text-primary-foreground [@media(max-height:900px)]:px-2 [@media(max-height:900px)]:text-lg">{euro(p.price)}</span>
@@ -250,7 +251,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
               if (p.choice_groups.length || p.extras.length || p.ingredients.length) { setOfferPick(true); setCustom(p); setShowSuggest(false); setShowCart(false) }
               else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1, offer: true }])
             }} className="whitespace-normal tap relative flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
-              {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl">🍽️</div>}
+              {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl"><HereIcon /></div>}
               <div className="p-4">
                 <h3 className="font-display text-4xl leading-tight">{p.name}</h3>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -273,7 +274,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     <main className="min-h-screen p-8 pt-20">
       
       <header className="mb-8 flex items-center justify-between pt-8">
-        <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</span>
+        <span className="rounded-full bg-muted px-6 py-2 font-display text-4xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>}</span>
         <Button variant="ghost" onClick={() => setShowCart(false)} className="whitespace-normal tap rounded-2xl bg-secondary px-8 py-4 font-display text-4xl">✕ {t.close}</Button>
       </header>
       {memberDialog}
@@ -331,7 +332,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         <span />
-        <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`} ▼</Button>
+        <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
       </header>
       {memberDialog}
       {activeCat === null && memberBar}
@@ -340,13 +341,13 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <div className={`grid gap-6 ${tile.cols === 1 ? "grid-cols-1" : tile.cols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
           {catLayout.strips && (offerMenus.length > 0 || foodFilters.length > 0 || categories.some((c) => !c.strip)) && (
             <div className="col-span-full flex items-center gap-3">
-              {offerMenus.length > 0 && <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${TILE[catLayout.size]!.h * 0.65}rem` }} className="whitespace-normal tap relative w-[26%] shrink-0 overflow-hidden rounded-3xl bg-secondary"><span style={{ fontSize: `${TILE[catLayout.size]!.text * 0.75}rem` }} className="glow font-display leading-none text-accent">🍱 {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span></Button>}
+              {offerMenus.length > 0 && <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${TILE[catLayout.size]!.h * 0.65}rem` }} className="whitespace-normal tap relative w-[26%] shrink-0 overflow-hidden rounded-3xl bg-secondary"><span style={{ fontSize: `${TILE[catLayout.size]!.text * 0.75}rem` }} className="glow font-display leading-none text-accent"><OffersIcon /> {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span></Button>}
               <div className="min-w-0 flex-1"><CategoryStrip light size={catLayout.size} initial={lastCat} onPick={setActiveCat} cats={[...categories.filter((c) => !c.strip), ...foodFilters.map((f) => ({ id: FF + f.id, name: `${f.emoji} ${f.label}`, name_tr: null, image: null } as unknown as Category))]} /></div>
             </div>
           )}
           {!catLayout.strips && offerMenus.length > 0 && (
             <Button variant="ghost" onClick={() => setActiveCat(OFFERS)} style={{ height: `${tile.h}rem` }} className="whitespace-normal tap relative overflow-hidden rounded-3xl bg-secondary">
-              <span style={{ fontSize: `${tile.text}rem` }} className="glow relative z-10 font-display leading-none text-accent">🍱 {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span>
+              <span style={{ fontSize: `${tile.text}rem` }} className="glow relative z-10 font-display leading-none text-accent"><OffersIcon /> {translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language).toUpperCase()}</span>
             </Button>
           )}
           {categories.filter(() => !catLayout.strips).map((c: Category) => (
@@ -381,7 +382,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             {shown.map((p: Product) => (
               <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
                 <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
-                {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "⭐ " : ""}🍱 {menuName(p.name, p.combo_name)}</h3> : null}
+                {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "★ " : ""}<OffersIcon /> {menuName(p.name, p.combo_name)}</h3> : null}
                 <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
                   {p.image? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
                 </div>
@@ -425,10 +426,10 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       {cart.length > 0 && (
         <div style={{ bottom: `${cartLift}rem` }} className="fixed inset-x-6 z-40 flex items-center justify-between rounded-3xl border-4 border-accent bg-card p-6 shadow-2xl">
           <div>
-            <p className="text-2xl text-muted-foreground">{cart.length} {t.products} · {dineOption === "qui"? `🍽️ ${t.here}` : `🥡 ${t.takeaway}`}</p>
+            <p className="text-2xl text-muted-foreground">{cart.length} {t.products} · {dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>}</p>
             <p className="font-display text-6xl text-accent">{euro(total)}</p>
           </div>
-          <Button variant="ghost" onClick={openCart} className="whitespace-normal tap h-auto rounded-full bg-primary px-14 py-8 font-display text-6xl text-primary-foreground">🛒 {t.cart}</Button>
+          <Button variant="ghost" onClick={openCart} className="whitespace-normal tap h-auto rounded-full bg-primary px-14 py-8 font-display text-6xl text-primary-foreground"><CartIcon /> {t.cart}</Button>
         </div>
       )}
     </main>
@@ -480,7 +481,7 @@ function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: 
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {hasMenuPrice && (
             <div className="mt-4 flex gap-3">
-              {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? `🍱 Menu · ${euro(product.combo_price ?? 0)}` : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
+              {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? <><OffersIcon /> Menu · {euro(product.combo_price ?? 0)}</> : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
             </div>
           )}
           {alts.length > 1 && (
@@ -493,7 +494,7 @@ function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: 
           )}
           {lines.length > 0 && (
             <section className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground">🍱 {t.includes}</h3>
+              <h3 className="font-display text-4xl text-muted-foreground"><OffersIcon /> {t.includes}</h3>
               <ul className="mt-3 flex flex-wrap gap-3">{combo.map((x) => <li key={x.id} className="rounded-full bg-muted px-6 py-3 text-2xl font-bold">{x.name}</li>)}</ul>
             </section>
           )}

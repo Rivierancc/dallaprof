@@ -5,6 +5,7 @@ export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; wh
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };
 
 export const MANUAL_UPDATED = "16 novembre 2026";
+// 16/11: bandierine e icone del totem disegnate, visibili anche su Windows 7.
 
 export const MANUAL: ManualSection[] = [
   { id: "menu-digitale", title: "📱 Menu digitale per il sito", entries: [

@@ -1,3 +1,4 @@
+import { Flag } from "@/components/compat-icons";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -53,7 +54,7 @@ function DigitalMenu() {
       <div className="flex flex-wrap items-center gap-2">
         {site && <a href={site} className="rounded-lg bg-secondary px-4 py-2 text-2xl text-secondary-foreground">← Torna al sito</a>}
         <h1 className="mr-auto font-display text-6xl text-accent">Menu</h1>
-        {LANGUAGES.map((l) => <button key={l.code} aria-label={l.name} onClick={() => setLang(l.code)} className={`rounded-md px-2 py-1 text-3xl ${lang === l.code ? "bg-accent/30" : ""}`}>{l.flag}</button>)}
+        {LANGUAGES.map((l) => <button key={l.code} aria-label={l.name} onClick={() => setLang(l.code)} className={`rounded-md px-2 py-1 text-3xl ${lang === l.code ? "bg-accent/30" : ""}`}><Flag code={l.code} /></button>)}
       </div>
       <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
         {cats.map((c) => <a key={c.id} href={`#c-${c.slug}`} className="shrink-0 rounded-full bg-secondary px-5 py-2 text-2xl text-secondary-foreground">{translatedFor(c.name, c.name_tr, lang)}</a>)}
