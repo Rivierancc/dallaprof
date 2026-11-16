@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { NameKeyboard } from "@/components/name-keyboard";
 import { findCustomer, registerCustomer } from "@/lib/loyalty.functions";
 import { normalizePhone, validPhone } from "@/lib/loyalty";
 import type { Language } from "@/lib/customer";
@@ -53,8 +54,9 @@ export function LoyaltyDialog({ language, onClose, onMember }: { language: Langu
           <p className="font-display text-4xl text-accent">{t.notFound}</p>
           <p className="mt-2 text-2xl text-muted-foreground">📱 {phone}</p>
           <label className="mt-6 block text-2xl font-bold">{t.name}
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className="mt-2 h-20 w-full rounded-2xl bg-background px-5 text-4xl" />
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} inputMode="none" dir="auto" className="mt-2 h-20 w-full rounded-2xl bg-background px-5 text-4xl" />
           </label>
+          <NameKeyboard language={language} value={name} onChange={setName} />
           <p className="mt-6 text-2xl">{t.bday}</p>
           <div className="mt-2 grid grid-cols-2 gap-4">
             <select aria-label={t.day} value={day} onChange={(e) => setDay(e.target.value)} className="h-20 rounded-2xl bg-background px-4 text-3xl"><option value="">{t.day}</option>{Array.from({ length: 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}</select>
