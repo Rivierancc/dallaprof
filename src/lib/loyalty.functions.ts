@@ -68,7 +68,7 @@ export const registerCustomer = createServerFn({ method: "POST" })
     const surname = String(d?.surname ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
     if (rawPhone && !validPhone(rawPhone)) throw new Error("Numero di cellulare non valido");
     if (email && !EMAIL.test(email)) throw new Error("Email non valida");
-    if (!rawPhone && !email) throw new Error("Serve il cellulare o l'email");
+    if (!rawPhone) throw new Error("Serve il numero di cellulare");
     if (name.length < 2) throw new Error("Scrivi il tuo nome");
     if (d?.consent !== true) throw new Error("Serve il consenso privacy");
     const b = d.day || d.month ? validBirthday(d.day, d.month) : null;

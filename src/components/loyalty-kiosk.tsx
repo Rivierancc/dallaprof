@@ -26,7 +26,7 @@ export function LoyaltyDialog({ language, onClose, onMember }: { language: Langu
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
-  const [byEmail, setByEmail] = useState(false);
+  const byEmail = false; // Il cellulare è obbligatorio: evita clienti doppi.
   const [field, setField] = useState<"name" | "surname" | "email">("name");
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
@@ -51,7 +51,6 @@ export function LoyaltyDialog({ language, onClose, onMember }: { language: Langu
       <div dir="ltr" className="max-h-[92vh] w-full max-w-[52rem] overflow-auto rounded-t-3xl bg-card p-8" onClick={(e) => e.stopPropagation()}>
         {step === "phone" ? <>
           <h2 className="font-display text-5xl text-accent">{t.ask}</h2>
-          <Button variant="secondary" onClick={() => { setByEmail(!byEmail); setErr(""); }} className="tap mt-4 h-16 w-full rounded-2xl text-3xl">{byEmail ? t.usePhone : t.useEmail}</Button>
           {byEmail ? <>
             <p aria-label={t.email} className="mt-6 min-h-20 break-all rounded-3xl bg-background p-5 text-center text-4xl">{email || <span className="text-muted-foreground">email@…</span>}</p>
             <EmailKeyboard value={email} onChange={setEmail} />
