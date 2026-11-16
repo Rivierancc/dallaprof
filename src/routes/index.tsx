@@ -367,14 +367,16 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         </div>
       ) : (
         <>
-          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-6 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
+          <div className="sticky top-0 z-30 -mx-2 mb-6 bg-background px-2 pt-2 pb-1">
+          <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-4 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
           {foodFilters.length > 0 && !ffCat && (
-            <div dir="ltr" className="mb-6 flex gap-3 overflow-x-auto pb-2">
+            <div dir="ltr" className="mb-2 flex gap-3 overflow-x-auto pb-2">
               {foodFilters.map((f) => (
                 <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-6 py-3 font-display text-3xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
               ))}
             </div>
           )}
+          </div>
           {ffOn && shown.length === 0 && <p className="mb-6 text-3xl text-muted-foreground">{ffOn.emoji} {ffOn.label}: —</p>}
           <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : "grid gap-6"} style={dl.scroll ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
             {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
