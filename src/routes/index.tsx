@@ -410,7 +410,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       )}
 
       {custom && (
-        <Customize key={custom.id} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish) => {
+        <Customize key={custom.id} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
           setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, ...(asMenu && dish.id !== custom.id ? { dishId: dish.id } : {}), name: asMenu ? menuName(dish.name, custom.combo_name) : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
@@ -443,7 +443,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: Product; startDish?: string | null; all: Product[]; lib: Ingredient[]; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product) => void }) {
+function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [removed, setRemoved] = useState<string[]>([])
@@ -484,11 +484,23 @@ function Customize({ product, startDish, all, lib, onClose, onAdd }: { product: 
           {menuOn && <p className="mt-1 font-display text-4xl text-accent">🍔 {dish.name}</p>}
           {descriptionFor(dish, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(dish, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
-          {hasMenuPrice && (
+          {(() => {
+            const cur = menuOn ? dish : product
+            const hosts = all.filter((x) => x.id !== product.id && !x.sold_out && isCombo(x) && x.combo_price !== null && (x.id === cur.id || x.combo_alts.includes(cur.id)))
+            if (!hosts.length) return null
+            const single = !(hasMenuPrice && asMenu)
+            return (
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button variant="ghost" aria-pressed={single} onClick={() => { if (cur.id !== product.id) onSwitch(cur, null); else setAsMenu(false) }} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${single ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · {euro(p2(cur))}</Button>
+                {hasMenuPrice && <Button variant="ghost" aria-pressed={!single} onClick={() => setAsMenu(true)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${!single ? "bg-accent text-accent-foreground" : "bg-muted"}`}><OffersIcon /> {menuName(cur.name, product.combo_name)} · {euro(product.combo_price ?? 0)}</Button>}
+                {hosts.map((h) => <Button variant="ghost" key={h.id} onClick={() => onSwitch(h, cur.id)} className="tap h-auto flex-1 whitespace-normal rounded-2xl bg-muted py-4 font-display text-4xl"><OffersIcon /> {menuName(cur.name, h.combo_name)} · {euro(h.combo_price ?? 0)}</Button>)}
+              </div>
+            )
+          })() ?? (hasMenuPrice && (
             <div className="mt-4 flex gap-3">
               {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? <><OffersIcon /> Menu · {euro(product.combo_price ?? 0)}</> : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
             </div>
-          )}
+          ))}
           {alts.length > 1 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">🍔 {({ IT: "Scegli il piatto", EN: "Choose your main", FR: "Choisissez le plat", ES: "Elige el plato", DE: "Wähle das Gericht", AR: "اختر الطبق" } as const)[language]}</h3>
