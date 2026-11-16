@@ -30,6 +30,14 @@ export function Screensaver() {
   const { reset } = useCustomer();
   // Quando parte il salvaschermo il prossimo cliente ricomincia in italiano.
   useEffect(() => { if (show) reset(); }, [show]);
+  // Mentre il salvaschermo è aperto la pagina non deve scorrere: sui Chromium vecchi
+  // (Windows 7 / Chrome 109) la barra di scorrimento resta sempre visibile a schermo.
+  useEffect(() => {
+    if (!show) return;
+    const root = document.documentElement;
+    root.classList.add("saver-open");
+    return () => { root.classList.remove("saver-open"); };
+  }, [show]);
   useEffect(() => {
     if (!data || !s.on) return;
     let t = setTimeout(() => setShow(true), s.after * 1000);

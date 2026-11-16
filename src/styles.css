@@ -149,3 +149,9 @@ html:has(.digital-menu), html:has(.digital-menu) body { user-select: auto; touch
 /* Hide horizontal scrollbars on customer strips, also on older Chromium (Win7 / Chrome 109) */
 .overflow-x-auto { scrollbar-width: none; -ms-overflow-style: none; }
 .overflow-x-auto::-webkit-scrollbar { display: none; height: 0; }
+
+/* Salvaschermo aperto: la pagina dietro non deve scorrere e la barra di scorrimento
+   non deve comparire (su Chromium vecchi, Win7 / Chrome 109, è sempre visibile). */
+html.saver-open, html.saver-open body { overflow: hidden; }
+html.saver-open { scrollbar-width: none; -ms-overflow-style: none; }
+html.saver-open::-webkit-scrollbar, html.saver-open body::-webkit-scrollbar { display: none; width: 0; height: 0; }
