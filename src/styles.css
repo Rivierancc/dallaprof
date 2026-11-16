@@ -145,3 +145,7 @@ html:has(.digital-menu[data-size="s"]) { font-size: 16px; }
 html:has(.digital-menu[data-size="l"]) { font-size: 21px; }
 html:has(.digital-menu[data-size="xl"]) { font-size: 24px; }
 html:has(.digital-menu), html:has(.digital-menu) body { user-select: auto; touch-action: auto; }
+
+/* Hide horizontal scrollbars on customer strips, also on older Chromium (Win7 / Chrome 109) */
+.overflow-x-auto { scrollbar-width: none; -ms-overflow-style: none; }
+.overflow-x-auto::-webkit-scrollbar { display: none; height: 0; }
