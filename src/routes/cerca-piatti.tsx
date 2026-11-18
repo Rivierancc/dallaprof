@@ -52,8 +52,7 @@ function CercaPiatti() {
     <div className="mb-4 grid gap-3 rounded-2xl bg-card p-4 md:grid-cols-3">
       <label className="text-lg font-bold">Prezzo da €<input inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} placeholder="0" className="mt-1 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" /></label>
       <label className="text-lg font-bold">Prezzo fino a €<input inputMode="decimal" value={max} onChange={(e) => setMax(e.target.value)} placeholder="qualsiasi" className="mt-1 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" /></label>
-      <label className="text-lg font-bold">Ingrediente<input list="ing-list" value={ing} onChange={(e) => setIng(e.target.value)} placeholder="es. Mortadella" className="mt-1 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" />
-        <datalist id="ing-list">{ingNames.map((n) => <option key={n} value={n} />)}</datalist></label>
+      <IngredientPicker value={ing} onChange={setIng} names={ingNames} />
     </div>
     <div className="mb-3 flex items-center gap-3 text-xl"><span className="font-bold">{results.length} piatti trovati</span>
       {(min || max || ing) && <button onClick={() => { setMin(""); setMax(""); setIng(""); }} className={staffChipClass}>✕ Azzera filtri</button>}</div>
@@ -66,4 +65,23 @@ function CercaPiatti() {
       {results.length === 0 && <li className="p-6 text-xl text-muted-foreground">Nessun piatto corrisponde ai filtri.</li>}
     </ul>
   </main>;
+}
+
+function IngredientPicker({ value, onChange, names }: { value: string; onChange: (v: string) => void; names: string[] }) {
+  const [open, setOpen] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const q = typing ? value.trim().toLowerCase() : "";
+  const list = q ? names.filter((n) => n.toLowerCase().includes(q)) : names;
+  return <div className="relative text-lg font-bold">Ingrediente
+    <div className="mt-1 flex gap-2">
+      <input value={value} onFocus={(e) => { setTyping(false); setOpen(true); e.currentTarget.select(); }} onClick={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)} onChange={(e) => { onChange(e.target.value); setTyping(true); setOpen(true); }}
+        placeholder="es. Mortadella" className="w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" />
+      {value && <button type="button" aria-label="Cancella ingrediente" onClick={() => onChange("")} className="rounded-xl bg-muted px-4 text-xl">✕</button>}
+    </div>
+    {open && list.length > 0 && <ul className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-lg">
+      {list.map((n) => <li key={n}><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange(n); setTyping(false); setOpen(false); }}
+        className={`w-full px-4 py-2 text-left text-xl font-normal hover:bg-muted ${n === value ? "bg-muted font-bold" : ""}`}>{n}</button></li>)}
+    </ul>}
+  </div>;
 }
