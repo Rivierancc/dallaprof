@@ -658,8 +658,9 @@ export const saveIngredient = createServerFn({ method: "POST" })
 
 // Scorte, allergeni e gelo di un ingrediente (pagina Scorte). Solo personale.
 export const saveIngredientInfo = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; allergens?: string[]; frozen?: boolean; stock_mode?: string; stock_qty?: number; stock_min?: number; stock_state?: string }) => {
+  .inputValidator((d: { id: string; allergens?: string[]; frozen?: boolean; stock_mode?: string; stock_qty?: number; stock_min?: number; stock_state?: string; group?: string }) => {
     const row: Database["public"]["Tables"]["menu_ingredients"]["Update"] = {};
+    if (d.group !== undefined) row.grp = String(d.group).trim().slice(0, 40);
     if (d.allergens !== undefined) row.allergens = cleanAllergens(d.allergens);
     if (d.frozen !== undefined) row.frozen = !!d.frozen;
     if (d.stock_mode !== undefined) row.stock_mode = d.stock_mode === "pezzi" ? "pezzi" : "vista";

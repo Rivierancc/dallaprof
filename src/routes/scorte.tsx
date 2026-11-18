@@ -59,6 +59,7 @@ function Scorte() {
     .filter((g) => !q || g.name.toLowerCase().includes(q.toLowerCase()))
     .filter((g) => !only || (only === "gelo" ? g.frozen : g.allergens.includes(only)))
     .filter((g) => !onlyLow || low(g));
+  const allGroups = [...new Set(lib.map((g) => g.group).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const groups = [...new Set(list.map((g) => g.group || "Altro"))].sort((a, b) => a.localeCompare(b));
   const save = async (g: MenuIngredient, d: Info) => {
     try { await saveIngredientInfo({ data: { ...d, id: g.id } }); await refresh(); } catch (e) { err(e); }
@@ -83,7 +84,7 @@ function Scorte() {
     </div>
     {groups.map((grp) => <section key={grp} className="mb-8">
       <h2 className="mb-3 font-display text-4xl text-muted-foreground">{grp}</h2>
-      <ul className="space-y-3">{list.filter((g) => (g.group || "Altro") === grp).map((g) => <Row key={g.id} g={g} low={low(g)} used={usedIn.get(g.name.toLowerCase()) ?? []} save={(d) => save(g, d)} />)}</ul>
+      <ul className="space-y-3">{list.filter((g) => (g.group || "Altro") === grp).map((g) => <Row key={g.id} groupsAll={allGroups} g={g} low={low(g)} used={usedIn.get(g.name.toLowerCase()) ?? []} save={(d) => save(g, d)} />)}</ul>
     </section>)}
     {!list.length && <p className="text-xl text-muted-foreground">Nessun ingrediente trovato.</p>}
     {missing.length > 0 && !only && !q && <section className="mt-10 rounded-2xl bg-card p-4">
@@ -95,7 +96,7 @@ function Scorte() {
 }
 
 type Info = Omit<Parameters<typeof saveIngredientInfo>[0]["data"], "id">;
-function Row({ g, low, used, save }: { g: MenuIngredient; low: boolean; used: string[]; save: (d: Info) => Promise<void> }) {
+function Row({ g, low, used, save, groupsAll }: { groupsAll: string[]; g: MenuIngredient; low: boolean; used: string[]; save: (d: Info) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const toggleA = (id: string) => save({ allergens: g.allergens.includes(id) ? g.allergens.filter((x) => x !== id) : [...g.allergens, id] });
   const btn = "tap rounded-xl px-4 py-2 text-lg font-bold";
@@ -120,6 +121,11 @@ function Row({ g, low, used, save }: { g: MenuIngredient; low: boolean; used: st
           <button key={v} onClick={() => save({ stock_state: v })} className={`${btn} ${g.stock_state === v ? c : "bg-secondary"}`}>{l}</button>)}
       </div>}
       <button onClick={() => save({ frozen: !g.frozen })} className={`${btn} ${g.frozen ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>❄️ {g.frozen ? "Gelo" : "Fresco"}</button>
+      <select aria-label={`Categoria ${g.name}`} value={g.group || ""} onChange={(e) => { let v = e.target.value; if (v === "__new") { v = (prompt("Nome della nuova categoria") || "").trim(); if (!v) return; } void save({ group: v }); }} className="rounded-xl bg-secondary px-3 py-2 text-lg font-bold">
+        <option value="">📂 Altro</option>
+        {groupsAll.map((x) => <option key={x} value={x}>📂 {x}</option>)}
+        <option value="__new">＋ Nuova categoria…</option>
+      </select>
       <button onClick={() => setOpen((o) => !o)} className={`${btn} bg-secondary`}>Allergeni {open ? "▲" : "▼"}</button>
     </div>
     {open && <div className="mt-3 flex flex-wrap gap-2">{ALLERGENS.map((a) => { const on = g.allergens.includes(a.id); return <button key={a.id} aria-pressed={on} onClick={() => toggleA(a.id)} className={`tap rounded-full px-4 py-2 text-lg font-bold ${on ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{a.icon} {a.IT}</button>; })}</div>}
