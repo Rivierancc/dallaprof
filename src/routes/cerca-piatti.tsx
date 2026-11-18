@@ -35,7 +35,6 @@ function CercaPiatti() {
   const cats = new Map((menu?.categories ?? []).map((c) => [c.id, c.name]));
   const ingNames = useMemo(() => {
     const s = new Set<string>();
-    for (const i of menu?.ingredients ?? []) s.add(i.name);
     for (const p of products) { p.ingredients.forEach((x) => s.add(x)); p.extras.forEach((e) => s.add(e.name)); p.choice_groups.forEach((g) => g.options.forEach((o) => s.add(o.name))); }
     return [...s].filter(Boolean).sort((a, b) => a.localeCompare(b, "it"));
   }, [menu, products]);
