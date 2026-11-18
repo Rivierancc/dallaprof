@@ -397,7 +397,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                   {p.image? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}{infoFlags(bannerSettings).frozen && dishInfo(p.ingredients, lib).frozen ? " ❄️" : ""}</h3>}
+                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
                   {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                     <div key={d.id} data-dish={d.id} className="mt-1">
                       <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
