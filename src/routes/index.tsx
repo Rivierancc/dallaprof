@@ -492,7 +492,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
           {descriptionFor(dish, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(dish, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
           {(() => {
-            const info = dishInfo(dish.ingredients, lib)
+            const info = dishInfo(dish.ingredients, lib, dish.description)
             const a = flags.allergens && info.allergens.length > 0, f = flags.frozen && info.frozen
             if (!a && !f) return null
             return <div className="mt-4 space-y-2">

@@ -688,6 +688,37 @@ export const deleteIngredient = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// Elimina un ingrediente dall'archivio; se indicato, lo sostituisce nei piatti (altrimenti i piatti restano invariati).
+export const deleteIngredientSafe = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; replaceWith?: string }) => ({ id: String(d.id), replaceWith: String(d.replaceWith ?? "").trim().slice(0, 80) }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { data: g, error: e1 } = await db.from("menu_ingredients").select("name").eq("id", data.id).maybeSingle();
+    if (e1) throw new Error(e1.message);
+    if (!g) return { ok: true as const, changed: 0 };
+    let changed = 0;
+    if (data.replaceWith) {
+      const old = g.name.toLowerCase();
+      const sw = (n: string) => (n.toLowerCase() === old ? data.replaceWith : n);
+      const { data: prods, error: e2 } = await db.from("menu_products").select("id, ingredients, extras, choice_groups");
+      if (e2) throw new Error(e2.message);
+      for (const p of prods ?? []) {
+        const ing = (p.ingredients as string[]).map(sw).filter((n, i, a) => a.findIndex((x) => x.toLowerCase() === n.toLowerCase()) === i);
+        const ex = (p.extras as { name: string }[]).map((x) => ({ ...x, name: sw(x.name) }));
+        const cg = (p.choice_groups as { options: { name: string }[] }[]).map((c) => ({ ...c, options: c.options.map((o) => ({ ...o, name: sw(o.name) })) }));
+        const before = JSON.stringify([p.ingredients, p.extras, p.choice_groups]);
+        if (before === JSON.stringify([ing, ex, cg])) continue;
+        const { error } = await db.from("menu_products").update({ ingredients: ing, extras: ex, choice_groups: cg } as never).eq("id", p.id);
+        if (error) throw new Error(error.message);
+        changed++;
+      }
+    }
+    const { error } = await db.from("menu_ingredients").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, changed };
+  });
+
 export const setCategoryCustom = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; kind: string; price: number | string }) => {
     const price = Number(String(d.price ?? "0").replace(",", "."));

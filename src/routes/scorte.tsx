@@ -7,7 +7,7 @@ import { PinPad } from "@/components/pin-pad";
 import { staffChipClass } from "@/components/staff-nav";
 import { venuePageTitle } from "@/lib/page-title";
 import { menuQueryOptions } from "@/lib/menu";
-import { saveIngredient, saveIngredientInfo, type MenuIngredient, type MenuProduct } from "@/lib/menu.functions";
+import { deleteIngredientSafe, saveIngredient, saveIngredientInfo, type MenuIngredient, type MenuProduct } from "@/lib/menu.functions";
 import { bannerQueryOptions } from "@/components/display-banner";
 import { ALLERGENS, infoFlags } from "@/lib/allergens";
 
@@ -65,6 +65,18 @@ function Scorte() {
     try { await saveIngredientInfo({ data: { ...d, id: g.id } }); await refresh(); } catch (e) { err(e); }
   };
 
+  const remove = async (g: MenuIngredient) => {
+    const used = usedIn.get(g.name.toLowerCase()) ?? [];
+    let replaceWith = "";
+    if (used.length) {
+      const a = prompt(`«${g.name}» è usato in: ${used.join(", ")}.\n\nI piatti NON verranno modificati.\nSe vuoi sostituirlo nei piatti, scrivi qui il nome del nuovo ingrediente (es. «Stracchino»). Lascia vuoto per non toccare i piatti.`, "");
+      if (a === null) return;
+      replaceWith = a.trim();
+    }
+    if (!confirm(replaceWith ? `Eliminare «${g.name}» e sostituirlo con «${replaceWith}» nei piatti?` : `Eliminare «${g.name}» dalle Scorte? I piatti restano come sono.`)) return;
+    try { const r = await deleteIngredientSafe({ data: { id: g.id, replaceWith } }); await refresh(); toast.success(replaceWith ? `Eliminato e sostituito in ${r.changed} piatti` : "Ingrediente eliminato"); } catch (e) { err(e); }
+  };
+
   return <main className="mx-auto min-h-screen max-w-6xl p-6">
     <header className="mb-4 flex flex-wrap items-center gap-3">
       <h1 className="mr-auto font-display text-6xl text-accent">📦 Scorte e allergeni</h1>
@@ -84,7 +96,7 @@ function Scorte() {
     </div>
     {groups.map((grp) => <section key={grp} className="mb-8">
       <h2 className="mb-3 font-display text-4xl text-muted-foreground">{grp}</h2>
-      <ul className="space-y-3">{list.filter((g) => (g.group || "Altro") === grp).map((g) => <Row key={g.id} groupsAll={allGroups} g={g} low={low(g)} used={usedIn.get(g.name.toLowerCase()) ?? []} save={(d) => save(g, d)} />)}</ul>
+      <ul className="space-y-3">{list.filter((g) => (g.group || "Altro") === grp).map((g) => <Row key={g.id} groupsAll={allGroups} g={g} low={low(g)} used={usedIn.get(g.name.toLowerCase()) ?? []} save={(d) => save(g, d)} remove={() => remove(g)} />)}</ul>
     </section>)}
     {!list.length && <p className="text-xl text-muted-foreground">Nessun ingrediente trovato.</p>}
     {missing.length > 0 && !only && !q && <section className="mt-10 rounded-2xl bg-card p-4">
@@ -96,7 +108,7 @@ function Scorte() {
 }
 
 type Info = Omit<Parameters<typeof saveIngredientInfo>[0]["data"], "id">;
-function Row({ g, low, used, save, groupsAll }: { groupsAll: string[]; g: MenuIngredient; low: boolean; used: string[]; save: (d: Info) => Promise<void> }) {
+function Row({ g, low, used, save, groupsAll, remove }: { remove: () => void; groupsAll: string[]; g: MenuIngredient; low: boolean; used: string[]; save: (d: Info) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const toggleA = (id: string) => save({ allergens: g.allergens.includes(id) ? g.allergens.filter((x) => x !== id) : [...g.allergens, id] });
   const btn = "tap rounded-xl px-4 py-2 text-lg font-bold";
@@ -127,6 +139,7 @@ function Row({ g, low, used, save, groupsAll }: { groupsAll: string[]; g: MenuIn
         <option value="__new">＋ Nuova categoria…</option>
       </select>
       <button onClick={() => setOpen((o) => !o)} className={`${btn} bg-secondary`}>Allergeni {open ? "▲" : "▼"}</button>
+      <button aria-label={`Elimina ${g.name}`} onClick={remove} className={`${btn} bg-secondary`}>🗑️ Elimina</button>
     </div>
     {open && <div className="mt-3 flex flex-wrap gap-2">{ALLERGENS.map((a) => { const on = g.allergens.includes(a.id); return <button key={a.id} aria-pressed={on} onClick={() => toggleA(a.id)} className={`tap rounded-full px-4 py-2 text-lg font-bold ${on ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{a.icon} {a.IT}</button>; })}</div>}
   </li>;

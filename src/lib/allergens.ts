@@ -34,11 +34,17 @@ export const ALLERGENS_TITLE: Record<Lang, string> = { IT: "Allergeni", EN: "All
 
 type Lib = { name: string; allergens: string[]; frozen: boolean }[];
 /** Allergeni e gelo di un piatto, ricavati dagli ingredienti dell'archivio con lo stesso nome. */
-export function dishInfo(names: string[], lib: Lib) {
+const norm = (s: string) => s.toLowerCase().replace(/\*/g, "").replace(/\s+/g, " ").trim();
+/** Ingredienti dell'archivio citati nella descrizione italiana (parola intera, senza asterischi). */
+export function namesInText(text: string, lib: Lib) {
+  const t = ` ${norm(text).replace(/[^\p{L}\p{N}' ]+/gu, " ").replace(/\s+/g, " ")} `;
+  return lib.filter((g) => { const n = norm(g.name); return n.length > 2 && t.includes(` ${n} `); }).map((g) => g.name);
+}
+export function dishInfo(names: string[], lib: Lib, description = "") {
   const set = new Set<string>();
   let frozen = false;
-  for (const n of names) {
-    const g = lib.find((x) => x.name.toLowerCase() === n.toLowerCase());
+  for (const n of [...names, ...(description ? namesInText(description, lib) : [])]) {
+    const g = lib.find((x) => norm(x.name) === norm(n));
     if (!g) continue;
     g.allergens.forEach((a) => set.add(a));
     if (g.frozen) frozen = true;
