@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CassaRouteImport } from './routes/cassa'
+import { Route as CercaPiattiRouteImport } from './routes/cerca-piatti'
 import { Route as ClientiRouteImport } from './routes/clienti'
 import { Route as CucinaRouteImport } from './routes/cucina'
 import { Route as DisplayRouteImport } from './routes/display'
@@ -33,6 +34,11 @@ const IndexRoute = IndexRouteImport.update({
 const CassaRoute = CassaRouteImport.update({
   id: '/cassa',
   path: '/cassa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CercaPiattiRoute = CercaPiattiRouteImport.update({
+  id: '/cerca-piatti',
+  path: '/cerca-piatti',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientiRoute = ClientiRouteImport.update({
@@ -104,6 +110,7 @@ const ApiPublicIconRoute = ApiPublicIconRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/cerca-piatti': typeof CercaPiattiRoute
   '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/cerca-piatti': typeof CercaPiattiRoute
   '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cassa': typeof CassaRoute
+  '/cerca-piatti': typeof CercaPiattiRoute
   '/clienti': typeof ClientiRoute
   '/cucina': typeof CucinaRoute
   '/display': typeof DisplayRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cassa'
+    | '/cerca-piatti'
     | '/clienti'
     | '/cucina'
     | '/display'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cassa'
+    | '/cerca-piatti'
     | '/clienti'
     | '/cucina'
     | '/display'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cassa'
+    | '/cerca-piatti'
     | '/clienti'
     | '/cucina'
     | '/display'
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CassaRoute: typeof CassaRoute
+  CercaPiattiRoute: typeof CercaPiattiRoute
   ClientiRoute: typeof ClientiRoute
   CucinaRoute: typeof CucinaRoute
   DisplayRoute: typeof DisplayRoute
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/cassa'
       fullPath: '/cassa'
       preLoaderRoute: typeof CassaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cerca-piatti': {
+      id: '/cerca-piatti'
+      path: '/cerca-piatti'
+      fullPath: '/cerca-piatti'
+      preLoaderRoute: typeof CercaPiattiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clienti': {
@@ -338,6 +358,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CassaRoute: CassaRoute,
+  CercaPiattiRoute: CercaPiattiRoute,
   ClientiRoute: ClientiRoute,
   CucinaRoute: CucinaRoute,
   DisplayRoute: DisplayRoute,

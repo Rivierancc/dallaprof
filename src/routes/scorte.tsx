@@ -81,6 +81,7 @@ function Scorte() {
     <header className="mb-4 flex flex-wrap items-center gap-3">
       <h1 className="mr-auto font-display text-6xl text-accent">📦 Scorte e allergeni</h1>
       <Link to="/menu" className={staffChipClass}>🍔 Gestione menu</Link>
+      <Link to="/cerca-piatti" className={staffChipClass}>🔍 Cerca piatti</Link>
       <Link to="/cucina" className={staffChipClass}>🍳 Cucina</Link>
       <Link to="/admin" className={staffChipClass}>⚙️ Admin</Link>
     </header>
