@@ -496,7 +496,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
             const a = flags.allergens && info.allergens.length > 0, f = flags.frozen && info.frozen
             if (!a && !f) return null
             return <div className="mt-4 space-y-2">
-              {a && <p className="flex flex-wrap items-center gap-2 text-2xl"><span className="font-bold">⚠️ {ALLERGENS_TITLE[language]}:</span>{info.allergens.map((id) => { const x = ALLERGENS.find((y) => y.id === id)!; return <span key={id} className="rounded-full bg-accent px-4 py-1 font-bold text-accent-foreground">{x.icon} {x[language]}</span> })}</p>}
+              {a && <p className="text-2xl"><span className="font-bold">{ALLERGENS_TITLE[language]}:</span> {info.allergens.map((id, i) => <span key={id}>{i > 0 ? ", " : ""}<u className="font-bold underline-offset-4">{ALLERGENS.find((y) => y.id === id)![language]}</u></span>)}</p>}
               {f && <p className="text-2xl font-bold text-muted-foreground">❄️ {FROZEN_TEXT[language]}</p>}
             </div>
           })()}
@@ -555,7 +555,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
               <div className="mt-3 flex flex-wrap gap-3">
                 {ingredients.map((ing) => {
                   const on = removed.includes(ing)
-                  return <Button variant="ghost" key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? `${t.without} ` : ""}{L(ing)}</Button>
+                  return <Button variant="ghost" key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? `${t.without} ` : ""}{flags.allergens && flags.underline && dishInfo([ing], lib).allergens.length > 0 ? <u className="underline-offset-4">{L(ing)}</u> : L(ing)}</Button>
                 })}
               </div>
             </section>

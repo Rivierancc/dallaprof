@@ -51,4 +51,5 @@ export const infoFlags = (s: Record<string, unknown> | null | undefined) => ({
   stock: s?.["stock_on"] === true,
   allergens: s?.["allergens_on"] === true,
   frozen: s?.["frozen_on"] === true,
+  underline: s?.["allergen_underline_on"] === true,
 });

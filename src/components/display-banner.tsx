@@ -122,7 +122,7 @@ export function InfoSettings() {
   const qc = useQueryClient();
   const [msg, setMsg] = useState("");
   if (!saved) return null;
-  const rows: [string, string][] = [["stock_on", "📦 Pagina Scorte per il personale"], ["allergens_on", "⚠️ Mostra gli allergeni ai clienti sul totem"], ["frozen_on", "❄️ Mostra i prodotti gelo/surgelati sul totem"]];
+  const rows: [string, string][] = [["stock_on", "📦 Pagina Scorte per il personale"], ["allergens_on", "⚠️ Mostra gli allergeni ai clienti sul totem"], ["frozen_on", "❄️ Mostra i prodotti gelo/surgelati sul totem"], ["allergen_underline_on", "Sottolinea sul totem gli ingredienti che contengono allergeni"]];
   const flip = async (k: string) => {
     setMsg("Salvo…");
     try { await saveBanner({ data: { settings: { ...saved, [k]: saved[k] !== true } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
