@@ -89,6 +89,8 @@ export type Ingredient = {
   price: number;
   available: boolean;
   position: number;
+  allergens: string[];
+  frozen: boolean;
 };
 
 // Nome dell'ingrediente nella lingua scelta (sempre italiano se manca la traduzione).

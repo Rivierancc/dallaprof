@@ -315,8 +315,10 @@ export type Database = {
       }
       menu_ingredients: {
         Row: {
+          allergens: Json
           available: boolean
           created_at: string
+          frozen: boolean
           grp: string
           id: string
           kind: string
@@ -328,11 +330,17 @@ export type Database = {
           name_fr: string
           position: number
           price: number
+          stock_min: number
+          stock_mode: string
+          stock_qty: number
+          stock_state: string
           venue_id: string
         }
         Insert: {
+          allergens?: Json
           available?: boolean
           created_at?: string
+          frozen?: boolean
           grp?: string
           id?: string
           kind?: string
@@ -344,11 +352,17 @@ export type Database = {
           name_fr?: string
           position?: number
           price?: number
+          stock_min?: number
+          stock_mode?: string
+          stock_qty?: number
+          stock_state?: string
           venue_id?: string
         }
         Update: {
+          allergens?: Json
           available?: boolean
           created_at?: string
+          frozen?: boolean
           grp?: string
           id?: string
           kind?: string
@@ -360,6 +374,10 @@ export type Database = {
           name_fr?: string
           position?: number
           price?: number
+          stock_min?: number
+          stock_mode?: string
+          stock_qty?: number
+          stock_state?: string
           venue_id?: string
         }
         Relationships: [

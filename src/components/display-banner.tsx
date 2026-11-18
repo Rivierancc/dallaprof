@@ -115,3 +115,22 @@ export function CartLiftSettings() {
     {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
 }
+
+/** Admin: scorte, allergeni e gelo, ognuno acceso o spento per questo locale. */
+export function InfoSettings() {
+  const { data: saved } = useQuery(bannerQueryOptions);
+  const qc = useQueryClient();
+  const [msg, setMsg] = useState("");
+  if (!saved) return null;
+  const rows: [string, string][] = [["stock_on", "📦 Pagina Scorte per il personale"], ["allergens_on", "⚠️ Mostra gli allergeni ai clienti sul totem"], ["frozen_on", "❄️ Mostra i prodotti gelo/surgelati sul totem"]];
+  const flip = async (k: string) => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, [k]: saved[k] !== true } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
+  };
+  return <div className="space-y-3">
+    <p className="text-xl text-muted-foreground">Allergeni e gelo si segnano sugli ingredienti nella pagina Scorte: il totem li mostra sui piatti che usano quegli ingredienti.</p>
+    {rows.map(([k, l]) => <div key={k} className="flex flex-wrap items-center gap-3"><Button variant={saved[k] === true ? "default" : "secondary"} onClick={() => void flip(k)}>{saved[k] === true ? "Acceso" : "Spento"}</Button><span className="text-xl">{l}</span></div>)}
+    {msg && <p role="status" className="text-xl">{msg}</p>}
+  </div>;
+}

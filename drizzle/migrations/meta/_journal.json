@@ -302,6 +302,13 @@
       "when": 1794857484360,
       "tag": "0042_customers_surname_email",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1795011613499,
+      "tag": "0043_ingredients_stock_allergens",
+      "breakpoints": true
     }
   ]
 }

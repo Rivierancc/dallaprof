@@ -7,6 +7,7 @@ import { ThemeGreeting } from "@/components/theme-layer"
 import { browserVenueId } from "@/lib/venue-client"
 import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner, bannerQueryOptions } from "@/components/display-banner"
+import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/lib/allergens"
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
 import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -396,7 +397,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                   {p.image? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
                 </div>
                 <div className="mt-4">
-                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
+                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}{infoFlags(bannerSettings).frozen && dishInfo(p.ingredients, lib).frozen ? " ❄️" : ""}</h3>}
                   {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                     <div key={d.id} data-dish={d.id} className="mt-1">
                       <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
@@ -453,6 +454,8 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
   const [removed, setRemoved] = useState<string[]>([])
   const [extras, setExtras] = useState<string[]>([])
   const [dishId, setDishId] = useState(startDish ?? product.id)
+  const { data: bannerS } = useQuery(bannerQueryOptions)
+  const flags = infoFlags(bannerS)
   const ingredients = (all.find((x) => x.id === dishId) ?? product).ingredients.filter((g) => !ingredientOff(g, lib))
   const L = (n: string) => ingredientLabel(n, lib, language)
   const [picks, setPicks] = useState<Record<string, string[]>>({})
@@ -488,6 +491,15 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
           {menuOn && <p className="mt-1 font-display text-4xl text-accent">🍔 {dish.name}</p>}
           {descriptionFor(dish, language) && <p className="mt-2 text-2xl text-muted-foreground">{descriptionFor(dish, language)}</p>}
           <p className="mt-3 inline-block rounded-full bg-primary px-6 py-2 font-display text-5xl text-primary-foreground">{euro(base)}</p>
+          {(() => {
+            const info = dishInfo(dish.ingredients, lib)
+            const a = flags.allergens && info.allergens.length > 0, f = flags.frozen && info.frozen
+            if (!a && !f) return null
+            return <div className="mt-4 space-y-2">
+              {a && <p className="flex flex-wrap items-center gap-2 text-2xl"><span className="font-bold">⚠️ {ALLERGENS_TITLE[language]}:</span>{info.allergens.map((id) => { const x = ALLERGENS.find((y) => y.id === id)!; return <span key={id} className="rounded-full bg-accent px-4 py-1 font-bold text-accent-foreground">{x.icon} {x[language]}</span> })}</p>}
+              {f && <p className="text-2xl font-bold text-muted-foreground">❄️ {FROZEN_TEXT[language]}</p>}
+            </div>
+          })()}
           {(() => {
             const cur = menuOn ? dish : product
             const hosts = all.filter((x) => x.id !== product.id && !x.sold_out && isCombo(x) && x.combo_price !== null && (x.id === cur.id || x.combo_alts.includes(cur.id)))

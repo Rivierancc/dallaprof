@@ -6,6 +6,7 @@ import { cleanCompanyStyle, type CompanyStyle } from "@/lib/company-style";
 import { cleanCombo, cleanComboPrice, cleanGroups, cleanMaxExtras, cleanSuggest, type ChoiceGroup, type Suggest } from "@/lib/options";
 import { cleanLanguages, cleanTranslations, type Translations } from "@/lib/customer";
 import { cleanKitchenFeatures, type KitchenFeatures } from "@/lib/kitchen";
+import { cleanAllergens } from "@/lib/allergens";
 
 const BUCKET = "menu-photos";
 const SIGN_TTL = 60 * 60;
@@ -82,6 +83,12 @@ export type MenuIngredient = {
   price: number;
   available: boolean;
   position: number;
+  allergens: string[];
+  frozen: boolean;
+  stock_mode: "pezzi" | "vista";
+  stock_qty: number;
+  stock_min: number;
+  stock_state: "ok" | "low" | "out";
 };
 
 export type MenuProduct = {
@@ -148,7 +155,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_ingredients")
-      .select("id, name, name_en, name_fr, name_es, name_de, name_ar, kind, grp, price, available, position")
+      .select("id, name, name_en, name_fr, name_es, name_de, name_ar, kind, grp, price, available, position, allergens, frozen, stock_mode, stock_qty, stock_min, stock_state")
       .order("kind", { ascending: true })
       .order("position", { ascending: true })
       .order("name", { ascending: true }),
@@ -192,6 +199,12 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       price: Number(r.price) || 0,
       available: !!r.available,
       position: r.position,
+      allergens: cleanAllergens(r.allergens),
+      frozen: !!r.frozen,
+      stock_mode: r.stock_mode === "pezzi" ? "pezzi" : "vista",
+      stock_qty: Number(r.stock_qty) || 0,
+      stock_min: Number(r.stock_min) || 0,
+      stock_state: r.stock_state === "low" || r.stock_state === "out" ? r.stock_state : "ok",
     })),
     products: (p.data ?? []).map((r) => ({
       id: r.id,
@@ -639,6 +652,27 @@ export const saveIngredient = createServerFn({ method: "POST" })
       ? db.from("menu_ingredients").update(data.row).eq("id", data.id)
       : db.from("menu_ingredients").insert(data.row);
     const { error } = await q;
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+// Scorte, allergeni e gelo di un ingrediente (pagina Scorte). Solo personale.
+export const saveIngredientInfo = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; allergens?: string[]; frozen?: boolean; stock_mode?: string; stock_qty?: number; stock_min?: number; stock_state?: string }) => {
+    const row: Database["public"]["Tables"]["menu_ingredients"]["Update"] = {};
+    if (d.allergens !== undefined) row.allergens = cleanAllergens(d.allergens);
+    if (d.frozen !== undefined) row.frozen = !!d.frozen;
+    if (d.stock_mode !== undefined) row.stock_mode = d.stock_mode === "pezzi" ? "pezzi" : "vista";
+    const int = (v: unknown) => Math.max(0, Math.min(99999, Math.round(Number(v) || 0)));
+    if (d.stock_qty !== undefined) row.stock_qty = int(d.stock_qty);
+    if (d.stock_min !== undefined) row.stock_min = int(d.stock_min);
+    if (d.stock_state !== undefined) row.stock_state = ["low", "out"].includes(d.stock_state) ? d.stock_state : "ok";
+    return { id: String(d.id), row };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const db = await admin();
+    const { error } = await db.from("menu_ingredients").update(data.row).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
