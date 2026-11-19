@@ -6,7 +6,7 @@ export function Fold({ title, hint, children, open = false, onToggle }: { title:
     <details
       open={open}
       onToggle={(e) => onToggle?.((e.target as HTMLDetailsElement).open)}
-      className="group rounded-3xl bg-card/60 p-5"
+      className="group rounded-3xl border-2 border-border bg-card p-5 shadow-lg open:border-accent"
     >
       <summary className="tap flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
         <span className="font-display text-4xl">{title}</span>
@@ -16,7 +16,7 @@ export function Fold({ title, hint, children, open = false, onToggle }: { title:
           <span className="hidden rounded-xl bg-secondary px-4 py-2 text-secondary-foreground group-open:inline">Chiudi ▲</span>
         </span>
       </summary>
-      <div className="mt-4">{children}</div>
+      <div className="mt-4 border-t-2 border-border pt-4">{children}</div>
     </details>
   );
 }

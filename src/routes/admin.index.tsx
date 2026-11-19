@@ -26,6 +26,7 @@ import { LoyaltySettings } from "@/components/loyalty-settings";
 import { RestaurantSettings } from "@/components/restaurant-settings";
 import { DigitalMenuSettings } from "@/components/digital-menu-settings";
 import { StaffFullscreenButton } from "@/components/staff-display";
+import { useState, type ReactNode } from "react";
 
 export const Route = createFileRoute("/admin/")({
   loader: async ({ context }) => {
@@ -63,25 +64,48 @@ function Admin() {
       if (fullscreen) await exitKiosk(); else if (await enterKiosk()) await navigate({ to: "/" });
     }}>{fullscreen ? "Esci da chiosco" : "Attiva modalità chiosco"}</Button>}
     {kioskError && <p role="alert" className="mt-6 text-2xl text-destructive">{kioskError}</p>}
-    <div className="mt-6">
-      <PasswordSettings restaurantOnly={ro} />
-      {!ro && <div className="mt-6"><OrderNumberSettings /></div>}
-      <div className="mx-auto mt-6 max-w-5xl"><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></div>
-      {!ro && <ThemesPanel />}
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></div>
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="🍽️ Ristorante: tavoli, coperto e tablet"><RestaurantSettings /></Fold></div>
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="👥 Clienti e fidelizzazione"><LoyaltySettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="⏱️ Ritorno all'inizio del totem"><IdleSettings /></Fold></div>}
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="📦 Scorte, allergeni e prodotti gelo"><InfoSettings /><Button asChild variant="secondary" className="mt-4"><Link to="/scorte">📦 Apri la pagina Scorte</Link></Button></Fold></div>
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🛒 Altezza del carrello sul totem"><CartLiftSettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🔎 Filtri dei piatti sul totem"><FoodFilterSettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🖼️ Salvaschermo del totem"><ScreensaverSettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></div>}
-      {!ro && <div className="mx-auto mt-6 max-w-5xl"><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></div>}
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="📱 Menu digitale (sito e QR code)"><DigitalMenuSettings /></Fold></div>
-      <div className="mx-auto mt-6 max-w-5xl"><Fold title="👨‍🍳 Funzioni cucina"><KitchenFeaturesSettings /></Fold></div>
-    </div>
+    <AdminTabs ro={ro} menu={menu} refresh={refresh} />
   </main>;
+}
+type TabId = "totem" | "menu" | "locale" | "clienti";
+const TABS: [TabId, string][] = [["totem", "🖥️ Totem e schermo"], ["menu", "🍔 Menu e catalogo"], ["locale", "🏪 Locale e cucina"], ["clienti", "👥 Clienti e sconti"]];
+/** Riquadro con cornice: separa nettamente un argomento dall'altro. */
+function Box({ children }: { children: ReactNode }) { return <div className="mx-auto mt-6 max-w-5xl">{children}</div>; }
+function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Parameters<typeof CategoryOrderPanel>[0]["categories"] }; refresh: () => Promise<unknown> }) {
+  const tabs = ro ? TABS.filter(([id]) => id !== "totem" && id !== "clienti") : TABS;
+  const [tab, setTab] = useState<TabId>(tabs[0]?.[0] ?? "menu");
+  return <div className="mt-8">
+    <nav className="sticky top-0 z-20 -mx-6 flex flex-wrap gap-3 border-b-4 border-accent bg-background px-6 py-3" aria-label="Schede Admin">
+      {tabs.map(([id, label]) => <Button key={id} variant={tab === id ? "default" : "secondary"} aria-pressed={tab === id} className="h-16 flex-1 whitespace-normal px-4 font-display text-3xl" onClick={() => setTab(id)}>{label}</Button>)}
+    </nav>
+    {tab === "totem" && <>
+      <ThemesPanel />
+      <Box><Fold title="⏱️ Inattività e salvaschermo">
+        <section className="rounded-2xl border-2 border-border bg-background/60 p-4"><h3 className="mb-3 font-display text-3xl text-accent">Ritorno all'inizio</h3><IdleSettings /></section>
+        <section className="mt-6 rounded-2xl border-2 border-border bg-background/60 p-4"><h3 className="mb-3 font-display text-3xl text-accent">Salvaschermo con foto e video</h3><ScreensaverSettings /></section>
+      </Fold></Box>
+      <Box><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></Box>
+      <Box><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></Box>
+      <Box><Fold title="🛒 Altezza del carrello sul totem"><CartLiftSettings /></Fold></Box>
+      <Box><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></Box>
+      <Box><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></Box>
+    </>}
+    {tab === "menu" && <>
+      <Box><CategoryOrderPanel categories={menu.categories} refresh={refresh} /></Box>
+      {!ro && <Box><Fold title="🔎 Filtri dei piatti sul totem"><FoodFilterSettings /></Fold></Box>}
+      <Box><Fold title="📱 Menu digitale (sito e QR code)"><DigitalMenuSettings /></Fold></Box>
+      <Box><Fold title="📦 Scorte, allergeni e prodotti gelo"><InfoSettings /><Button asChild variant="secondary" className="mt-4"><Link to="/scorte">📦 Apri la pagina Scorte</Link></Button></Fold></Box>
+    </>}
+    {tab === "locale" && <>
+      <Box><Fold title="🏷️ Logo e descrizione azienda"><CompanySettings /></Fold></Box>
+      <Box><Fold title="🍽️ Ristorante: tavoli, coperto e tablet"><RestaurantSettings /></Fold></Box>
+      <Box><Fold title="👨‍🍳 Funzioni cucina"><KitchenFeaturesSettings /></Fold></Box>
+      {!ro && <Box><OrderNumberSettings /></Box>}
+      <PasswordSettings restaurantOnly={ro} />
+    </>}
+    {tab === "clienti" && <>
+      <Box><Fold title="🎁 Sconti e fidelizzazione"><LoyaltySettings /></Fold></Box>
+      <Box><Button asChild variant="secondary" className="h-16 w-full font-display text-3xl"><Link to="/clienti">👥 Apri la rubrica clienti</Link></Button></Box>
+    </>}
+  </div>;
 }
