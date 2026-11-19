@@ -31,6 +31,7 @@ function CercaPiatti() {
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
   const [ing, setIng] = useState("");
+  const [name, setName] = useState("");
   const products = (menu?.products ?? []) as MenuProduct[];
   const cats = new Map((menu?.categories ?? []).map((c) => [c.id, c.name]));
   const ingNames = useMemo(() => {
@@ -38,7 +39,8 @@ function CercaPiatti() {
     for (const p of products) { p.ingredients.forEach((x) => s.add(x)); p.extras.forEach((e) => s.add(e.name)); p.choice_groups.forEach((g) => g.options.forEach((o) => s.add(o.name))); }
     return [...s].filter(Boolean).sort((a, b) => a.localeCompare(b, "it"));
   }, [menu, products]);
-  const results = filterDishes(products, { min: min === "" ? null : Number(min.replace(",", ".")), max: max === "" ? null : Number(max.replace(",", ".")), ingredient: ing });
+  const nq = name.trim().toLowerCase();
+  const results = filterDishes(products, { min: min === "" ? null : Number(min.replace(",", ".")), max: max === "" ? null : Number(max.replace(",", ".")), ingredient: ing }).filter((r) => !nq || r.product.name.toLowerCase().includes(nq));
 
   return <main className="mx-auto min-h-screen max-w-6xl p-6">
     <header className="mb-4 flex flex-wrap items-center gap-3">
@@ -49,12 +51,14 @@ function CercaPiatti() {
       <Link to="/admin" className={staffChipClass}>⚙️ Admin</Link>
     </header>
     <div className="mb-4 grid gap-3 rounded-2xl bg-card p-4 md:grid-cols-3">
+      <label className="text-lg font-bold md:col-span-3">Nome del piatto<div className="mt-1 flex gap-2"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="es. coca" className="w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" />
+        {name && <button type="button" aria-label="Cancella nome" onClick={() => setName("")} className="rounded-xl bg-muted px-4 text-xl">✕</button>}</div></label>
       <label className="text-lg font-bold">Prezzo da €<input inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} placeholder="0" className="mt-1 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" /></label>
       <label className="text-lg font-bold">Prezzo fino a €<input inputMode="decimal" value={max} onChange={(e) => setMax(e.target.value)} placeholder="qualsiasi" className="mt-1 w-full rounded-xl bg-muted px-4 py-3 text-xl outline-none" /></label>
       <IngredientPicker value={ing} onChange={setIng} names={ingNames} />
     </div>
     <div className="mb-3 flex items-center gap-3 text-xl"><span className="font-bold">{results.length} piatti trovati</span>
-      {(min || max || ing) && <button onClick={() => { setMin(""); setMax(""); setIng(""); }} className={staffChipClass}>✕ Azzera filtri</button>}</div>
+      {(min || max || ing || name) && <button onClick={() => { setMin(""); setMax(""); setIng(""); setName(""); }} className={staffChipClass}>✕ Azzera filtri</button>}</div>
     <ul className="divide-y divide-border rounded-2xl bg-card">
       {results.map((r) => <li key={r.product.id} className="flex flex-wrap items-baseline gap-3 p-4">
         <div className="mr-auto min-w-0"><p className="text-2xl font-bold">{r.product.name}{r.product.sold_out && <span className="ml-2 text-lg text-destructive">(esaurito)</span>}</p>
