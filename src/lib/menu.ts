@@ -14,7 +14,9 @@ export type CartItem = {
   removed?: string[];
   gift?: boolean; // regalo di compleanno scelto dal ristoratore: prezzo 0
   offer?: boolean; // prodotto suggerito: prezzo ricalcolato in base alla spesa
+  edit?: CartEdit; // scelte fatte nel totem, per riaprire la voce e modificarla
 };
+export type CartEdit = { asMenu: boolean; dishId: string; picks: Record<string, string[]>; extras: string[]; removed: string[] };
 
 export const itemNotes = (i: CartItem) => [
   ...(i.extras ?? []).map((e) => `+ ${e}`),

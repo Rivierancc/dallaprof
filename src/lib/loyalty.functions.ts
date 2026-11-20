@@ -20,7 +20,7 @@ export const saveLoyalty = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-type Found = { id: string; firstName: string; favourites: string[]; firstOrder: boolean; birthday: boolean; greet: boolean; gifts: string[] };
+type Found = { id: string; firstName: string; favourites: string[]; firstOrder: boolean; birthday: boolean; greet: boolean; gifts: string[]; lastOrder: Omit<import("@/lib/menu").CartItem, "id">[] };
 type Gift = { year: number; ids: string[]; used: boolean };
 const cleanGift = (v: unknown): Gift | null => { const o = v as Partial<Gift> | null; return o && typeof o === "object" && Array.isArray(o.ids) ? { year: Number(o.year) || 0, ids: o.ids.filter((x): x is string => typeof x === "string" && UUID.test(x)).slice(0, 10), used: o.used === true } : null; };
 const giftYear = () => new Date().getFullYear();
@@ -32,7 +32,17 @@ async function profile(c: { id: string; name: string; birth_day: number | null; 
   // Benvenuto una sola volta: basta un qualsiasi ordine già collegato (anche non ancora pagato).
   const near = birthdayNear(c.birth_day, c.birth_month, rules.birthday_days);
   const { count } = await (await db()).from("orders").select("id", { count: "exact", head: true }).eq("customer_id", c.id);
-  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !count, birthday: near && discYear(c.birthday_gift) !== giftYear(), greet: birthdayNear(c.birth_day, c.birth_month, 0) || (near && discYear(c.birthday_gift) !== giftYear()), gifts: giftsFor(c, rules.birthday_days) };
+  return { id: c.id, firstName: c.name.trim().split(/\s+/)[0] ?? "", favourites: favourites(orders ?? []), firstOrder: !count, birthday: near && discYear(c.birthday_gift) !== giftYear(), greet: birthdayNear(c.birth_day, c.birth_month, 0) || (near && discYear(c.birthday_gift) !== giftYear()), gifts: giftsFor(c, rules.birthday_days), lastOrder: lastOrderOf(orders?.[0]?.items) };
+}
+/** Ultimo ordine pagato, voce per voce con scelte, aggiunte ed esclusioni (bevande comprese). */
+function lastOrderOf(items: unknown) {
+  return (Array.isArray(items) ? items : []).filter((i) => i && typeof i === "object" && (i as { gift?: unknown }).gift !== true).slice(0, 30).map((raw) => {
+    const i = raw as Record<string, unknown>;
+    const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 40) : []);
+    const e = i["edit"] as Record<string, unknown> | undefined;
+    const edit = e && typeof e === "object" && typeof e["dishId"] === "string" ? { asMenu: e["asMenu"] === true, dishId: String(e["dishId"]), picks: Object.fromEntries(Object.entries((e["picks"] as Record<string, unknown>) ?? {}).map(([k, v]) => [k, strs(v)])), extras: strs(e["extras"]), removed: strs(e["removed"]) } : undefined;
+    return { name: String(i["name"] ?? ""), qty: Math.max(1, Number(i["qty"]) || 1), price: Number(i["price"]) || 0, ...(typeof i["productId"] === "string" ? { productId: i["productId"] } : {}), ...(typeof i["dishId"] === "string" ? { dishId: i["dishId"] } : {}), extras: strs(i["extras"]), removed: strs(i["removed"]), ...(edit ? { edit } : {}) };
+  });
 }
 /** Regali scelti dal ristoratore: valgono solo nei giorni del compleanno di quest'anno e una volta sola. */
 function giftsFor(c: { birth_day: number | null; birth_month: number | null; birthday_gift?: unknown }, days: number) {

@@ -11,9 +11,9 @@ import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
 import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { menuQueryOptions, type Category, type CartItem, type Product, type Ingredient, euro, ingredientLabel, ingredientOff, customIngredients } from "@/lib/menu"
+import { menuQueryOptions, type Category, type CartItem, type CartEdit, type Product, type Ingredient, euro, ingredientLabel, ingredientOff, customIngredients } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
 import { licenseQueryOptions, realOrders } from "@/lib/license"
 import { supabase } from "@/integrations/supabase/client"
@@ -24,6 +24,7 @@ import { LoyaltyDialog, loyaltyCopy, type Member } from "@/components/loyalty-ki
 import { getLoyalty, linkOrderCustomer } from "@/lib/loyalty.functions"
 import { discountFor } from "@/lib/loyalty"
 import { playBirthdaySong } from "@/lib/sounds"
+import { productOf, splitMenu } from "@/lib/order-lines"
 import { copy, translatedFor, customTitleFor, descriptionFor, orderPayload, type PaymentMethod } from "@/lib/customer"
 
 export const Route = createFileRoute("/")({
@@ -83,6 +84,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const [showCart, setShowCart] = useState(false)
   const [foodFilter, setFoodFilter] = useState<string | null>(null)
   const [compose, setCompose] = useState<Category | null>(null)
+  const [editing, setEditing] = useState<string | null>(null)
   const lib = data?.ingredients ?? []
   const { reset: resetCustomer } = useCustomer()
   const idle = Number(useBanner().idle ?? 60)
@@ -148,6 +150,11 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       </div>
       {disc.amount > 0 && <p className="mt-2 text-2xl text-accent">{disc.reason === "birthday" ? lt.birthday : `${lt.discount} ${disc.reason === "welcome" ? lt.welcomeD : lt.member}`} {disc.step ? `-${euro(disc.amount)} (${euro(loyalty.step_off)} / ${euro(loyalty.step_every)})` : `-${disc.pct}%`}</p>}
       {member.gifts.length > 0 && <p className="mt-2 text-2xl text-accent">{lt.gift}: {member.gifts.map((id) => products.find((p) => p.id === id)?.name).filter(Boolean).join(", ")}</p>}
+      {member.lastOrder.length > 0 && <div className="mt-4 rounded-2xl bg-background p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-display text-3xl">🧾 {CX[language].last}</p>
+          <Button variant="ghost" onClick={() => setCart((c) => [...c, ...member.lastOrder.filter((i) => !i.productId || products.some((p) => p.id === i.productId)).map((i) => ({ ...i, id: crypto.randomUUID() }))])} className="tap h-auto rounded-full bg-accent px-6 py-3 font-display text-3xl text-accent-foreground">🔁 {CX[language].again}</Button></div>
+        <div className="mt-3 grid gap-3">{member.lastOrder.map((i, k) => <CartDetails key={k} item={i} products={products} categories={categories} />)}</div>
+      </div>}
       {favs.length > 0 && <div className="mt-4"><p className="font-display text-3xl">{lt.favs}</p>
         <div className="mt-2 flex flex-wrap gap-3">{favs.map((p) => <Button key={p.id} variant="ghost" onClick={() => addFav(p)} className="tap h-auto rounded-full bg-accent px-6 py-3 font-display text-3xl text-accent-foreground">+ {p.name} · {euro(p.price)}</Button>)}</div></div>}
     </div>
@@ -286,20 +293,26 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       <h1 className="mb-8 font-display text-8xl">{t.yourOrder}</h1>
       {memberBar}
       <div className="grid gap-4">
-        {priced.map((i) => (
-          <div key={i.id} className="flex items-start justify-between gap-6 rounded-3xl bg-card p-6">
-            <div className="min-w-0">
-              <p className="font-display text-5xl">{i.qty} × {i.name}</p>
-              {(() => { const d = (i.dishId ? products.find((x) => x.id === i.dishId) : undefined) ?? products.find((x) => x.id === i.productId); const desc = d ? descriptionFor(d, language) : ""; return desc ? <p className="mt-1 text-2xl text-muted-foreground">{d && i.dishId ? `🍔 ${d.name}: ` : ""}{desc}</p> : null })()}
-              {(i.extras ?? []).length > 0 && <ul className="mt-2 space-y-1 text-2xl font-bold text-accent">{(i.extras ?? []).map((e) => <li key={e}>{e.startsWith("🍱 ") ? e : `+ ${e.split(" › ").join(" → ")}`}</li>)}</ul>}
-              {(i.removed ?? []).length > 0 && <ul className="mt-1 space-y-1 text-2xl font-bold text-destructive">{(i.removed ?? []).map((r) => <li key={r}>✕ {t.without} {r}</li>)}</ul>}
-            </div>
-            <div className="flex items-center gap-6">
+        {priced.map((i) => {
+          const prod = i.productId ? products.find((x) => x.id === i.productId) : undefined
+          const setQty = (q: number) => setCart((c) => q < 1 ? c.filter((x) => x.id !== i.id) : c.map((x) => x.id === i.id ? { ...x, qty: q } : x))
+          return (
+          <div key={i.id} className="flex flex-wrap items-start justify-between gap-6 rounded-3xl bg-card p-6">
+            <div className="min-w-0 flex-1"><CartDetails item={i} products={products} categories={categories} /></div>
+            <div className="flex flex-col items-end gap-4">
               <p className="font-display text-5xl text-accent">{(i.offer || i.gift) && i.price === 0 ? t.free : euro(i.price * i.qty)}</p>
-              <Button variant="ghost" onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="whitespace-normal tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</Button>
+              {!i.gift && <div className="flex items-center gap-3">
+                <Button variant="ghost" aria-label="-" onClick={() => setQty(i.qty - 1)} className="tap h-16 w-16 rounded-full bg-secondary font-display text-4xl">−</Button>
+                <span className="w-12 text-center font-display text-5xl">{i.qty}</span>
+                <Button variant="ghost" aria-label="+" onClick={() => setQty(i.qty + 1)} className="tap h-16 w-16 rounded-full bg-accent font-display text-4xl text-accent-foreground">+</Button>
+              </div>}
+              <div className="flex items-center gap-3">
+                {i.edit && prod && <Button variant="ghost" onClick={() => { setEditing(i.id); setStartDish(i.edit!.dishId); setCustom(prod); setActiveCat(prod.category_id); setShowCart(false) }} className="tap h-16 rounded-full bg-secondary px-6 font-display text-3xl">✏️ {CX[language].edit}</Button>}
+                <Button variant="ghost" aria-label={t.close} onClick={() => setCart((c) => c.filter((x) => x.id!== i.id))} className="whitespace-normal tap h-16 w-16 rounded-full bg-destructive font-display text-4xl text-destructive-foreground">✕</Button>
+              </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
       <div className="mt-10 border-t-4 border-border pt-8">
         {disc.amount > 0 && <div className="mb-4 flex items-baseline justify-between text-success">
@@ -417,11 +430,14 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       )}
 
       {custom && (
-        <Customize key={custom.id} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish) => {
+        <Customize key={custom.id + (editing ?? "")} initial={editing ? cart.find((x) => x.id === editing)?.edit : undefined} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (editing) { setEditing(null); setShowCart(true) } if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish, edit) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
-          setCart((c) => [...c, { id: crypto.randomUUID(), productId: custom.id, ...(asMenu && dish.id !== custom.id ? { dishId: dish.id } : {}), name: asMenu ? menuName(dish.name, custom.combo_name) : custom.name, price, qty: 1, extras: extras.map((e) => e.name), removed, ...(offerPick ? { offer: true } : {}) }])
+          const prev = editing ? cart.find((x) => x.id === editing) : undefined
+          const row: CartItem = { id: prev?.id ?? crypto.randomUUID(), productId: custom.id, ...(asMenu && dish.id !== custom.id ? { dishId: dish.id } : {}), name: asMenu ? menuName(dish.name, custom.combo_name) : custom.name, price, qty: prev?.qty ?? 1, extras: extras.map((e) => e.name), removed, edit, ...(offerPick || prev?.offer ? { offer: true } : {}) }
+          setCart((c) => prev ? c.map((x) => x.id === prev.id ? row : x) : [...c, row])
           setCustom(null)
+          if (prev) { setEditing(null); setShowCart(true) }
           if (offerPick) { setOfferPick(false); setShowSuggest(true) }
         }} />
       )}
@@ -450,22 +466,22 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product) => void }) {
+function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; initial?: CartEdit | undefined; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product, edit: CartEdit) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
-  const [removed, setRemoved] = useState<string[]>([])
-  const [extras, setExtras] = useState<string[]>([])
+  const [removed, setRemoved] = useState<string[]>(initial?.removed ?? [])
+  const [extras, setExtras] = useState<string[]>(initial?.extras ?? [])
   const [dishId, setDishId] = useState(startDish ?? product.id)
   const { data: bannerS } = useQuery(bannerQueryOptions)
   const flags = infoFlags(bannerS)
   const ingredients = (all.find((x) => x.id === dishId) ?? product).ingredients.filter((g) => !ingredientOff(g, lib))
   const L = (n: string) => ingredientLabel(n, lib, language)
-  const [picks, setPicks] = useState<Record<string, string[]>>({})
+  const [picks, setPicks] = useState<Record<string, string[]>>(initial?.picks ?? {})
   const combo = product.combo_items.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x)
   const comboLines = combo.map((x) => ({ name: `🍱 ${x.name}`, price: 0 }))
   const hasCombo = isCombo(product)
   const hasMenuPrice = hasCombo && product.combo_price !== null
-  const [asMenu, setAsMenu] = useState(true)
+  const [asMenu, setAsMenu] = useState(initial?.asMenu ?? true)
   const menuOn = hasCombo && (!hasMenuPrice || asMenu)
   const alts = menuOn ? [product, ...product.combo_alts.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)] : []
   const dish = alts.find((x) => x.id === dishId) ?? product
@@ -483,6 +499,22 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
   const lines = menuOn ? comboLines : []
   const chosen = offers.filter((e) => extras.includes(e.name))
   const total = base + [...chosen, ...picked].reduce((s, e) => s + e.price, 0)
+  // Menu a cassetti: si apre una portata alla volta, si passa alla successiva solo con «Conferma».
+  const drawers = menuOn && menuGroups.length > 0
+  const steps = 1 + menuGroups.length
+  const [step, setStep] = useState(0)
+  const stepRefs = useRef<(HTMLElement | null)[]>([])
+  useEffect(() => { if (drawers && step >= 0) stepRefs.current[step]?.scrollIntoView({ block: "start", behavior: "smooth" }) }, [step, drawers])
+  const drawer = (i: number, title: string, summary: string, body: ReactNode, valid: boolean) => !drawers ? body : (
+    <section key={`step-${i}`} ref={(el) => { stepRefs.current[i] = el }} className={`mt-6 scroll-mt-4 rounded-3xl border-4 p-5 ${step === i ? "border-accent bg-background" : valid ? "border-success" : "border-border"}`}>
+      <button type="button" onClick={() => setStep(step === i ? -1 : i)} className="flex w-full items-center justify-between gap-4 text-left">
+        <span className="font-display text-4xl">{valid && step !== i ? "✓ " : `${i + 1}. `}{title}</span><span className="text-3xl">{step === i ? "▲" : "▼"}</span>
+      </button>
+      {step !== i && summary && <p className="mt-2 text-2xl text-muted-foreground">{summary}</p>}
+      {step === i && <>{body}<Button variant="ghost" disabled={!valid} onClick={() => setStep(i + 1 < steps ? i + 1 : -1)} className="tap mt-6 h-20 w-full whitespace-normal rounded-2xl bg-success font-display text-4xl text-success-foreground">{i + 1 < steps ? CX[language].next : CX[language].done}</Button></>}
+    </section>
+  )
+  const dishSummary = [dish.name, ...dishGroups.flatMap((g) => (picks[g.name] ?? []).map(L)), ...removed.map((r) => `${t.without} ${L(r)}`), ...extras.map((e) => `+ ${L(e)}`)].join(" · ")
   const toggle = (g: { name: string; max: number }, o: string) => setPicks((cur) => {
     const list = cur[g.name] ?? []
     if (list.includes(o)) return { ...cur, [g.name]: list.filter((x) => x !== o) }
@@ -524,6 +556,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
               {[false, true].map((m) => <Button variant="ghost" key={String(m)} aria-pressed={asMenu === m} onClick={() => setAsMenu(m)} className={`tap h-auto flex-1 whitespace-normal rounded-2xl py-4 font-display text-4xl ${asMenu === m ? "bg-accent text-accent-foreground" : "bg-muted"}`}>{m ? <><OffersIcon /> Menu · {euro(product.combo_price ?? 0)}</> : `${({ IT: "Solo piatto", EN: "Single item", FR: "Seul", ES: "Solo", DE: "Nur Gericht", AR: "الطبق فقط" } as const)[language]} · ${euro(p2(product))}`}</Button>)}
             </div>
           ))}
+          {drawer(0, `🍔 ${CX[language].main}`, dishSummary, <>
           {alts.length > 1 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">🍔 {({ IT: "Scegli il piatto", EN: "Choose your main", FR: "Choisissez le plat", ES: "Elige el plato", DE: "Wähle das Gericht", AR: "اختر الطبق" } as const)[language]}</h3>
@@ -532,6 +565,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
               </div>
             </section>
           )}
+          </>, groupsValid(dishGroups, picks))}
           {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
             return (
@@ -592,7 +626,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
               </section>
             )
           }
-            return <>{menuGroups.map((g) => <Fragment key={g.name}>{G(g)}{subGroups(g).map((sg) => <div key={sg.name} className="ml-8 border-l-4 border-border pl-4">{G(sg)}</div>)}</Fragment>)}</> })()}
+            return <>{menuGroups.map((g, k) => <Fragment key={g.name}>{drawer(k + 1, L(g.name), [...(picks[g.name] ?? []), ...subGroups(g).flatMap((sg) => picks[sg.name] ?? [])].map(L).join(" · "), <>{G(g)}{subGroups(g).map((sg) => <div key={sg.name} className="ml-8 border-l-4 border-border pl-4">{G(sg)}</div>)}</>, groupsValid([g, ...subGroups(g)], picks))}</Fragment>)}</> })()}
           {lines.length > 0 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground"><OffersIcon /> {t.includes}</h3>
@@ -601,7 +635,7 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, menuOn, dish) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
+          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, menuOn, dish, { asMenu: menuOn, dishId: dish.id, picks, extras, removed }) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
           <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
         </div>
       </div>
@@ -704,6 +738,43 @@ function CategoryStrip({ cats, onPick, size, initial, light }: { cats: Category[
         </Button>
       ))}
       <div aria-hidden className={`${light ? "w-[4%]" : "w-[20%]"} shrink-0`} />
+    </div>
+  )
+}
+
+const CX = {
+  IT: { last: "Il tuo ultimo ordine", again: "Riordina", edit: "Modifica", next: "Conferma e avanti ➔", done: "Conferma ✓", main: "Piatto principale", menu: "MENU" },
+  EN: { last: "Your last order", again: "Order again", edit: "Edit", next: "Confirm and next ➔", done: "Confirm ✓", main: "Main dish", menu: "MENU" },
+  FR: { last: "Votre dernière commande", again: "Commander à nouveau", edit: "Modifier", next: "Confirmer et suivant ➔", done: "Confirmer ✓", main: "Plat principal", menu: "MENU" },
+  ES: { last: "Tu último pedido", again: "Repetir pedido", edit: "Modificar", next: "Confirmar y seguir ➔", done: "Confirmar ✓", main: "Plato principal", menu: "MENÚ" },
+  DE: { last: "Deine letzte Bestellung", again: "Nochmal bestellen", edit: "Ändern", next: "Bestätigen und weiter ➔", done: "Bestätigen ✓", main: "Hauptgericht", menu: "MENÜ" },
+  AR: { last: "طلبك الأخير", again: "اطلب مجدداً", edit: "تعديل", next: "تأكيد والتالي ➔", done: "تأكيد ✓", main: "الطبق الرئيسي", menu: "وجبة" },
+} as const
+
+// Riepilogo di una voce: nei menu prima il piatto con le sue aggiunte, poi contorno e bevanda.
+function CartDetails({ item: i, products, categories }: { item: Omit<CartItem, "id">; products: Product[]; categories: Category[] }) {
+  const { language } = useCustomer()
+  const t = copy[language]
+  const prod = productOf({ id: "", ...i }, products)
+  const dish = (i.dishId ? products.find((x) => x.id === i.dishId) : undefined) ?? prod
+  const isMenu = !!prod && isCombo(prod) && (i.edit ? i.edit.asMenu : i.name !== prod.name || !!i.dishId)
+  const desc = dish ? descriptionFor(dish, language) : ""
+  const removed = (i.removed ?? []).map((r) => <li key={"r" + r} className="text-destructive">✕ {t.without} {r}</li>)
+  if (!isMenu) return (<>
+    <p className="font-display text-5xl">{i.qty} × {i.name}</p>
+    {desc && <p className="mt-1 text-2xl text-muted-foreground">{desc}</p>}
+    <ul className="mt-2 space-y-1 text-2xl font-bold">{(i.extras ?? []).map((e) => <li key={e} className="text-accent">+ {e.split(" › ").join(" → ")}</li>)}{removed}</ul>
+  </>)
+  const m = splitMenu({ id: "", ...i }, prod, products, categories)
+  const clean = (x: string) => x.replace(/^🍱 /, "").replace(/^\+ /, "+ ")
+  return (
+    <div className="rounded-2xl border-4 border-accent p-4">
+      <p className="flex flex-wrap items-center gap-3"><span className="rounded-full bg-accent px-4 py-1 font-display text-3xl text-accent-foreground"><OffersIcon /> {CX[language].menu}</span><span className="font-display text-5xl">{i.qty} × {i.name}</span></p>
+      {dish && <div className="mt-3"><p className="font-display text-4xl">🍔 {dish.name}</p>
+        {desc && <p className="text-2xl text-muted-foreground">{desc}</p>}
+        <ul className="mt-1 space-y-1 pl-4 text-2xl font-bold">{m.dishExtras.map((e) => <li key={e} className="text-accent">+ {e.split(" › ").join(" → ")}</li>)}{removed}</ul></div>}
+      {m.side.length > 0 && <ul className="mt-3 space-y-1 text-2xl font-bold">{m.side.map((x) => <li key={x}>🍟 {clean(x)}</li>)}</ul>}
+      {m.drink.length > 0 && <ul className="mt-3 space-y-1 text-2xl font-bold">{m.drink.map((x) => <li key={x}>🥤 {clean(x)}</li>)}</ul>}
     </div>
   )
 }
