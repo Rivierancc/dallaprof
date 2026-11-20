@@ -430,7 +430,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       )}
 
       {custom && (
-        <Customize key={custom.id + (editing ?? "")} initial={editing ? cart.find((x) => x.id === editing)?.edit : undefined} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (editing) { setEditing(null); setShowCart(true) } if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish, edit) => {
+        <Customize key={custom.id + (editing ?? "")} menuFirst={activeCat === OFFERS || !!startDish} initial={editing ? cart.find((x) => x.id === editing)?.edit : undefined} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (editing) { setEditing(null); setShowCart(true) } if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish, edit) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
           const prev = editing ? cart.find((x) => x.id === editing) : undefined
@@ -466,7 +466,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
 const p2 = (p: Product) => Number(p.price) || 0
 
-function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; initial?: CartEdit | undefined; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product, edit: CartEdit) => void }) {
+function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; initial?: CartEdit | undefined; menuFirst?: boolean; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product, edit: CartEdit) => void }) {
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [removed, setRemoved] = useState<string[]>(initial?.removed ?? [])
@@ -474,14 +474,15 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
   const [dishId, setDishId] = useState(startDish ?? product.id)
   const { data: bannerS } = useQuery(bannerQueryOptions)
   const flags = infoFlags(bannerS)
-  const ingredients = (all.find((x) => x.id === dishId) ?? product).ingredients.filter((g) => !ingredientOff(g, lib))
+  // Ogni piatto ha ingredienti toglibili: se non sono impostati a mano si ricavano dalla descrizione.
+  const ingredients = removableOf(all.find((x) => x.id === dishId) ?? product).filter((g) => !ingredientOff(g, lib))
   const L = (n: string) => ingredientLabel(n, lib, language)
   const [picks, setPicks] = useState<Record<string, string[]>>(initial?.picks ?? {})
   const combo = product.combo_items.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x)
   const comboLines = combo.map((x) => ({ name: `🍱 ${x.name}`, price: 0 }))
   const hasCombo = isCombo(product)
   const hasMenuPrice = hasCombo && product.combo_price !== null
-  const [asMenu, setAsMenu] = useState(initial?.asMenu ?? true)
+  const [asMenu, setAsMenu] = useState(initial?.asMenu ?? (menuFirst ?? true))
   const menuOn = hasCombo && (!hasMenuPrice || asMenu)
   const alts = menuOn ? [product, ...product.combo_alts.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)] : []
   const dish = alts.find((x) => x.id === dishId) ?? product
@@ -502,7 +503,7 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
   // Menu a cassetti: si apre una portata alla volta, si passa alla successiva solo con «Conferma».
   const drawers = menuOn && menuGroups.length > 0
   const steps = 1 + menuGroups.length
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(initial ? -1 : 0)
   const stepRefs = useRef<(HTMLElement | null)[]>([])
   useEffect(() => { if (drawers && step >= 0) stepRefs.current[step]?.scrollIntoView({ block: "start", behavior: "smooth" }) }, [step, drawers])
   const drawer = (i: number, title: string, summary: string, body: ReactNode, valid: boolean) => !drawers ? body : (
@@ -511,7 +512,7 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
         <span className="font-display text-4xl">{valid && step !== i ? "✓ " : `${i + 1}. `}{title}</span><span className="text-3xl">{step === i ? "▲" : "▼"}</span>
       </button>
       {step !== i && summary && <p className="mt-2 text-2xl text-muted-foreground">{summary}</p>}
-      {step === i && <>{body}<Button variant="ghost" disabled={!valid} onClick={() => setStep(i + 1 < steps ? i + 1 : -1)} className="tap mt-6 h-20 w-full whitespace-normal rounded-2xl bg-success font-display text-4xl text-success-foreground">{i + 1 < steps ? CX[language].next : CX[language].done}</Button></>}
+      {step === i && <>{body}<Button variant="ghost" disabled={!valid} onClick={() => setStep(initial ? -1 : i + 1 < steps ? i + 1 : -1)} className="tap mt-6 h-20 w-full whitespace-normal rounded-2xl bg-success font-display text-4xl text-success-foreground">{initial || i + 1 >= steps ? CX[language].done : CX[language].next}</Button></>}
     </section>
   )
   const dishSummary = [dish.name, ...dishGroups.flatMap((g) => (picks[g.name] ?? []).map(L)), ...removed.map((r) => `${t.without} ${L(r)}`), ...extras.map((e) => `+ ${L(e)}`)].join(" · ")
@@ -635,8 +636,8 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
           )}
         </div>
         <div className="border-t-4 border-border p-6">
-          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, menuOn, dish, { asMenu: menuOn, dishId: dish.id, picks, extras, removed }) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{t.add} · {euro(total)}</Button>
-          <Button variant="ghost" onClick={onClose} className="whitespace-normal tap mt-3 w-full py-2 text-2xl text-muted-foreground">{t.close}</Button>
+          <Button variant="ghost" disabled={!orderType || !ok} onClick={() => { if (orderType && ok) onAdd([...lines, ...picked, ...chosen], removed, base, menuOn, dish, { asMenu: menuOn, dishId: dish.id, picks, extras, removed }) }} className="whitespace-normal tap h-24 w-full rounded-3xl bg-primary font-display text-5xl text-primary-foreground">{initial ? `💾 ${CX[language].save}` : t.add} · {euro(total)}</Button>
+          <Button variant="ghost" onClick={onClose} className={`whitespace-normal tap mt-3 w-full text-2xl ${initial ? "rounded-2xl bg-secondary py-4 font-display text-3xl" : "py-2 text-muted-foreground"}`}>{initial ? `✕ ${CX[language].cancel}` : t.close}</Button>
         </div>
       </div>
     </div>
@@ -743,12 +744,12 @@ function CategoryStrip({ cats, onPick, size, initial, light }: { cats: Category[
 }
 
 const CX = {
-  IT: { last: "Il tuo ultimo ordine", again: "Riordina", edit: "Modifica", next: "Conferma e avanti ➔", done: "Conferma ✓", main: "Piatto principale", menu: "MENU" },
-  EN: { last: "Your last order", again: "Order again", edit: "Edit", next: "Confirm and next ➔", done: "Confirm ✓", main: "Main dish", menu: "MENU" },
-  FR: { last: "Votre dernière commande", again: "Commander à nouveau", edit: "Modifier", next: "Confirmer et suivant ➔", done: "Confirmer ✓", main: "Plat principal", menu: "MENU" },
-  ES: { last: "Tu último pedido", again: "Repetir pedido", edit: "Modificar", next: "Confirmar y seguir ➔", done: "Confirmar ✓", main: "Plato principal", menu: "MENÚ" },
-  DE: { last: "Deine letzte Bestellung", again: "Nochmal bestellen", edit: "Ändern", next: "Bestätigen und weiter ➔", done: "Bestätigen ✓", main: "Hauptgericht", menu: "MENÜ" },
-  AR: { last: "طلبك الأخير", again: "اطلب مجدداً", edit: "تعديل", next: "تأكيد والتالي ➔", done: "تأكيد ✓", main: "الطبق الرئيسي", menu: "وجبة" },
+  IT: { save: "Salva modifiche", cancel: "Annulla modifiche", last: "Il tuo ultimo ordine", again: "Riordina", edit: "Modifica", next: "Conferma e avanti ➔", done: "Conferma ✓", main: "Piatto principale", menu: "MENU" },
+  EN: { save: "Save changes", cancel: "Cancel changes", last: "Your last order", again: "Order again", edit: "Edit", next: "Confirm and next ➔", done: "Confirm ✓", main: "Main dish", menu: "MENU" },
+  FR: { save: "Enregistrer", cancel: "Annuler les modifications", last: "Votre dernière commande", again: "Commander à nouveau", edit: "Modifier", next: "Confirmer et suivant ➔", done: "Confirmer ✓", main: "Plat principal", menu: "MENU" },
+  ES: { save: "Guardar cambios", cancel: "Cancelar cambios", last: "Tu último pedido", again: "Repetir pedido", edit: "Modificar", next: "Confirmar y seguir ➔", done: "Confirmar ✓", main: "Plato principal", menu: "MENÚ" },
+  DE: { save: "Änderungen speichern", cancel: "Änderungen verwerfen", last: "Deine letzte Bestellung", again: "Nochmal bestellen", edit: "Ändern", next: "Bestätigen und weiter ➔", done: "Bestätigen ✓", main: "Hauptgericht", menu: "MENÜ" },
+  AR: { save: "حفظ التعديلات", cancel: "إلغاء التعديلات", last: "طلبك الأخير", again: "اطلب مجدداً", edit: "تعديل", next: "تأكيد والتالي ➔", done: "تأكيد ✓", main: "الطبق الرئيسي", menu: "وجبة" },
 } as const
 
 // Riepilogo di una voce: nei menu prima il piatto con le sue aggiunte, poi contorno e bevanda.
@@ -777,4 +778,10 @@ function CartDetails({ item: i, products, categories }: { item: Omit<CartItem, "
       {m.drink.length > 0 && <ul className="mt-3 space-y-1 text-2xl font-bold">{m.drink.map((x) => <li key={x}>🥤 {clean(x)}</li>)}</ul>}
     </div>
   )
+}
+
+/** Ingredienti toglibili: quelli impostati in Gestione menu, altrimenti quelli scritti nella descrizione. */
+function removableOf(p: { ingredients: string[]; description?: string | null }): string[] {
+  if (p.ingredients.length) return p.ingredients
+  return [...new Set((p.description ?? "").split(/[,;\n]/).map((x) => x.replace(/\*/g, "").trim()).filter((x) => x && x.length < 40 && !/a scelta/i.test(x)).map((x) => x[0]!.toUpperCase() + x.slice(1)))]
 }
