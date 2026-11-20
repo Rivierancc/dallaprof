@@ -27,7 +27,7 @@ export function splitMenu(item: CartItem, product: Product | undefined, products
     const k = e.indexOf(": ");
     const group = k > 0 ? e.slice(0, k) : "";
     const opt = k > 0 ? e.slice(k + 2) : e.replace(/^🍱 /, "");
-    const g = group ? comboGroups.get(group) : undefined;
+    const g = group ? comboGroups.get(group) ?? comboGroups.get(group.split(" › ")[0] ?? "") : undefined;
     const isProduct = products.some((p) => p.name.toLowerCase() === opt.toLowerCase());
     // Il personale decide in Menu offerta con cosa va ogni scelta/extra; senza indicazione si indovina.
     const to = g ? (g.to ?? (isDrinkName(opt) || /bevand|bibit|drink/i.test(group) ? "drink" : isProduct ? "side" : "dish"))

@@ -11,7 +11,7 @@ import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
 import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions, type Category, type CartItem, type Product, type Ingredient, euro, ingredientLabel, ingredientOff, customIngredients } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
@@ -287,10 +287,12 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       {memberBar}
       <div className="grid gap-4">
         {priced.map((i) => (
-          <div key={i.id} className="flex items-center justify-between rounded-3xl bg-card p-6">
-            <div>
+          <div key={i.id} className="flex items-start justify-between gap-6 rounded-3xl bg-card p-6">
+            <div className="min-w-0">
               <p className="font-display text-5xl">{i.qty} × {i.name}</p>
-              <p className="text-2xl text-accent">{i.extras?.length || i.removed?.length? [...(i.extras?? []).map((e) => `+ ${e}`),...(i.removed?? []).map((r) => `${t.without} ${r}`)].join(" · ") : ""}</p>
+              {(() => { const d = (i.dishId ? products.find((x) => x.id === i.dishId) : undefined) ?? products.find((x) => x.id === i.productId); const desc = d ? descriptionFor(d, language) : ""; return desc ? <p className="mt-1 text-2xl text-muted-foreground">{d && i.dishId ? `🍔 ${d.name}: ` : ""}{desc}</p> : null })()}
+              {(i.extras ?? []).length > 0 && <ul className="mt-2 space-y-1 text-2xl font-bold text-accent">{(i.extras ?? []).map((e) => <li key={e}>{e.startsWith("🍱 ") ? e : `+ ${e.split(" › ").join(" → ")}`}</li>)}</ul>}
+              {(i.removed ?? []).length > 0 && <ul className="mt-1 space-y-1 text-2xl font-bold text-destructive">{(i.removed ?? []).map((r) => <li key={r}>✕ {t.without} {r}</li>)}</ul>}
             </div>
             <div className="flex items-center gap-6">
               <p className="font-display text-5xl text-accent">{(i.offer || i.gift) && i.price === 0 ? t.free : euro(i.price * i.qty)}</p>
@@ -469,7 +471,12 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
   const dish = alts.find((x) => x.id === dishId) ?? product
   const pickDish = (id: string) => { setDishId(id); setRemoved([]); setExtras([]); setPicks({}) }
   const offers = [...dish.extras, ...(menuOn ? product.combo_extras.filter((e) => !dish.extras.some((x) => x.name === e.name)) : [])].filter((e) => !ingredientOff(e.name, lib))
-  const groups = [...(menuOn ? product.combo_groups : []), ...dish.choice_groups].map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib) && !all.some((x) => x.name === o.name && x.sold_out)) })).filter((g) => g.options.length)
+  const clean = (gs: typeof dish.choice_groups) => gs.map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib) && !all.some((x) => x.name === o.name && x.sold_out)) })).filter((g) => g.options.length)
+  const dishGroups = clean(dish.choice_groups)
+  const menuGroups = menuOn ? clean(product.combo_groups) : []
+  // Opzioni del prodotto scelto in una scelta del menu (es. salse del contorno): subito sotto.
+  const subGroups = (g: { name: string }) => (picks[g.name] ?? []).flatMap((o) => { const x = all.find((y) => y.name === o); return x ? clean(x.choice_groups).map((sg) => ({ ...sg, name: `${g.name} › ${sg.name}` })) : [] })
+  const groups = [...dishGroups, ...menuGroups.flatMap((g) => [g, ...subGroups(g)])]
   const ok = groupsValid(groups, picks)
   const picked = groups.flatMap((g) => g.options.filter((o) => (picks[g.name] ?? []).includes(o.name)).map((o) => ({ name: `${g.name}: ${o.name}`, price: o.price })))
   const base = basePrice(p2(product), product.combo_price, hasMenuPrice && asMenu)
@@ -525,18 +532,12 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
               </div>
             </section>
           )}
-          {lines.length > 0 && (
-            <section className="mt-6">
-              <h3 className="font-display text-4xl text-muted-foreground"><OffersIcon /> {t.includes}</h3>
-              <ul className="mt-3 flex flex-wrap gap-3">{combo.map((x) => <li key={x.id} className="rounded-full bg-muted px-6 py-3 text-2xl font-bold">{x.name}</li>)}</ul>
-            </section>
-          )}
-          {groups.map((g) => {
+          {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
             return (
               <section key={g.name} className="mt-6">
                 <h3 className="flex flex-wrap items-center gap-3 font-display text-4xl text-muted-foreground">
-                  {L(g.name)}
+                  {g.name.includes(" › ") ? g.name.split(" › ").map(L).join(" › ") : L(g.name)}
                   {g.min > 0 && <span className={`rounded-full px-3 py-1 font-sans text-lg font-bold ${n >= g.min ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground"}`}>{n >= g.min ? "✓" : "!"} {t.required}</span>}
                   <span className="font-sans text-xl">{g.min === g.max ? `${g.min}` : g.min > 0 ? t.pickN.replace("{a}", String(g.min)).replace("{b}", String(g.max)) : t.upTo.replace("{n}", String(g.max))}</span>
                 </h3>
@@ -548,7 +549,8 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
                 </div>
               </section>
             )
-          })}
+          }
+            return <>{dishGroups.map(G)}</> })()}
           {ingredients.length > 0 && (
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">{t.remove}</h3>
@@ -570,6 +572,31 @@ function Customize({ product, startDish, all, lib, onSwitch, onClose, onAdd }: {
                   return <Button variant="ghost" key={e.name} disabled={full} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : canAddExtra(dish.max_extras, x.length) ? [...x, e.name] : x))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {L(e.name)} · {euro(e.price)}</Button>
                 })}
               </div>
+            </section>
+          )}
+          {(() => { const G = (g: (typeof groups)[number]) => {
+            const n = (picks[g.name] ?? []).length
+            return (
+              <section key={g.name} className="mt-6">
+                <h3 className="flex flex-wrap items-center gap-3 font-display text-4xl text-muted-foreground">
+                  {g.name.includes(" › ") ? g.name.split(" › ").map(L).join(" › ") : L(g.name)}
+                  {g.min > 0 && <span className={`rounded-full px-3 py-1 font-sans text-lg font-bold ${n >= g.min ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground"}`}>{n >= g.min ? "✓" : "!"} {t.required}</span>}
+                  <span className="font-sans text-xl">{g.min === g.max ? `${g.min}` : g.min > 0 ? t.pickN.replace("{a}", String(g.min)).replace("{b}", String(g.max)) : t.upTo.replace("{n}", String(g.max))}</span>
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {g.options.map((o) => {
+                    const on = (picks[g.name] ?? []).includes(o.name)
+                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
+                  })}
+                </div>
+              </section>
+            )
+          }
+            return <>{menuGroups.map((g) => <Fragment key={g.name}>{G(g)}{subGroups(g).map((sg) => <div key={sg.name} className="ml-8 border-l-4 border-border pl-4">{G(sg)}</div>)}</Fragment>)}</> })()}
+          {lines.length > 0 && (
+            <section className="mt-6">
+              <h3 className="font-display text-4xl text-muted-foreground"><OffersIcon /> {t.includes}</h3>
+              <ul className="mt-3 flex flex-wrap gap-3">{combo.map((x) => <li key={x.id} className="rounded-full bg-muted px-6 py-3 text-2xl font-bold">{x.name}</li>)}</ul>
             </section>
           )}
         </div>
