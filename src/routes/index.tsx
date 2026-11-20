@@ -566,6 +566,8 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
               </div>
             </section>
           )}
+          <div className={alts.length > 1 ? "mt-6 rounded-3xl border-4 border-success bg-card p-5" : ""}>
+          {alts.length > 1 && <p className="font-display text-4xl text-success">✓ {dish.name}</p>}
           {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
             return (
@@ -608,6 +610,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
               </div>
             </section>
           )}
+          </div>
           </>, groupsValid(dishGroups, picks))}
           {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
