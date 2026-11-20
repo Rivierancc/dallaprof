@@ -565,7 +565,6 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
               </div>
             </section>
           )}
-          </>, groupsValid(dishGroups, picks))}
           {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
             return (
@@ -608,6 +607,7 @@ function Customize({ product, startDish, initial, all, lib, onSwitch, onClose, o
               </div>
             </section>
           )}
+          </>, groupsValid(dishGroups, picks))}
           {(() => { const G = (g: (typeof groups)[number]) => {
             const n = (picks[g.name] ?? []).length
             return (
