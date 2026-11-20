@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { deleteCustomer, getLoyalty, listCustomers, saveLoyalty, setBirthdayGift, type CustomerRow } from "@/lib/loyalty.functions";
+import { deleteCustomer, getLoyalty, sendCustomerEmails, listCustomers, saveLoyalty, setBirthdayGift, type CustomerRow } from "@/lib/loyalty.functions";
 import { birthdayNear, type Loyalty } from "@/lib/loyalty";
 import { euro, menuQueryOptions } from "@/lib/menu";
 
@@ -117,14 +117,23 @@ export function CustomersPanel() {
   const s = search.trim().toLowerCase();
   const rows = (customers ?? []).filter((c) => (!s || `${c.name} ${c.surname}`.toLowerCase().includes(s) || c.phone.includes(s) || c.email.includes(s)) && (!onlyBday || birthdayNear(c.birth_day, c.birth_month, 30)));
   const mails = rows.filter((c) => c.email).map((c) => c.email);
-  const mailAll = () => { window.location.href = `mailto:?bcc=${mails.join(",")}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text.replace(/\{nome\}/gi, "").replace(/^Ciao\s*,?\s*/i, "Ciao, "))}`; };
+  const [sendMsg, setSendMsg] = useState("");
+  const send = async (list: CustomerRow[]) => {
+    const n = list.filter((c) => c.email).length; if (!n) return;
+    if (!confirm(`Inviare l'email a ${n} ${n === 1 ? "cliente" : "clienti"}?`)) return;
+    setSendMsg("Invio in corso…");
+    try { const r = await sendCustomerEmails({ data: { ids: list.map((c) => c.id), subject, text } }); setSendMsg(`✅ Inviate ${r.sent} email`); }
+    catch (e) { setSendMsg("⚠️ " + (e instanceof Error ? e.message : "Invio non riuscito")); }
+  };
   return <div className="space-y-6">
     <section className="space-y-3 rounded-2xl bg-card p-5">
       <h3 className="font-display text-4xl">📢 Messaggio</h3>
       <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Oggetto (per le email)" className="h-14 w-full rounded-2xl bg-background px-4 text-xl" />
       <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} className="w-full rounded-2xl bg-background p-4 text-xl" />
-      <p className="text-lg text-muted-foreground">Scrivi {"{nome}"} e verrà sostituito con il nome del cliente. Usa i pulsanti WhatsApp ed Email accanto a ogni cliente, oppure scrivi a tutti quelli con email (in copia nascosta, nessuno vede gli altri indirizzi).</p>
-      <Button disabled={!mails.length} onClick={mailAll}>✉️ Email a tutti quelli in elenco ({mails.length})</Button>
+      <p className="text-lg text-muted-foreground">Scrivi {"{nome}"} e verrà sostituito con il nome del cliente. Usa i pulsanti WhatsApp ed Email accanto a ogni cliente, oppure scrivi a tutti quelli con email (ognuno riceve la sua email personale da info@dallaprof.food).</p>
+      <Button disabled={!mails.length || !subject.trim()} onClick={() => void send(rows)}>✉️ Invia email a tutti quelli in elenco ({mails.length})</Button>
+      {!subject.trim() && <p className="text-lg text-muted-foreground">Scrivi l'oggetto per poter inviare.</p>}
+      {sendMsg && <p role="status" className="rounded-xl bg-background px-4 py-2 text-xl">{sendMsg}</p>}
     </section>
     <div className="border-t border-border pt-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -140,7 +149,7 @@ export function CustomersPanel() {
             <span>{c.orders} ordini · {euro(c.spent)}</span><span className="text-muted-foreground">iscritto il {day(c.created_at)}</span>
             <span className="ml-auto flex flex-wrap gap-2">
               {c.phone && <Button asChild variant="secondary"><a href={waLink(c.phone, fill(text, c))} target="_blank" rel="noreferrer">💬 WhatsApp</a></Button>}
-              {c.email && <Button asChild variant="secondary"><a href={`mailto:${c.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(fill(text, c))}`}>✉️ Email</a></Button>}
+              {c.email && <Button variant="secondary" disabled={!subject.trim()} onClick={() => void send([c])}>✉️ Email</Button>}
               <Button variant={c.gift && c.gift.year === new Date().getFullYear() && c.gift.ids.length ? "default" : "secondary"} onClick={() => setGiftFor(giftFor === c.id ? null : c.id)}>🎁 Regalo{c.gift && c.gift.year === new Date().getFullYear() ? (c.gift.used ? " (consegnato)" : ` (${c.gift.ids.length})`) : ""}</Button>
               <Button variant="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>📜 Storico</Button>
               <Button variant="destructive" aria-label={`Cancella ${c.name}`} onClick={() => void remove(c)}>🗑️</Button>

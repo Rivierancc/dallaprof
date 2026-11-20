@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { PasskeyLogin, PasskeyManager } from "@/components/passkey";
 import { SuperManual } from "@/components/super-manual";
-import { createVenue, getLicense, listVenues, masterLogin, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
+import { createVenue, getLicense, listVenues, masterLogin, requestMasterReset, resetMasterWithCode, getRecoveryEmail, saveRecoveryEmail, resetVenuePin, masterLogout, masterStatus, saveLicense, type LicenseRow } from "@/lib/license.functions";
 import { MODES, PLANS, cleanMode } from "@/lib/license";
 import { gateFlags } from "@/lib/gate";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,7 @@ function Login({ configured }: { configured: boolean }) {
       <Button type="submit" className="h-14 text-xl">{configured ? "Entra" : "Imposta password"}</Button>
     </form>
     {configured && <button type="button" onClick={() => setForgot(!forgot)} className="text-lg underline">Password dimenticata?</button>}
-    {forgot && <p className="rounded-xl bg-card p-4 text-lg">Il recupero via email sarà attivo appena collegato un indirizzo email di invio. Nel frattempo contatta l'assistenza tecnica per reimpostarla.</p>}
+    {forgot && <ForgotMaster />}
   </main></div>;
 }
 
@@ -262,6 +262,7 @@ function MasterPassword({ onBack }: { onBack: () => void }) {
       <Button onClick={changePw} className="h-14 text-xl">Cambia password</Button>
       {msg && <p className="rounded-xl bg-background px-4 py-2 text-lg">{msg}</p>}
     </section>
+    <RecoveryEmail />
     <PasskeyManager />
   </main></div>;
 }
@@ -283,4 +284,44 @@ function PinReset({ venueId }: { venueId: string }) {
     }}>Reimposta PIN</Button>
     {msg && <span className="text-lg">{msg}</span>}
   </div>;
+}
+
+function ForgotMaster() {
+  const router = useRouter();
+  const ask = useServerFn(requestMasterReset); const reset = useServerFn(resetMasterWithCode);
+  const [sent, setSent] = useState(""); const [code, setCode] = useState(""); const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [msg, setMsg] = useState("");
+  const request = async () => {
+    setMsg("Invio…");
+    const r = await ask().catch((e) => ({ ok: false as const, reason: e instanceof Error ? e.message : "Errore" }));
+    if (r.ok) { setSent(r.reason || "la tua email"); setMsg(""); } else setMsg("⚠️ " + r.reason);
+  };
+  const confirmReset = async () => {
+    const c = pwCheck(pw, pw2); if (c) return setMsg("⚠️ " + c);
+    const r = await reset({ data: { code, newPassword: pw, ...gateFlags() } }).catch(() => ({ ok: false as const, reason: "Errore" }));
+    if (r.ok) router.invalidate(); else setMsg("⚠️ " + r.reason);
+  };
+  return <section className="grid gap-3 rounded-xl bg-card p-4 text-lg">
+    {!sent ? <><p>Ti mandiamo un codice di 6 cifre all'email di recupero.</p><Button onClick={() => void request()}>✉️ Invia codice</Button></> : <>
+      <p>Codice inviato a <b>{sent}</b>. Vale 15 minuti.</p>
+      <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="Codice a 6 cifre" aria-label="Codice" className="h-14 rounded-2xl bg-background px-4 text-2xl tracking-widest" />
+      <PwInput value={pw} onChange={setPw} placeholder="Nuova password (min. 8)" auto="new-password" />
+      <PwInput value={pw2} onChange={setPw2} placeholder="Ripeti la nuova password" auto="new-password" />
+      <Button onClick={() => void confirmReset()}>Imposta nuova password</Button>
+      <button type="button" className="underline" onClick={() => void request()}>Invia un nuovo codice</button></>}
+    {msg && <p>{msg}</p>}
+  </section>;
+}
+
+function RecoveryEmail() {
+  const get = useServerFn(getRecoveryEmail); const save = useServerFn(saveRecoveryEmail);
+  const { data } = useQuery({ queryKey: ["recovery-email"], queryFn: () => get() });
+  const [v, setV] = useState<string | null>(null); const [msg, setMsg] = useState("");
+  const val = v ?? data?.email ?? "";
+  return <section className="grid gap-3 rounded-2xl bg-card p-5">
+    <h2 className="font-display text-4xl">✉️ Email di recupero</h2>
+    <p className="text-lg text-muted-foreground">Se dimentichi la password, il codice di sblocco arriva qui.</p>
+    <input value={val} onChange={(e) => setV(e.target.value)} type="email" placeholder="tua@email.it" aria-label="Email di recupero" className="h-14 rounded-2xl bg-background px-4 text-xl" />
+    <Button onClick={async () => { setMsg("Salvo…"); try { await save({ data: { email: val } }); setMsg("✅ Salvata"); } catch (e) { setMsg("⚠️ " + (e instanceof Error ? e.message : "Errore")); } }}>Salva email</Button>
+    {msg && <p className="text-lg">{msg}</p>}
+  </section>;
 }

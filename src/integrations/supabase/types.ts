@@ -160,6 +160,9 @@ export type Database = {
           pec: string
           phone: string
           plan: string
+          recovery_email: string | null
+          reset_expires: string | null
+          reset_hash: string | null
           sdi: string
           status: string
           updated_at: string
@@ -181,6 +184,9 @@ export type Database = {
           pec?: string
           phone?: string
           plan?: string
+          recovery_email?: string | null
+          reset_expires?: string | null
+          reset_hash?: string | null
           sdi?: string
           status?: string
           updated_at?: string
@@ -202,6 +208,9 @@ export type Database = {
           pec?: string
           phone?: string
           plan?: string
+          recovery_email?: string | null
+          reset_expires?: string | null
+          reset_hash?: string | null
           sdi?: string
           status?: string
           updated_at?: string

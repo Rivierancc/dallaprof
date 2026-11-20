@@ -286,3 +286,54 @@ export const passkeyLoginFinish = createServerFn({ method: "POST" })
     await m.update({ master: hash.slice(-16) });
     return { ok: true as const, reason: "" };
   });
+
+/* ---- Recupero password Master via email ---- */
+const validMail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+export const getRecoveryEmail = createServerFn({ method: "GET" }).handler(async () => {
+  await requireMaster();
+  const { data } = await (await admin()).from("license").select("recovery_email").eq("id", 1).maybeSingle();
+  return { email: data?.recovery_email ?? "" };
+});
+export const saveRecoveryEmail = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => ({ email: String(d.email ?? "").trim().toLowerCase().slice(0, 200) }))
+  .handler(async ({ data }) => {
+    await requireMaster();
+    if (!validMail(data.email)) throw new Error("Email non valida");
+    await (await admin()).from("license").update({ recovery_email: data.email }).eq("id", 1);
+    return { ok: true };
+  });
+export const requestMasterReset = createServerFn({ method: "POST" }).handler(async () => {
+  const db = await admin();
+  const { data } = await db.from("license").select("recovery_email, reset_expires").eq("id", 1).maybeSingle();
+  const to = data?.recovery_email ?? "";
+  if (!validMail(to)) return { ok: false as const, reason: "Nessuna email di recupero impostata" };
+  // Al massimo un codice ogni 2 minuti.
+  if (data?.reset_expires && new Date(data.reset_expires).getTime() - 13 * 60_000 > Date.now()) return { ok: true as const, reason: "" };
+  const { hashPin } = await import("@/lib/staff.server");
+  const n = crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000;
+  const code = String(n).padStart(6, "0");
+  await db.from("license").update({ reset_hash: await hashPin(code), reset_expires: new Date(Date.now() + 15 * 60_000).toISOString() }).eq("id", 1);
+  const { sendEmails } = await import("@/lib/email.server");
+  await sendEmails([{ to, subject: "Codice di sblocco Super Admin", text: `Il tuo codice è ${code}. Vale 15 minuti.`, html: `<p>Il tuo codice per reimpostare la password Super Admin è:</p><p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p><p>Vale 15 minuti. Se non l'hai chiesto tu, ignora questa email.</p>` }]);
+  const [u, dom] = to.split("@");
+  return { ok: true as const, reason: `${u!.slice(0, 2)}•••@${dom}` };
+});
+export const resetMasterWithCode = createServerFn({ method: "POST" })
+  .inputValidator((d: { code: string; newPassword: string } & Flags) => ({ code: String(d.code ?? "").replace(/\D/g, "").slice(0, 6), newPassword: String(d.newPassword ?? "").slice(0, 100), secure: !!d.secure, partitioned: !!d.partitioned }))
+  .handler(async ({ data }) => {
+    const db = await admin();
+    const { data: row } = await db.from("license").select("reset_hash, reset_expires").eq("id", 1).maybeSingle();
+    if (!row?.reset_hash || !row.reset_expires || new Date(row.reset_expires).getTime() < Date.now()) return { ok: false as const, reason: "Codice scaduto: richiedine uno nuovo" };
+    const { hashPin } = await import("@/lib/staff.server");
+    const [salt] = row.reset_hash.split(":");
+    if ((await hashPin(data.code, salt)) !== row.reset_hash) {
+      await db.from("license").update({ reset_hash: null, reset_expires: null }).eq("id", 1);
+      return { ok: false as const, reason: "Codice errato: richiedine uno nuovo" };
+    }
+    if (data.newPassword.length < 8) return { ok: false as const, reason: "La password deve avere almeno 8 caratteri" };
+    const hash = await hashPin(data.newPassword);
+    await db.from("license").update({ master_hash: hash, reset_hash: null, reset_expires: null }).eq("id", 1);
+    const s = await useSession<{ master?: string }>(await masterConfig(data));
+    await s.update({ master: hash.slice(-16) });
+    return { ok: true as const, reason: "" };
+  });

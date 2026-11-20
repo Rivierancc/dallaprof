@@ -164,3 +164,23 @@ export const setBirthdayGift = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/** Invio email vero (Resend) a uno o più clienti del locale. {nome} viene sostituito. */
+export const sendCustomerEmails = createServerFn({ method: "POST" })
+  .inputValidator((d: { ids: string[]; subject: string; text: string }) => ({
+    ids: (Array.isArray(d.ids) ? d.ids : []).map(String).slice(0, 2000),
+    subject: String(d.subject ?? "").trim().slice(0, 200), text: String(d.text ?? "").slice(0, 5000),
+  }))
+  .handler(async ({ data }) => {
+    await staffOnly();
+    if (!data.subject) throw new Error("Scrivi l'oggetto");
+    if (!data.text.trim()) throw new Error("Scrivi il messaggio");
+    const { data: cs } = await (await db()).from("venue_customers").select("name, email").in("id", data.ids);
+    const { sendEmails, esc } = await import("@/lib/email.server");
+    const list = (cs ?? []).filter((c) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email ?? ""));
+    const sent = await sendEmails(list.map((c) => {
+      const t = data.text.replace(/\{nome\}/gi, c.name);
+      return { to: c.email!, subject: data.subject.replace(/\{nome\}/gi, c.name), text: t, html: `<div style="font-family:sans-serif;font-size:16px;line-height:1.5">${esc(t).replace(/\n/g, "<br>")}</div>` };
+    }));
+    return { sent };
+  });

@@ -1,0 +1,2 @@
+ALTER TABLE public.license ADD COLUMN IF NOT EXISTS recovery_email text, ADD COLUMN IF NOT EXISTS reset_hash text, ADD COLUMN IF NOT EXISTS reset_expires timestamptz;
+UPDATE public.license SET recovery_email = 'nccalbenga@gmail.com' WHERE id = 1 AND recovery_email IS NULL;

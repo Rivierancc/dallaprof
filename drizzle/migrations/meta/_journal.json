@@ -309,6 +309,13 @@
       "when": 1795011613499,
       "tag": "0043_ingredients_stock_allergens",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795201430751,
+      "tag": "0044_master_recovery_email",
+      "breakpoints": true
     }
   ]
 }
