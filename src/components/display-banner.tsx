@@ -134,3 +134,22 @@ export function InfoSettings() {
     {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
 }
+
+/** Admin: mostra o nasconde il pulsante «Attiva modalità chiosco» sulla home del totem. */
+export function KioskButtonSettings() {
+  const { data: saved } = useQuery(bannerQueryOptions);
+  const qc = useQueryClient();
+  const [msg, setMsg] = useState("");
+  if (!saved) return null;
+  const on = saved["kiosk_button"] !== false;
+  const flip = async () => {
+    setMsg("Salvo…");
+    try { await saveBanner({ data: { settings: { ...saved, kiosk_button: !on } } }); await qc.invalidateQueries({ queryKey: ["banner"] }); setMsg("Salvato ✓"); }
+    catch (e) { setMsg(e instanceof Error ? e.message : "Errore nel salvataggio"); }
+  };
+  return <div className="space-y-3">
+    <p className="text-xl text-muted-foreground">Spegnilo se il totem si avvia già da solo a schermo intero: il pulsante non comparirà più ai clienti.</p>
+    <div className="flex flex-wrap items-center gap-3"><Button variant={on ? "default" : "secondary"} onClick={() => void flip()}>{on ? "Acceso" : "Spento"}</Button><span className="text-xl">⛶ Pulsante «Attiva modalità chiosco» sul totem</span></div>
+    {msg && <p role="status" className="text-xl">{msg}</p>}
+  </div>;
+}

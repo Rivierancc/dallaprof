@@ -11,7 +11,7 @@ import { Fold } from "@/components/fold";
 import { CategoryOrderPanel } from "@/components/category-order-panel";
 import { ThemesPanel } from "@/components/themes-panel";
 import { CompanySettings } from "@/components/company-identity";
-import { BannerSettings, IdleSettings, CartLiftSettings, InfoSettings } from "@/components/display-banner";
+import { BannerSettings, IdleSettings, CartLiftSettings, InfoSettings, KioskButtonSettings } from "@/components/display-banner";
 import { ScreensaverSettings } from "@/components/screensaver";
 import { FoodFilterSettings } from "@/components/food-filter-settings";
 import { NewsSettingsPanel } from "@/components/news-ticker";
@@ -51,19 +51,19 @@ function Admin() {
   const { index: textScale, change: changeTextScale } = useTextScale();
   const ro = useRestaurantOnly();
   return <main className="min-h-screen p-6">
-    <header className="mb-6 flex flex-wrap items-center gap-4"><h1 className="mr-auto font-display text-7xl text-accent">Admin</h1>
+    <header className="mb-3 flex flex-wrap items-center gap-3"><h1 className="font-display text-5xl text-accent">Admin</h1>
+      <span className="mr-auto"><LicenseSummary /></span>
+      <TextScaleToggle index={textScale} onChange={changeTextScale} />
+      {!ro && <Button size="sm" onClick={async () => {
+        if (fullscreen) await exitKiosk(); else if (await enterKiosk()) await navigate({ to: "/" });
+      }}>{fullscreen ? "Esci da chiosco" : "⛶ Chiosco"}</Button>}
       <StaffFullscreenButton />
-      <Button asChild variant="secondary"><Link to="/manuale">📖 Manuale</Link></Button>
-      <Button asChild variant="secondary"><Link to="/menu">Gestione menu</Link></Button>
-      <Button asChild variant="secondary"><Link to="/cassa">Cassa</Link></Button>
-      {ro ? <Button asChild variant="secondary"><Link to="/sala">🍽️ Sala</Link></Button> : <Button asChild variant="secondary"><Link to="/">Totem</Link></Button>}
+      <Button asChild size="sm" variant="secondary"><Link to="/manuale">📖 Manuale</Link></Button>
+      <Button asChild size="sm" variant="secondary"><Link to="/menu">Gestione menu</Link></Button>
+      <Button asChild size="sm" variant="secondary"><Link to="/cassa">Cassa</Link></Button>
+      {ro ? <Button asChild size="sm" variant="secondary"><Link to="/sala">🍽️ Sala</Link></Button> : <Button asChild size="sm" variant="secondary"><Link to="/">Totem</Link></Button>}
     </header>
-    <LicenseSummary />
-    <TextScaleToggle index={textScale} onChange={changeTextScale} />
-    {!ro && <Button className="h-auto whitespace-normal p-8 font-display text-5xl" onClick={async () => {
-      if (fullscreen) await exitKiosk(); else if (await enterKiosk()) await navigate({ to: "/" });
-    }}>{fullscreen ? "Esci da chiosco" : "Attiva modalità chiosco"}</Button>}
-    {kioskError && <p role="alert" className="mt-6 text-2xl text-destructive">{kioskError}</p>}
+    {kioskError && <p role="alert" className="mb-3 text-xl text-destructive">{kioskError}</p>}
     <AdminTabs ro={ro} menu={menu} refresh={refresh} />
   </main>;
 }
@@ -74,7 +74,7 @@ function Box({ children }: { children: ReactNode }) { return <div className="mx-
 function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Parameters<typeof CategoryOrderPanel>[0]["categories"] }; refresh: () => Promise<unknown> }) {
   const tabs = ro ? TABS.filter(([id]) => id !== "totem" && id !== "clienti") : TABS;
   const [tab, setTab] = useState<TabId>(tabs[0]?.[0] ?? "menu");
-  return <div className="mt-8">
+  return <div className="mt-2">
     <nav className="sticky top-0 z-20 -mx-6 flex flex-wrap gap-3 border-b-4 border-accent bg-background px-6 py-3" aria-label="Schede Admin">
       {tabs.map(([id, label]) => <Button key={id} variant={tab === id ? "default" : "secondary"} aria-pressed={tab === id} className="h-16 flex-1 whitespace-normal px-4 font-display text-3xl" onClick={() => setTab(id)}>{label}</Button>)}
     </nav>
@@ -86,6 +86,7 @@ function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Par
       </Fold></Box>
       <Box><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></Box>
       <Box><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></Box>
+      <Box><Fold title="⛶ Pulsante modalità chiosco"><KioskButtonSettings /></Fold></Box>
       <Box><Fold title="🛒 Altezza del carrello sul totem"><CartLiftSettings /></Fold></Box>
       <Box><Fold title="🎨 Linea tra i piatti"><DividerSettings /></Fold></Box>
       <Box><Fold title="🌍 Lingue del totem"><LanguageSettings /></Fold></Box>

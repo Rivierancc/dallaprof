@@ -4,7 +4,7 @@ export type ManualMode = "fast_food" | "restaurant" | "both";
 export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "19 novembre 2026";
+export const MANUAL_UPDATED = "20 novembre 2026";
 // 16/11: bandierine e icone del totem disegnate, visibili anche su Windows 7.
 
 export const MANUAL: ManualSection[] = [
@@ -34,7 +34,7 @@ export const MANUAL: ManualSection[] = [
   ]},
   { id: "chiosco", only: "fast_food", title: "⛶ Modalità chiosco", entries: [
     { title: "Schermo intero per il personale", where: "Cassa e Cucina", steps: ["Tocca il pulsantino «Schermo» in alto per ingrandire la pagina senza password.", "Tocca di nuovo lo stesso pulsantino per tornare alla finestra normale, senza password."], tips: ["L'accesso alla pagina e i comandi del personale restano protetti dal PIN. Nell'anteprima alcuni browser non consentono lo schermo intero: apri il sito direttamente sul dispositivo."] },
-    { title: "Attivare il chiosco", where: "Totem (pulsante sotto l'orologio) oppure Admin", steps: ["Tocca «Attiva modalità chiosco»: lo schermo va a tutto schermo e il tasto destro è bloccato."] },
+    { title: "Attivare il chiosco", where: "Totem (pulsante sotto l'orologio) oppure Admin", steps: ["Tocca «Attiva modalità chiosco»: lo schermo va a tutto schermo e il tasto destro è bloccato."], tips: ["Se il totem si avvia già a schermo intero, in Admin → Totem e schermo → «⛶ Pulsante modalità chiosco» puoi spegnerlo: non comparirà più ai clienti. In Admin il comando è il pulsantino «⛶ Chiosco» in alto, accanto alla tendina della grandezza del testo."] },
     { title: "Uscire dal chiosco", where: "Totem", steps: ["Tocca 5 volte di fila l'orologio in alto a sinistra (entro 2 secondi).", "Inserisci il codice di uscita (di fabbrica 1234).", "In alternativa: pulsante «Esci da chiosco» in Admin oppure tasto ESC."], tips: ["Il codice di uscita vale solo per quel dispositivo e si cambia in Admin → Password e codici."] },
   ]},
   { id: "cassa", title: "💶 Cassa", entries: [

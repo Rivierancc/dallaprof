@@ -634,7 +634,8 @@ function Badge({ p, pos = "right-3 top-3" }: { p: Product; pos?: string }) {
 function HomeBanner() { return <BannerView banner={useBanner()} /> }
 function KioskButton() {
   const { fullscreen, enterKiosk, kioskError } = useCustomer()
-  if (fullscreen) return null
+  const { data: kb } = useQuery(bannerQueryOptions)
+  if (fullscreen || !kb || kb["kiosk_button"] === false) return null
   // Accanto al logo, fuori dal flusso: il logo resta centrato. Su schermi stretti va sotto il logo.
   return <div className="mb-4 flex flex-col items-center gap-2 md:absolute md:right-0 md:top-0 md:mb-0 md:items-end">
     <Button variant="secondary" onClick={() => void enterKiosk()} className="tap h-auto whitespace-normal md:max-w-[10rem]">⛶ Attiva modalità chiosco</Button>

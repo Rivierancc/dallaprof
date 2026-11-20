@@ -28,31 +28,14 @@ export function useTextScale() {
   return { index, change };
 }
 
-/** Riga di pulsanti: A piccola, A media, A grande... si tocca quella che si riesce a leggere. */
+/** Tendina compatta: si sceglie la grandezza del testo che si riesce a leggere. */
 export function TextScaleToggle({ index, onChange }: { index: number; onChange: (index: number) => void }) {
   return (
-    <div
-      role="group"
-      aria-label="Ingrandimento del testo"
-      className="mb-4 flex flex-wrap items-center gap-3 rounded-3xl bg-card/60 p-4"
-    >
-      <span className="px-2 text-xl font-bold text-muted-foreground">🔠 Ingrandisci il testo</span>
-      {TEXT_SCALES.map((level, i) => (
-        <button
-          key={level.label}
-          type="button"
-          aria-pressed={i === index}
-          onClick={() => onChange(i)}
-          className={`tap flex items-center gap-3 rounded-2xl px-5 py-3 font-bold ${
-            i === index ? "bg-accent text-accent-foreground" : "bg-secondary text-secondary-foreground"
-          }`}
-        >
-          <span aria-hidden className="leading-none" style={{ fontSize: `${1 + i * 0.4}em` }}>
-            A
-          </span>
-          <span className="text-xl">{level.label}</span>
-        </button>
-      ))}
-    </div>
+    <label className="inline-flex items-center gap-2 rounded-xl bg-secondary px-3 py-1 text-lg font-bold">
+      <span aria-hidden>🔠</span><span className="sr-only">Grandezza del testo</span>
+      <select value={index} onChange={(e) => onChange(Number(e.target.value))} className="rounded-lg bg-background px-2 py-1 text-lg">
+        {TEXT_SCALES.map((level, i) => <option key={level.label} value={i}>Testo {level.label}</option>)}
+      </select>
+    </label>
   );
 }
