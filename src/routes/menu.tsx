@@ -403,34 +403,38 @@ function MenuEditor() {
 
   return (
     <main className="min-h-screen p-6 pb-[50vh]">
-      <header className="mb-6 flex flex-wrap items-center gap-4">
-        <StaffFullscreenButton />
-        <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
-        <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/cerca-piatti">🔍 Cerca piatti</Link></Button>
-        <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/admin">Admin</Link></Button>
-        <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/manuale">📖 Manuale</Link></Button>
-        <Link to="/cucina" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
-          Cucina
-        </Link>
-        <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
-          Totem
-        </Link>
-        <button onClick={logout} className="tap rounded-2xl bg-card px-6 py-4 text-2xl font-bold">
-          Esci
-        </button>
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <StaffFullscreenButton />
+          <div>
+            <h1 className="font-display text-7xl text-accent">Gestione menu</h1>
+            <p className="mt-1 text-2xl text-muted-foreground">
+              Le modifiche si vedono subito sul totem e in cucina.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/cerca-piatti">🔍 Cerca piatti</Link></Button>
+            <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/admin">Admin</Link></Button>
+            <Button asChild variant="secondary" className="h-auto px-6 py-4 text-2xl font-bold"><Link to="/manuale">📖 Manuale</Link></Button>
+            <Link to="/cucina" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+              Cucina
+            </Link>
+            <Link to="/" className="tap rounded-2xl bg-secondary px-6 py-4 text-2xl font-bold">
+              Totem
+            </Link>
+            <button onClick={logout} className="tap rounded-2xl bg-card px-6 py-4 text-2xl font-bold">
+              Esci
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex h-14 items-center rounded-xl bg-secondary px-1"><TextScaleToggle index={textScale} onChange={changeTextScale} /></div>
+            <TranslateMenuButton hasManual={menu.products.some((p) => [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim()))} onDone={refresh} />
+            <ViewToggle view={view} onChange={changeView} />
+          </div>
+        </div>
       </header>
-
-      <p className="mb-4 text-2xl text-muted-foreground">
-        Le modifiche si vedono subito sul totem e in cucina.
-      </p>
-
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-      <div className="flex h-14 items-center rounded-xl bg-secondary px-1"><TextScaleToggle index={textScale} onChange={changeTextScale} /></div>
-
-      <TranslateMenuButton hasManual={menu.products.some((p) => [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim()))} onDone={refresh} />
-
-      <ViewToggle view={view} onChange={changeView} />
-      </div>
 
       {view === "focus" && active ? (
         <section className="mx-auto max-w-5xl">
