@@ -460,25 +460,26 @@ function MenuEditor() {
         </section>
       ) : (
         <div className="mx-auto max-w-5xl">
-        <div className="mb-4 grid grid-cols-2 gap-3">
+        {(panel || foldOpen) ? (
+          <button onClick={() => { setPanel(null); setFoldOpen(false); }} className="tap mb-4 rounded-2xl bg-secondary px-6 py-3 text-2xl font-bold">← Torna alla selezione</button>
+        ) : (
+        <div className="mb-8 grid grid-cols-2 gap-x-6 gap-y-10 py-6 sm:grid-cols-4">
           {([
-            ["cats", "📂 Categorie e piatti", `${cats.length}`],
-            ["offers", "🍱 Menu in offerta", `${menu.products.filter((p) => p.combo_items.length > 0).length}`],
-            ["salato", "🧀 Ingredienti salati", `${menu.ingredients.filter((g) => g.kind === "salato").length}`],
-            ["dolce", "🍫 Ingredienti dolci", `${menu.ingredients.filter((g) => g.kind === "dolce").length}`],
-          ] as const).map(([k, label, n]) => {
-            const on = k === "cats" ? (foldOpen || !!active) && !panel : panel === k;
-            return (
-              <button key={k} aria-expanded={on} onClick={() => {
-                if (k === "cats") { if (on) { setFoldOpen(false); if (active) closeCategory(active.id); } else { setPanel(null); setFoldOpen(true); } }
-                else { setPanel(on ? null : k); }
-              }} className={`tap flex min-h-24 items-center justify-between gap-3 rounded-3xl border-2 px-5 py-4 text-left shadow-lg ${on ? "border-accent bg-accent text-accent-foreground" : "border-border bg-card"}`}>
-                <span className="font-display text-3xl leading-tight">{label}</span>
-                <span className="shrink-0 text-xl font-bold">{n} {on ? "▲" : "▼"}</span>
-              </button>
-            );
-          })}
+            ["cats", "📂", "Categorie e piatti", `${cats.length}`, "oklch(0.62 0.17 245)", "oklch(0.42 0.15 250)"],
+            ["offers", "🍱", "Menu in offerta", `${menu.products.filter((p) => p.combo_items.length > 0 || p.combo_groups.length > 0 || p.combo_offer).length}`, "oklch(0.72 0.17 55)", "oklch(0.5 0.15 45)"],
+            ["salato", "🧀", "Ingredienti salati", `${menu.ingredients.filter((g) => g.kind === "salato").length}`, "oklch(0.82 0.15 90)", "oklch(0.58 0.12 80)"],
+            ["dolce", "🍫", "Ingredienti dolci", `${menu.ingredients.filter((g) => g.kind === "dolce").length}`, "oklch(0.66 0.2 0)", "oklch(0.45 0.16 5)"],
+          ] as const).map(([k, icon, label, n, c1, c2]) => (
+            <button key={k} onClick={() => { if (k === "cats") { setPanel(null); setFoldOpen(true); } else setPanel(k); }} className="group flex flex-col items-center gap-4">
+              <span className="relative grid aspect-square w-36 place-items-center rounded-full text-6xl transition-all duration-100 group-active:translate-y-1.5" style={{ background: `radial-gradient(circle at 35% 28%, color-mix(in oklch, ${c1} 55%, white), ${c1} 45%, ${c2})`, boxShadow: `inset 0 3px 6px color-mix(in oklch, white 45%, transparent), inset 0 -8px 14px color-mix(in oklch, black 30%, transparent), 0 8px 0 ${c2}, 0 14px 22px color-mix(in oklch, black 55%, transparent)` }}>
+                <span className="drop-shadow-lg">{icon}</span>
+                <span className="absolute -right-1 -top-1 grid min-w-12 place-items-center rounded-full border-2 border-background bg-background px-2 py-1 text-xl font-bold shadow-lg" style={{ color: c1 }}>{n}</span>
+              </span>
+              <span className="text-center font-display text-3xl leading-tight">{label}</span>
+            </button>
+          ))}
         </div>
+        )}
         {panel === "offers" && <ComboOffersPanel bare />}
         {(panel === "salato" || panel === "dolce") && <IngredientsPanel only={panel} ingredients={menu.ingredients} refresh={refresh} />}
         {(foldOpen || !!active) && !panel && <Fold bare title="📂 Categorie e piatti"><div className="space-y-4">
