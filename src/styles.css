@@ -155,3 +155,14 @@ html:has(.digital-menu), html:has(.digital-menu) body { user-select: auto; touch
 html.saver-open, html.saver-open body { overflow: hidden; }
 html.saver-open { scrollbar-width: none; -ms-overflow-style: none; }
 html.saver-open::-webkit-scrollbar, html.saver-open body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Pillola 3D per i comandi di Gestione menu */
+.pill3d {
+  border-radius: 9999px;
+  box-shadow: inset 0 2px 3px color-mix(in oklch, white 35%, transparent), inset 0 -3px 6px color-mix(in oklch, black 25%, transparent), 0 4px 0 color-mix(in oklch, currentColor 10%, black 70%), 0 6px 10px rgb(0 0 0 / 0.35);
+  transition: transform 80ms, box-shadow 80ms;
+}
+.pill3d:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 3px color-mix(in oklch, white 25%, transparent), 0 1px 0 color-mix(in oklch, currentColor 10%, black 70%);
+}

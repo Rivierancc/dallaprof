@@ -104,9 +104,9 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
   const head = (
     <div className="flex flex-wrap items-center gap-3">
       <button onClick={() => setExpanded(!expanded)} className="mr-auto min-w-0 truncate text-left text-2xl font-bold">✨ {title}</button>
-      <span className={`rounded-full px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento"}</span>
+      <span className={`pill3d px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento"}</span>
       {on && <span className="text-2xl font-bold">€ {fmt(c.custom_price)}</span>}
-      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold">{expanded ? "▲ Comprimi" : "▼ Apri"}</button>
+      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="tap pill3d bg-secondary px-4 py-3 text-xl font-bold">{expanded ? "▲ Comprimi" : "▼ Apri"}</button>
     </div>
   );
   if (!expanded) return <div className={`mb-3 rounded-2xl border-2 p-3 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>{head}</div>;

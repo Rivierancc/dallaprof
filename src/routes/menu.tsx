@@ -612,7 +612,7 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-display text-4xl">{active.name} · {products.length} piatti</h3>
-        <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
+        <button onClick={h.add} className="tap pill3d bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
           + Nuovo piatto
         </button>
       </div>
@@ -621,11 +621,11 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
       </CategoryCustomBlock>
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3">
         <span className="text-xl font-bold">📖 Scheda ingredienti in cucina per tutta la categoria:</span>
-        <button disabled={busy} onClick={toggleAll} className={`tap rounded-xl px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>
+        <button disabled={busy} onClick={toggleAll} className={`tap pill3d px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-success text-success-foreground" : "bg-secondary"}`}>
           {anyOn ? "Acceso · tocca per spegnere tutto" : "Spento · tocca per accendere tutto"}
         </button>
         {products.length > 0 && (
-          <button onClick={() => setClosed(allClosed ? new Set() : new Set(products.map((p) => p.id)))} className="tap ml-auto rounded-xl bg-secondary px-5 py-2 text-xl font-bold">
+          <button onClick={() => setClosed(allClosed ? new Set() : new Set(products.map((p) => p.id)))} className="tap ml-auto pill3d bg-secondary px-5 py-2 text-xl font-bold">
             {allClosed ? "▼ Apri tutti i piatti" : "▲ Comprimi tutti i piatti"}
           </button>
         )}
@@ -657,12 +657,12 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
         {!products.length && <li className="text-xl text-muted-foreground">Nessun piatto: premi «+ Nuovo piatto» qui sopra.</li>}
         <li className="list-none flex flex-wrap gap-3 pt-2">
           {products.length > 0 && (
-            <button onClick={h.add} className="tap rounded-xl bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
+            <button onClick={h.add} className="tap pill3d bg-accent px-6 py-4 text-2xl font-bold text-accent-foreground">
               + Aggiungi altro piatto
             </button>
           )}
           {onClose && (
-            <button onClick={onClose} className="tap ml-auto rounded-xl bg-secondary px-6 py-4 text-2xl font-bold">
+            <button onClick={onClose} className="tap ml-auto pill3d bg-secondary px-6 py-4 text-2xl font-bold">
               ▲ Chiudi categoria
             </button>
           )}
