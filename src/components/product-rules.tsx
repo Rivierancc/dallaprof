@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { cleanFilters, dishMatches } from "@/lib/food-filters";
 import { setProductTags, setProductRecipe, setProductRules, type MenuProduct } from "@/lib/menu.functions";
 import { EditOption } from "@/components/edit-option";
 import type { ChoiceGroup, Suggest } from "@/lib/options";
+import { FIXED_TAG } from "@/lib/food-filters";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
 const num = (s: string) => Number(s.replace(",", "."));
@@ -44,14 +45,14 @@ export function ProductRules({ p }: { p: MenuProduct }) {
     <div className={`grid w-full gap-6 rounded-2xl bg-background/40 p-4 ${busy ? "opacity-60" : ""}`}>
       <TagsEditor p={p} />
       <RecipeEditor p={p} />
-      <section>
-        <h3 className="mb-2 text-2xl font-bold">Quanti extra può aggiungere il cliente</h3>
+      <FixedSwitch p={p} />
+      <Drawer title="➕ Quanti extra può aggiungere il cliente" summary={p.max_extras === 0 ? "Senza limite" : `Max ${p.max_extras}`}>
         <div className="flex flex-wrap gap-2">
           {[0, 1, 2, 3, 4, 5].map((n) => (
             <button key={n} disabled={busy} onClick={() => run({ maxExtras: n })} className={`${btn} ${p.max_extras === n ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{n === 0 ? "Senza limite" : `Max ${n}`}</button>
           ))}
         </div>
-      </section>
+      </Drawer>
 
       <section>
         <button type="button" onClick={() => setChOpen((o) => !o)} aria-expanded={chOpen} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">📋 Scelte del cliente <span className="font-normal text-muted-foreground">({chSummary})</span> {chOpen ? "▲" : "▼"}</button>
@@ -89,8 +90,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
 
       <p className="text-lg text-muted-foreground">🍱 Il menu di questo piatto (scelte dalle categorie, prezzo, nome) si imposta nella sezione «🍱 Menu offerta» più in basso.</p>
 
-      <section>
-        <h3 className="mb-1 text-2xl font-bold">💡 Suggerisci prima di chiudere l'ordine</h3>
+      <Drawer title="💡 Suggerisci prima di chiudere l'ordine" summary={p.suggest.on ? `Suggerito${p.suggest.price === null ? "" : p.suggest.price === 0 ? " · omaggio" : ` · € ${fmt(p.suggest.price)}`}` : "Non suggerito"}>
         <p className="mb-3 text-lg text-muted-foreground">Compare al cliente quando va al carrello, se non l'ha già preso. Prezzo offerta 0 = omaggio; vuoto = prezzo normale. Spesa minima 0 = offerta sempre valida.</p>
         <div className="flex flex-wrap items-center gap-3">
           <button disabled={busy} role="switch" aria-checked={p.suggest.on} onClick={() => run({ suggest: { ...p.suggest, on: !p.suggest.on } })} className={`${btn} ${p.suggest.on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.suggest.on ? "💡 Suggerito" : "Non suggerito"}</button>
@@ -103,7 +103,7 @@ export function ProductRules({ p }: { p: MenuProduct }) {
             void run({ suggest: { on: p.suggest.on, price, min } }, "Offerta salvata");
           }} className={`${btn} bg-primary text-primary-foreground`}>Salva offerta</button>
         </div>
-      </section>
+      </Drawer>
     </div>
   );
 }
@@ -171,6 +171,35 @@ export function GroupEditor({ g, disabled, menu, onChange, onDelete }: { g: Choi
   );
 }
 
+// Cassetto richiudibile con riepilogo sulla riga chiusa.
+function Drawer({ title, summary, children }: { title: string; summary: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section>
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">{title} <span className="font-normal text-muted-foreground">({summary})</span> {open ? "▲" : "▼"}</button>
+      {open && <div className="mt-3">{children}<div className="mt-3 flex justify-end"><button type="button" onClick={() => setOpen(false)} className={`${btn} bg-secondary`}>▲ Chiudi</button></div></div>}
+    </section>
+  );
+}
+
+// Piatto già pronto: il cliente non può togliere ingredienti (es. lasagne).
+function FixedSwitch({ p }: { p: MenuProduct }) {
+  const qc = useQueryClient();
+  const save = useServerFn(setProductTags);
+  const fixed = p.food_tags.includes(FIXED_TAG);
+  const toggle = async () => {
+    const tags = fixed ? p.food_tags.filter((t) => t !== FIXED_TAG) : [...p.food_tags, FIXED_TAG];
+    try { await save({ data: { id: p.id, tags } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Salvato"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
+  };
+  return (
+    <section className="flex flex-wrap items-center gap-3">
+      <span className="text-xl font-bold">✂️ Il cliente può togliere ingredienti:</span>
+      <button role="switch" aria-checked={!fixed} onClick={() => void toggle()} className={`${btn} ${fixed ? "bg-destructive text-destructive-foreground" : "bg-accent text-accent-foreground"}`}>{fixed ? "No, piatto già pronto" : "Sì"}</button>
+    </section>
+  );
+}
+
 // Scheda ingredienti mostrata in cucina quando si tocca il piatto.
 function RecipeEditor({ p }: { p: MenuProduct }) {
   const qc = useQueryClient();
@@ -181,13 +210,12 @@ function RecipeEditor({ p }: { p: MenuProduct }) {
     catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); }
   };
   return (
-    <section>
-      <h3 className="mb-1 text-2xl font-bold">👨‍🍳 Ingredienti di preparazione in cucina</h3>
+    <Drawer title="👨‍🍳 Ingredienti di preparazione in cucina" summary={`${p.recipe_on ? "Acceso" : "Spento"}${p.recipe.trim() ? " · con note" : ""}`}>
       <p className="mb-3 text-lg text-muted-foreground">Se è acceso, in cucina toccando il piatto si apre il riquadro con ingredienti, modifiche del cliente e queste note.</p>
       <button onClick={() => run(!p.recipe_on, text)} className={`${btn} mb-3 ${p.recipe_on ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>{p.recipe_on ? "Acceso" : "Spento"}</button>
       <textarea value={text} maxLength={1000} rows={4} onChange={(e) => setText(e.target.value)} placeholder="Es. pane tostato, 180 g di carne, cheddar, insalata, pomodoro…" className={`${box} block w-full`} />
       <button onClick={() => run(p.recipe_on, text)} className={`${btn} mt-2 bg-primary text-primary-foreground`}>Salva note</button>
-    </section>
+    </Drawer>
   );
 }
 

@@ -1,4 +1,5 @@
 import { HereIcon, TakeawayIcon, OffersIcon, CartIcon } from "@/components/compat-icons";
+import { FIXED_TAG } from "@/lib/food-filters"
 import { Screensaver } from "@/components/screensaver"
 import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
@@ -790,7 +791,8 @@ function CartDetails({ item: i, products, categories }: { item: Omit<CartItem, "
 }
 
 /** Ingredienti toglibili: quelli impostati in Gestione menu, altrimenti quelli scritti nella descrizione. */
-function removableOf(p: { ingredients: string[]; description?: string | null }): string[] {
+function removableOf(p: { ingredients: string[]; description?: string | null; food_tags?: string[] }): string[] {
+  if (p.food_tags?.includes(FIXED_TAG)) return []
   if (p.ingredients.length) return p.ingredients
   return [...new Set((p.description ?? "").split(/[,;\n]/).map((x) => x.replace(/\*/g, "").trim()).filter((x) => x && x.length < 40 && !/a scelta/i.test(x)).map((x) => x[0]!.toUpperCase() + x.slice(1)))]
 }

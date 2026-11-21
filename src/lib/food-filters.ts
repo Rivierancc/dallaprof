@@ -46,3 +46,6 @@ export function dishMatches(d: Dish, f: FoodFilter): boolean {
   const text = [d.name, d.description, ...d.ingredients].join(" ").toLowerCase();
   return f.words.some((w) => text.includes(w));
 }
+
+/** Etichetta interna: piatto già pronto, il cliente non può togliere ingredienti. */
+export const FIXED_TAG = "~fisso";
