@@ -134,7 +134,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const toPay = Math.round((total - disc.amount) * 100) / 100
   const favs = member ? member.favourites.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => !!p) : []
   const addFav = (p: Product) => {
-    if (p.choice_groups.length || p.extras.length || p.ingredients.length || isCombo(p)) { setActiveCat(p.category_id); setCustom(p); setShowCart(false) }
+    if (p.choice_groups.length || p.extras.length || removableOf(p).length || isCombo(p)) { setActiveCat(p.category_id); setCustom(p); setShowCart(false) }
     else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1 }])
   }
   // Regali di compleanno: aggiunti gratis al carrello, il nome per la cucina resta in italiano.
@@ -259,7 +259,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           const label = (s: string) => s.replace("{x}", euro(missing)).replace("{y}", euro(p.suggest.price ?? 0))
           return (
             <Button variant="ghost" key={p.id} onClick={() => {
-              if (p.choice_groups.length || p.extras.length || p.ingredients.length) { setOfferPick(true); setCustom(p); setShowSuggest(false); setShowCart(false) }
+              if (p.choice_groups.length || p.extras.length || removableOf(p).length) { setOfferPick(true); setCustom(p); setShowSuggest(false); setShowCart(false) }
               else setCart((c) => [...c, { id: crypto.randomUUID(), productId: p.id, name: p.name, price: p.price, qty: 1, offer: true }])
             }} className="whitespace-normal tap relative flex h-auto flex-col overflow-hidden rounded-3xl border-4 border-accent bg-card p-0 text-left">
               {p.image ? <img src={p.image} alt={p.name} className="aspect-square w-full object-cover" /> : <div className="grid aspect-square w-full place-items-center bg-muted text-7xl"><HereIcon /></div>}

@@ -1007,7 +1007,17 @@ function OptionsEditor({
           {removable.map((g) => (
             <span key={g} className={chip}>
               {g}
-              <button className={x} title="Rimuovi" onClick={() => onSave(removable.filter((v) => v !== g), p.extras)}>✕</button>
+              <button
+                className={x}
+                title="Rimuovi"
+                onClick={() => {
+                  const next = removable.filter((v) => v !== g);
+                  if (!next.length && removableOf({ ingredients: [], description: p.description }).length) {
+                    toast.info("Per non far togliere nulla, metti «✂️ Il cliente può togliere ingredienti» su «No, piatto già pronto» qui sotto.");
+                  }
+                  onSave(next, p.extras);
+                }}
+              >✕</button>
             </span>
           ))}
           {fixed && <span className="text-lg text-muted-foreground">Disattivato (piatto già pronto)</span>}
