@@ -1,5 +1,4 @@
 import { HereIcon, TakeawayIcon, OffersIcon, CartIcon } from "@/components/compat-icons";
-import { FIXED_TAG } from "@/lib/food-filters"
 import { Screensaver } from "@/components/screensaver"
 import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
@@ -20,7 +19,7 @@ import { licenseQueryOptions, realOrders } from "@/lib/license"
 import { supabase } from "@/integrations/supabase/client"
 import { useCustomer } from "@/components/customer-session"
 import { Button } from "@/components/ui/button"
-import { basePrice, canAddExtra, groupsValid, isCombo, menuName, suggestPrice } from "@/lib/options"
+import { basePrice, canAddExtra, groupsValid, isCombo, menuName, removableOf, suggestPrice } from "@/lib/options"
 import { LoyaltyDialog, loyaltyCopy, type Member } from "@/components/loyalty-kiosk"
 import { getLoyalty, linkOrderCustomer } from "@/lib/loyalty.functions"
 import { discountFor } from "@/lib/loyalty"
@@ -788,11 +787,4 @@ function CartDetails({ item: i, products, categories }: { item: Omit<CartItem, "
       {m.drink.length > 0 && <ul className="mt-3 space-y-1 text-2xl font-bold">{m.drink.map((x) => <li key={x}>🥤 {clean(x)}</li>)}</ul>}
     </div>
   )
-}
-
-/** Ingredienti toglibili: quelli impostati in Gestione menu, altrimenti quelli scritti nella descrizione. */
-function removableOf(p: { ingredients: string[]; description?: string | null; food_tags?: string[] }): string[] {
-  if (p.food_tags?.includes(FIXED_TAG)) return []
-  if (p.ingredients.length) return p.ingredients
-  return [...new Set((p.description ?? "").split(/[,;\n]/).map((x) => x.replace(/\*/g, "").trim()).filter((x) => x && x.length < 40 && !/a scelta/i.test(x)).map((x) => x[0]!.toUpperCase() + x.slice(1)))]
 }

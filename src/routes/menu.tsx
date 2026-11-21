@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { ProductRules } from "@/components/product-rules";
 import { EditOption } from "@/components/edit-option";
+import { FIXED_TAG } from "@/lib/food-filters";
+import { removableOf } from "@/lib/options";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
@@ -908,7 +910,7 @@ function ProductRow({
         aria-expanded={open}
         className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold"
       >
-        Opzioni ({p.extras.length + p.ingredients.length + p.choice_groups.length}{p.combo_items.length ? " · 🍱" : ""}{p.suggest.on ? " · 💡" : ""}) {open ? "▲" : "▼"}
+        Opzioni ({p.extras.length + removableOf(p).length + p.choice_groups.length}{p.combo_items.length ? " · 🍱" : ""}{p.suggest.on ? " · 💡" : ""}) {open ? "▲" : "▼"}
       </button>
       <select
         value=""
@@ -969,10 +971,13 @@ function OptionsEditor({
   const [ing, setIng] = useState("");
   const [exName, setExName] = useState("");
   const [exPrice, setExPrice] = useState("");
+  const fixed = p.food_tags.includes(FIXED_TAG);
+  const removable = removableOf(p);
+  const fromDesc = !fixed && !p.ingredients.length && removable.length > 0;
   const addIng = () => {
     const v = ing.trim();
-    if (!v || p.ingredients.includes(v)) return;
-    onSave([...p.ingredients, v], p.extras);
+    if (!v || removable.some((g) => g.toLowerCase() === v.toLowerCase())) return;
+    onSave([...removable, v], p.extras);
     setIng("");
   };
   const addExtra = () => {
@@ -993,16 +998,22 @@ function OptionsEditor({
     <div className="grid w-full gap-6 rounded-2xl bg-background/40 p-4 md:grid-cols-2">
       <div>
         <h3 className="mb-1 text-2xl font-bold">Ingredienti che il cliente può togliere</h3>
+        {fromDesc && (
+          <p className="mb-2 text-base text-muted-foreground">
+            Presi in automatico dalla descrizione: tocca ✕ su quelli che il cliente non può togliere (es. il pane).
+          </p>
+        )}
         <div className="mb-3 flex flex-wrap gap-2">
-          {p.ingredients.map((g) => (
+          {removable.map((g) => (
             <span key={g} className={chip}>
               {g}
-              <button className={x} title="Rimuovi" onClick={() => onSave(p.ingredients.filter((v) => v !== g), p.extras)}>✕</button>
+              <button className={x} title="Rimuovi" onClick={() => onSave(removable.filter((v) => v !== g), p.extras)}>✕</button>
             </span>
           ))}
-          {!p.ingredients.length && <span className="text-lg text-muted-foreground">Nessuno</span>}
+          {fixed && <span className="text-lg text-muted-foreground">Disattivato (piatto già pronto)</span>}
+          {!fixed && !removable.length && <span className="text-lg text-muted-foreground">Nessuno</span>}
         </div>
-        <div className="flex gap-2">
+        {!fixed && <div className="flex gap-2">
           <input
             value={ing}
             onChange={(e) => setIng(e.target.value)}
@@ -1012,7 +1023,7 @@ function OptionsEditor({
             className="min-w-0 flex-1 rounded-xl bg-muted px-4 py-3 text-xl outline-none"
           />
           <button onClick={addIng} className="tap rounded-xl bg-primary px-5 text-xl font-bold text-primary-foreground">+ Aggiungi</button>
-        </div>
+        </div>}
       </div>
       <div>
         <h3 className="mb-1 text-2xl font-bold">Extra a pagamento</h3>

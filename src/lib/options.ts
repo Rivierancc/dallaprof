@@ -1,4 +1,5 @@
 // Regole condivise tra pannello e totem: scelte obbligatorie, limite extra, menu combinati, suggeriti.
+import { FIXED_TAG } from "@/lib/food-filters";
 // to = con cosa va in cucina nei menu: panino, contorno o bevanda.
 export type Place = "dish" | "side" | "drink";
 export type ChoiceOption = { name: string; price: number; to?: Place | undefined };
@@ -60,3 +61,11 @@ export const cleanExtras = (v: unknown): ChoiceOption[] =>
   cleanGroups([{ name: "x", max: 1, options: v }])[0]?.options ?? [];
 // È un menu se ha articoli inclusi o scelte del menu.
 export const isCombo = (p: { combo_items: string[]; combo_groups: ChoiceGroup[] }) => p.combo_items.length > 0 || p.combo_groups.length > 0;
+
+// Ingredienti che il cliente può togliere sul totem: quelli salvati in Gestione menu,
+// oppure ricavati dalla descrizione (salvo piatti segnati come non modificabili).
+export function removableOf(p: { ingredients: string[]; description?: string | null; food_tags?: string[] }): string[] {
+  if (p.food_tags?.includes(FIXED_TAG)) return [];
+  if (p.ingredients.length) return p.ingredients;
+  return [...new Set((p.description ?? "").split(/[,;\n]/).map((x) => x.replace(/\*/g, "").trim()).filter((x) => x && x.length < 40 && !/a scelta/i.test(x)).map((x) => x[0]!.toUpperCase() + x.slice(1)))];
+}
