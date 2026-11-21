@@ -424,11 +424,13 @@ function MenuEditor() {
         Le modifiche si vedono subito sul totem e in cucina.
       </p>
 
-      <TextScaleToggle index={textScale} onChange={changeTextScale} />
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="flex h-14 items-center rounded-xl bg-secondary px-1"><TextScaleToggle index={textScale} onChange={changeTextScale} /></div>
 
       <TranslateMenuButton hasManual={menu.products.some((p) => [p.description_en, p.description_fr, p.description_es, p.description_de, p.description_ar].some((t) => t.trim()))} onDone={refresh} />
 
       <ViewToggle view={view} onChange={changeView} />
+      </div>
 
       {view === "focus" && active ? (
         <section className="mx-auto max-w-5xl">
@@ -544,14 +546,14 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
     <button
       onClick={() => onChange(v)}
       aria-pressed={view === v}
-      className={`tap rounded-xl px-5 py-3 text-xl font-bold ${view === v ? "bg-accent text-accent-foreground" : "bg-card"}`}
+      className={`tap h-14 rounded-xl px-5 text-xl font-bold ${view === v ? "bg-accent text-accent-foreground" : "bg-secondary"}`}
     >
       {label}
     </button>
   );
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3">
-      <span className="text-xl text-muted-foreground">I piatti</span>
+    <div className="contents">
+      <span className="text-xl text-muted-foreground">I piatti:</span>
       {btn("inline", "Sotto alla categoria")}
       {btn("focus", "In una pagina a sé")}
     </div>
@@ -1204,11 +1206,11 @@ function TranslateMenuButton({ hasManual, onDone }: { hasManual: boolean; onDone
     } catch { toast.error("Traduzione non riuscita, riprova", { id }); }
     finally { setBusy(false); }
   };
-  return <div className="mb-4 flex flex-wrap items-center gap-3">
-    <button type="button" disabled={busy} onClick={() => (hasManual ? setAsk(true) : void go(false))} className="tap rounded-xl bg-secondary px-5 py-3 text-xl font-bold disabled:opacity-50">
-      {busy ? "⏳ Traduzione in corso…" : "🌍 Traduci tutto il menu con IA"}
+  return <div className="contents">
+    <button type="button" disabled={busy} onClick={() => (hasManual ? setAsk(true) : void go(false))} className="tap h-14 rounded-xl bg-secondary px-5 text-xl font-bold disabled:opacity-50">
+      {busy ? "⏳ Traduzione in corso…" : "🌍 Traduci menu con IA"}
     </button>
-    {ask && <div role="alertdialog" className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-4 text-xl">
+    {ask && <div role="alertdialog" className="order-last flex basis-full flex-wrap items-center gap-3 rounded-xl bg-card p-4 text-xl">
       <span className="basis-full font-bold">⚠️ Alcuni piatti hanno già descrizioni nelle altre lingue. Cosa faccio?</span>
       <button type="button" onClick={() => void go(false)} className="tap rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">Traduci solo le lingue vuote</button>
       <button type="button" onClick={() => void go(true)} className="tap rounded-xl bg-destructive px-4 py-3 font-bold text-destructive-foreground">Sostituisci tutto</button>
