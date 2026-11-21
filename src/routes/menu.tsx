@@ -884,6 +884,15 @@ function ProductRow({
           ▼
         </button>
       </div>
+      <textarea
+        value={desc}
+        onChange={(e) => setDesc(e.target.value)}
+        onBlur={() => desc.trim() !== p.description && run(() => onDescription(desc.trim()))}
+        rows={2}
+        maxLength={300}
+        placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
+        className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
+      />
       <button
         role="switch"
         aria-checked={p.is_featured}
@@ -930,15 +939,6 @@ function ProductRow({
       </select>
       <DeleteButton onConfirm={() => void run(onDelete)} />
       {toggleBtn}
-      <textarea
-        value={desc}
-        onChange={(e) => setDesc(e.target.value)}
-        onBlur={() => desc.trim() !== p.description && run(() => onDescription(desc.trim()))}
-        rows={2}
-        maxLength={300}
-        placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
-        className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
-      />
       {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
       {open && <ProductRules p={p} />}
       <button type="button" onClick={() => setTrOpen((o) => !o)} aria-expanded={trOpen} className="tap w-full basis-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">🌍 Traduzioni (EN, FR, ES, DE, AR) {trOpen ? "▲" : "▼"}</button>
