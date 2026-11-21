@@ -486,7 +486,13 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
   const menuOn = hasCombo && (!hasMenuPrice || asMenu)
   const alts = menuOn ? [product, ...product.combo_alts.map((id) => all.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)] : []
   const dish = alts.find((x) => x.id === dishId) ?? product
-  const pickDish = (id: string) => { setDishId(id); setRemoved([]); setExtras([]); setPicks({}) }
+  const pickDish = (id: string) => {
+    // Cambiando piatto si azzerano solo le sue opzioni: contorno, bibita e le altre scelte del menu restano.
+    const own = new Set((all.find((x) => x.id === dishId)?.choice_groups ?? []).map((g) => g.name))
+    const keep = new Set((menuOn ? product.combo_groups : []).map((g) => g.name))
+    setDishId(id); setRemoved([]); setExtras([])
+    setPicks((cur) => Object.fromEntries(Object.entries(cur).filter(([k]) => !own.has(k) && (keep.has(k) || [...keep].some((g) => k.startsWith(`${g} › `))))))
+  }
   const offers = [...dish.extras, ...(menuOn ? product.combo_extras.filter((e) => !dish.extras.some((x) => x.name === e.name)) : [])].filter((e) => !ingredientOff(e.name, lib))
   const clean = (gs: typeof dish.choice_groups) => gs.map((g) => ({ ...g, options: g.options.filter((o) => !ingredientOff(o.name, lib) && !all.some((x) => x.name === o.name && x.sold_out)) })).filter((g) => g.options.length)
   const dishGroups = clean(dish.choice_groups)
