@@ -17,7 +17,7 @@ const box = "rounded-xl bg-muted px-3 py-2 text-xl outline-none";
 const btn = "tap rounded-xl px-4 py-2 text-xl font-bold";
 
 // Tutto ciò che riguarda i menu: articoli inclusi, prezzo, nome e sezione «Menu in offerta» del totem.
-export function ComboOffersPanel() {
+export function ComboOffersPanel({ bare = false }: { bare?: boolean } = {}) {
   const { data: menu } = useSuspenseQuery(menuQueryOptions);
   const qc = useQueryClient();
   const saveTitle = useServerFn(setOffersTitle);
@@ -31,8 +31,8 @@ export function ComboOffersPanel() {
   const toggle = (id: string) => setClosed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const allClosed = menus.length > 0 && menus.every((p) => closed.has(p.id));
   return (
-    <div className="mx-auto mt-6 max-w-5xl">
-      <Fold title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
+    <div className={bare ? "" : "mx-auto mt-6 max-w-5xl"}>
+      <Fold bare={bare} open={bare} title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
         <div className="grid gap-5">
           <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; ogni menu compare da solo nella sezione speciale del totem; con «⭐ In evidenza» va in cima con la stellina.</p>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">

@@ -8,7 +8,7 @@ import { ProductRules } from "@/components/product-rules";
 import { EditOption } from "@/components/edit-option";
 import { FIXED_TAG } from "@/lib/food-filters";
 import { removableOf } from "@/lib/options";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { PinPad } from "@/components/pin-pad";
 import { kitchenStatus, lockKitchen } from "@/lib/kitchen.functions";
@@ -89,6 +89,7 @@ function MenuEditor() {
   const [view, setView] = useState<View>("inline");
   const [jump, setJump] = useState(0);
   const [foldOpen, setFoldOpen] = useState(false);
+  const [panel, setPanel] = useState<"offers" | "salato" | "dolce" | null>(null);
   const { index: textScale, change: changeTextScale } = useTextScale();
 
   // La scelta su dove mostrare i piatti resta in memoria sul dispositivo del locale.
@@ -401,7 +402,7 @@ function MenuEditor() {
   };
 
   return (
-    <main className="min-h-screen p-6">
+    <main className="min-h-screen p-6 pb-[50vh]">
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <StaffFullscreenButton />
         <h1 className="mr-auto font-display text-7xl text-accent">Gestione menu</h1>
@@ -452,7 +453,29 @@ function MenuEditor() {
           </div>
         </section>
       ) : (
-        <div className="mx-auto max-w-5xl"><Fold title="📂 Categorie e piatti" hint={`${cats.length}`} open={foldOpen || !!active} onToggle={setFoldOpen}><div className="space-y-4">
+        <div className="mx-auto max-w-5xl">
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          {([
+            ["cats", "📂 Categorie e piatti", `${cats.length}`],
+            ["offers", "🍱 Menu in offerta", `${menu.products.filter((p) => p.combo_items.length > 0).length}`],
+            ["salato", "🧀 Ingredienti salati", `${menu.ingredients.filter((g) => g.kind === "salato").length}`],
+            ["dolce", "🍫 Ingredienti dolci", `${menu.ingredients.filter((g) => g.kind === "dolce").length}`],
+          ] as const).map(([k, label, n]) => {
+            const on = k === "cats" ? (foldOpen || !!active) && !panel : panel === k;
+            return (
+              <button key={k} aria-expanded={on} onClick={() => {
+                if (k === "cats") { if (on) { setFoldOpen(false); if (active) closeCategory(active.id); } else { setPanel(null); setFoldOpen(true); } }
+                else { setPanel(on ? null : k); }
+              }} className={`tap flex min-h-24 items-center justify-between gap-3 rounded-3xl border-2 px-5 py-4 text-left shadow-lg ${on ? "border-accent bg-accent text-accent-foreground" : "border-border bg-card"}`}>
+                <span className="font-display text-3xl leading-tight">{label}</span>
+                <span className="shrink-0 text-xl font-bold">{n} {on ? "▲" : "▼"}</span>
+              </button>
+            );
+          })}
+        </div>
+        {panel === "offers" && <ComboOffersPanel bare />}
+        {(panel === "salato" || panel === "dolce") && <IngredientsPanel only={panel} ingredients={menu.ingredients} refresh={refresh} />}
+        {(foldOpen || !!active) && !panel && <Fold bare title="📂 Categorie e piatti"><div className="space-y-4">
           <div className="flex items-center justify-end gap-4">
             <button onClick={addCategory} className="tap rounded-xl bg-primary px-5 py-3 text-xl font-bold text-primary-foreground">
               + Nuova
@@ -505,11 +528,9 @@ function MenuEditor() {
             </div>
           ))}
           {!menu.categories.length && <p className="text-xl text-muted-foreground">Nessuna categoria: crea la prima.</p>}
-        </div></Fold></div>
+        </div></Fold>}</div>
       )}
 
-      <ComboOffersPanel />
-      <IngredientsPanel categories={menu.categories} ingredients={menu.ingredients} refresh={refresh} />
       <datalist id="ing-lib">{menu.ingredients.map((g) => <option key={g.id} value={g.name} data-price={fmt(g.price)} />)}</datalist>
     </main>
   );
@@ -586,7 +607,9 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
           + Nuovo piatto
         </button>
       </div>
+      <CategoryCustomBlock divider={divider}>
       <CategoryCustom key={[active.id, active.custom_kind, active.custom_price, active.custom_title, active.custom_title_en, active.custom_title_fr, active.custom_title_es, active.custom_title_de, active.custom_title_ar].join("|")} c={active} ingredients={menuData.ingredients} refresh={() => qc.invalidateQueries({ queryKey: ["menu"] })} />
+      </CategoryCustomBlock>
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3">
         <span className="text-xl font-bold">📖 Scheda ingredienti in cucina per tutta la categoria:</span>
         <button disabled={busy} onClick={toggleAll} className={`tap rounded-xl px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>
@@ -1192,4 +1215,9 @@ function TranslateMenuButton({ hasManual, onDone }: { hasManual: boolean; onDone
       <button type="button" onClick={() => setAsk(false)} className="tap rounded-xl bg-secondary px-4 py-3 font-bold">Annulla</button>
     </div>}
   </div>;
+}
+
+// «Crea il tuo» staccato dai piatti con la stessa linea usata tra un piatto e l'altro.
+function CategoryCustomBlock({ divider, children }: { divider: ReturnType<typeof useDivider>; children: ReactNode }) {
+  return <div className="mb-4">{children}<DividerView divider={divider} /></div>;
 }

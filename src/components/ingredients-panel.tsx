@@ -35,7 +35,7 @@ function IngredientForm({ initial, onSave, onCancel, label, listId }: { listId: 
   );
 }
 
-function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; title: string; items: MenuIngredient[]; refresh: () => Promise<unknown> }) {
+function KindList({ kind, title, items, refresh, bare }: { kind: "dolce" | "salato"; title: string; items: MenuIngredient[]; refresh: () => Promise<unknown>; bare?: boolean }) {
   const [edit, setEdit] = useState<string | null>(null);
   const listId = `grp-${kind}`;
   const groups = [...new Set(items.map((g) => g.group).filter(Boolean))].sort();
@@ -47,7 +47,7 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
     toast.success("Ingrediente salvato");
   };
   return (
-    <Fold title={title} hint={`${items.length}`}>
+    <Fold bare={!!bare} title={title} hint={`${items.length}`}>
       <datalist id={listId}>{groups.map((x) => <option key={x} value={x} />)}</datalist>
       <ul className="mb-4 space-y-2">
         {sorted.map((g) =>
@@ -100,12 +100,19 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
   const [newKind, setNewKind] = useState<"salato" | "dolce">("salato");
   const dirty = [...excluded].sort().join(",") !== [...c.custom_excluded].sort().join(",");
   const title = c.custom_title.trim() || `Crea il tuo ${c.name}`;
+  const [expanded, setExpanded] = useState(false);
+  const head = (
+    <div className="flex flex-wrap items-center gap-3">
+      <button onClick={() => setExpanded(!expanded)} className="mr-auto min-w-0 truncate text-left text-2xl font-bold">✨ {title}</button>
+      <span className={`rounded-full px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento"}</span>
+      {on && <span className="text-2xl font-bold">€ {fmt(c.custom_price)}</span>}
+      <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold">{expanded ? "▲ Comprimi" : "▼ Apri"}</button>
+    </div>
+  );
+  if (!expanded) return <div className={`mb-3 rounded-2xl border-2 p-3 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>{head}</div>;
   return (
-    <div className={`mb-4 rounded-2xl border-2 p-4 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="mr-auto text-2xl font-bold">✨ {title}</span>
-        <span className={`rounded-full px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento · non si vede sul totem"}</span>
-      </div>
+    <div className={`mb-3 rounded-2xl border-2 p-4 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>
+      {head}
       <Fold open={open} onToggle={setOpen} title="Impostazioni «Crea il tuo»" hint={on ? `${offered.length - offered.filter((g) => excluded.includes(g.id)).length} ingredienti` : "spento"}>
         <div className="flex flex-wrap items-center gap-3">
           <select aria-label={`Crea il tuo ${c.name}`} value={c.custom_kind} onChange={(e) => save(e.target.value)} className={field}>
@@ -225,13 +232,17 @@ function TranslateIngredientsButton({ refresh }: { refresh: () => Promise<unknow
   );
 }
 
-export function IngredientsPanel({ ingredients, refresh }: { categories?: MenuCategory[]; ingredients: MenuIngredient[]; refresh: () => Promise<unknown> }) {
+export function IngredientsPanel({ ingredients, refresh, only }: { categories?: MenuCategory[]; ingredients: MenuIngredient[]; refresh: () => Promise<unknown>; only?: "salato" | "dolce" }) {
+  if (only) return (
+    <div className="grid gap-4">
+      <KindList bare kind={only} title={only === "salato" ? "🧀 Ingredienti salati" : "🍫 Ingredienti dolci"} items={ingredients.filter((g) => g.kind === only)} refresh={refresh} />
+      <p className="text-lg text-muted-foreground">Scrivi ogni ingrediente una volta, con il nome nelle lingue e il prezzo. Usa gli stessi nomi italiani nelle opzioni dei piatti: sul totem compariranno tradotti. "Non disponibile" lo nasconde ovunque sul totem.</p>
+      <FillPricesButton refresh={refresh} />
+      <TranslateIngredientsButton refresh={refresh} />
+    </div>
+  );
   return (
     <div className="mt-10 grid gap-6">
-      <h2 className="font-display text-6xl">Ingredienti</h2>
-      <p className="-mt-4 text-xl text-muted-foreground">
-        Scrivi ogni ingrediente una volta, con il nome nelle 4 lingue e il prezzo quando lo si aggiunge. Usa gli stessi nomi italiani nelle opzioni dei piatti: sul totem compariranno tradotti. "Non disponibile" lo nasconde ovunque sul totem.
-      </p>
       <KindList kind="salato" title="🧀 Ingredienti salati" items={ingredients.filter((g) => g.kind === "salato")} refresh={refresh} />
       <KindList kind="dolce" title="🍫 Ingredienti dolci" items={ingredients.filter((g) => g.kind === "dolce")} refresh={refresh} />
       <FillPricesButton refresh={refresh} />
