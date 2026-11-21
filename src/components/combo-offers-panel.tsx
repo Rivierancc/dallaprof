@@ -35,12 +35,15 @@ export function ComboOffersPanel({ bare = false }: { bare?: boolean } = {}) {
       <Fold bare={bare} open={bare} title="🍱 Menu offerta" hint={`${menus.length} menu · ${offers} in offerta`}>
         <div className="grid gap-5">
           <p className="text-lg text-muted-foreground">Ogni piatto resta in vendita da solo nella sua categoria. Qui lo trasformi anche in menu: scegli dalle categorie cosa può scegliere il cliente (contorno, bevanda, dolce) e il prezzo totale; ogni menu compare da solo nella sezione speciale del totem; con «⭐ In evidenza» va in cima con la stellina.</p>
+          <TitleDrawer current={menu.offersTitle || "Menu in offerta"}>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-4">
             <label className="flex min-w-0 flex-1 items-center gap-2 text-xl">Nome della sezione sul totem
               <input value={title} maxLength={40} onChange={(e) => setTitle(e.target.value)} placeholder="Menu in offerta" className={`${box} min-w-0 flex-1`} /></label>
             <button onClick={async () => { try { await saveTitle({ data: { title, tr: menu.offersTitleTr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); toast.success("Nome sezione salvato"); } catch (e) { toast.error(e instanceof Error ? e.message : "Errore"); } }} className={`${btn} bg-primary text-primary-foreground`}>Salva nome</button>
             <div className="w-full"><TranslationsEditor label="🌍 Nome della sezione nelle altre lingue" value={menu.offersTitleTr} onSave={async (tr) => { await saveTitle({ data: { title, tr } }); await qc.invalidateQueries({ queryKey: ["menu"] }); }} /></div>
           </div>
+          </TitleDrawer>
+          <DividerView divider={divider} />
           {menus.length > 0 && <div className="flex justify-end"><button onClick={() => setClosed(allClosed ? new Set() : new Set(menus.map((p) => p.id)))} className={`${btn} bg-secondary`}>{allClosed ? "▼ Apri tutti i menu" : "▲ Comprimi tutti i menu"}</button></div>}
           {menus.map((p, i) => (
             <Fragment key={p.id}>
@@ -260,6 +263,20 @@ function NewMenuDrawer({ children }: { children: ReactNode }) {
         <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="tap pill3d bg-secondary px-4 py-3 text-xl font-bold">{open ? "▲ Comprimi" : "▼ Apri"}</button>
       </div>
       {open && <div className="mt-3 grid gap-3"><p className="text-lg text-muted-foreground">Scegli il piatto da cui partire: diventa un menu qui sopra.</p>{children}</div>}
+    </div>
+  );
+}
+
+// Cassetto «Nome della sezione»: chiuso di default, mostra il nome attuale.
+function TitleDrawer({ current, children }: { current: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl border-2 border-border bg-background/20 p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => setOpen(!open)} className="mr-auto text-left text-2xl font-bold">🏷️ Nome della sezione sul totem <span className="font-normal text-muted-foreground">({current})</span></button>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="tap pill3d bg-secondary px-4 py-3 text-xl font-bold">{open ? "▲ Comprimi" : "▼ Apri"}</button>
+      </div>
+      {open && <div className="mt-3 grid gap-3">{children}</div>}
     </div>
   );
 }
