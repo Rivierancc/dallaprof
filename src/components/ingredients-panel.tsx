@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, setCategoryNameTr, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
 import { Fold } from "@/components/fold";
 import { TranslationsEditor } from "@/components/translations-editor";
+import { translateIngredients } from "@/lib/translate.functions";
 import { Button } from "@/components/ui/button";
 
 const fmt = (n: number) => n.toFixed(2).replace(".", ",");
@@ -83,53 +84,94 @@ function KindList({ kind, title, items, refresh }: { kind: "dolce" | "salato"; t
   );
 }
 
-function CategoryCustom({ c, refresh }: { c: MenuCategory; refresh: () => Promise<unknown> }) {
+// «Crea il tuo» della singola categoria: si mostra dentro la categoria in Gestione menu.
+export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; ingredients: MenuIngredient[]; refresh: () => Promise<unknown> }) {
   const [price, setPrice] = useState(fmt(c.custom_price));
   const [titles, setTitles] = useState({ custom_title: c.custom_title, custom_title_en: c.custom_title_en, custom_title_fr: c.custom_title_fr, custom_title_es: c.custom_title_es, custom_title_de: c.custom_title_de, custom_title_ar: c.custom_title_ar });
+  const [excluded, setExcluded] = useState<string[]>(c.custom_excluded);
   const [busy, setBusy] = useState(false);
-  const save = async (kind: string, p = price) => {
-    try { await setCategoryCustom({ data: { id: c.id, kind, price: p } }); await refresh(); toast.success("Salvato"); } catch (e) { err(e); }
+  const on = c.custom_kind !== "none";
+  const save = async (kind: string, p = price, ex = excluded) => {
+    try { await setCategoryCustom({ data: { id: c.id, kind, price: p, excluded: ex } }); await refresh(); toast.success("Salvato"); } catch (e) { err(e); }
   };
+  const offered = ingredients.filter((g) => c.custom_kind === "entrambi" || g.kind === c.custom_kind).sort((a, b) => (a.group || "~").localeCompare(b.group || "~") || a.name.localeCompare(b.name));
+  const toggle = (id: string) => { const ex = excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id]; setExcluded(ex); void save(c.custom_kind, price, ex); };
+  const title = c.custom_title.trim() || `Crea il tuo ${c.name}`;
   return (
-    <li className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3">
-      <span className="min-w-40 flex-1 text-2xl font-bold">{c.name}</span>
-      <select aria-label={`Crea il tuo ${c.name}`} value={c.custom_kind} onChange={(e) => save(e.target.value)} className={field}>
-        <option value="none">No</option>
-        <option value="salato">Sì, ingredienti salati</option>
-        <option value="dolce">Sì, ingredienti dolci</option>
-        <option value="entrambi">Sì, dolci e salati</option>
-      </select>
-      <label className="flex items-center gap-2 text-xl">
-        Prezzo base €
-        <input aria-label="Prezzo base" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onBlur={() => save(c.custom_kind)} className={`${field} w-24 text-center`} />
-      </label>
-      <div className="w-full"><TranslationsEditor label={`🌍 Nome «${c.name}» nelle altre lingue`} value={c.name_tr} onSave={async (tr) => { await setCategoryNameTr({ data: { id: c.id, tr } }); await refresh(); }} /></div>
-      <div className="grid w-full min-w-0 gap-3 sm:grid-cols-2">
-        {([
-          ["custom_title", "Titolo italiano", "Crea la tua piadina"],
-          ["custom_title_en", "Titolo inglese", "Create your own flatbread"],
-          ["custom_title_fr", "Titolo francese", "Composez votre galette"],
-          ["custom_title_es", "Titolo spagnolo", "Crea tu piadina"],
-          ["custom_title_de", "Titolo tedesco", "Stell deine Piadina zusammen"],
-          ["custom_title_ar", "Titolo arabo", "اصنع البيادينا الخاصة بك"],
-        ] as const).map(([key, label, placeholder]) => (
-          <label key={key} className="grid min-w-0 gap-1 text-lg">
-            {label}
-            <input aria-label={`${label} ${c.name}`} maxLength={120} placeholder={placeholder} value={titles[key]} onChange={(e) => setTitles({ ...titles, [key]: e.target.value })} className={field} />
-          </label>
-        ))}
+    <div className={`mb-4 rounded-2xl border-2 p-4 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="mr-auto text-2xl font-bold">✨ {title}</span>
+        <span className={`rounded-full px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento · non si vede sul totem"}</span>
       </div>
-      <Button disabled={busy} onClick={async () => {
-        setBusy(true);
-        try { await setCategoryCustomTitles({ data: { id: c.id, ...titles } }); await refresh(); toast.success("Titoli salvati"); }
-        catch (e) { err(e); }
-        finally { setBusy(false); }
-      }} className="tap h-auto whitespace-normal px-5 py-3 text-xl font-bold">{busy ? "Salvataggio…" : "Salva titoli"}</Button>
-    </li>
+      <Fold title="Impostazioni «Crea il tuo»" hint={on ? `${offered.length - offered.filter((g) => excluded.includes(g.id)).length} ingredienti` : "spento"}>
+        <div className="flex flex-wrap items-center gap-3">
+          <select aria-label={`Crea il tuo ${c.name}`} value={c.custom_kind} onChange={(e) => save(e.target.value)} className={field}>
+            <option value="none">Spento (non si vede sul totem)</option>
+            <option value="salato">Acceso, ingredienti salati</option>
+            <option value="dolce">Acceso, ingredienti dolci</option>
+            <option value="entrambi">Acceso, dolci e salati</option>
+          </select>
+          <label className="flex items-center gap-2 text-xl">
+            Prezzo base €
+            <input aria-label="Prezzo base" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} onBlur={() => save(c.custom_kind)} className={`${field} w-24 text-center`} />
+          </label>
+        </div>
+        {on && (
+          <div className="mt-4">
+            <p className="mb-2 text-xl font-bold">Ingredienti che il cliente può scegliere — tocca per escludere o rimettere:</p>
+            <div className="flex flex-wrap gap-2">
+              {offered.map((g) => {
+                const out = excluded.includes(g.id);
+                return (
+                  <button key={g.id} onClick={() => toggle(g.id)} className={`tap rounded-full px-4 py-2 text-lg font-bold ${out ? "bg-secondary text-muted-foreground line-through" : "bg-success text-success-foreground"}`}>
+                    {out ? "✕" : "✓"} {g.name}{g.price ? ` · € ${fmt(g.price)}` : ""}{!g.available ? " (non disp.)" : ""}
+                  </button>
+                );
+              })}
+              {!offered.length && <p className="text-lg text-muted-foreground">Nessun ingrediente in archivio di questo tipo.</p>}
+            </div>
+          </div>
+        )}
+        <div className="mt-4"><TranslationsEditor label={`🌍 Nome «${c.name}» nelle altre lingue`} value={c.name_tr} onSave={async (tr) => { await setCategoryNameTr({ data: { id: c.id, tr } }); await refresh(); }} /></div>
+        <div className="mt-3 grid w-full min-w-0 gap-3 sm:grid-cols-2">
+          {([
+            ["custom_title", "Titolo italiano", "Crea la tua piadina"],
+            ["custom_title_en", "Titolo inglese", "Create your own flatbread"],
+            ["custom_title_fr", "Titolo francese", "Composez votre galette"],
+            ["custom_title_es", "Titolo spagnolo", "Crea tu piadina"],
+            ["custom_title_de", "Titolo tedesco", "Stell deine Piadina zusammen"],
+            ["custom_title_ar", "Titolo arabo", "اصنع البيادينا الخاصة بك"],
+          ] as const).map(([key, label, placeholder]) => (
+            <label key={key} className="grid min-w-0 gap-1 text-lg">
+              {label}
+              <input aria-label={`${label} ${c.name}`} maxLength={120} placeholder={placeholder} value={titles[key]} onChange={(e) => setTitles({ ...titles, [key]: e.target.value })} className={field} />
+            </label>
+          ))}
+        </div>
+        <Button disabled={busy} onClick={async () => {
+          setBusy(true);
+          try { await setCategoryCustomTitles({ data: { id: c.id, ...titles } }); await refresh(); toast.success("Titoli salvati"); }
+          catch (e) { err(e); }
+          finally { setBusy(false); }
+        }} className="tap mt-3 h-auto whitespace-normal px-5 py-3 text-xl font-bold">{busy ? "Salvataggio…" : "Salva titoli"}</Button>
+      </Fold>
+    </div>
   );
 }
 
-export function IngredientsPanel({ categories, ingredients, refresh }: { categories: MenuCategory[]; ingredients: MenuIngredient[]; refresh: () => Promise<unknown> }) {
+function TranslateIngredientsButton({ refresh }: { refresh: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button disabled={busy} variant="secondary" onClick={async () => {
+      setBusy(true);
+      try { const r = await translateIngredients(); await refresh(); toast.success(`Tradotti ${r.done} ingredienti${r.failed ? ` · ${r.failed} non riusciti` : ""}`); }
+      catch (e) { err(e); }
+      finally { setBusy(false); }
+    }} className="tap h-auto w-fit whitespace-normal px-5 py-3 text-xl font-bold">{busy ? "Traduzione in corso…" : "🌍 Traduci gli ingredienti senza traduzione"}</Button>
+  );
+}
+
+export function IngredientsPanel({ ingredients, refresh }: { categories?: MenuCategory[]; ingredients: MenuIngredient[]; refresh: () => Promise<unknown> }) {
   return (
     <div className="mt-10 grid gap-6">
       <h2 className="font-display text-6xl">Ingredienti</h2>
@@ -138,12 +180,7 @@ export function IngredientsPanel({ categories, ingredients, refresh }: { categor
       </p>
       <KindList kind="salato" title="🧀 Ingredienti salati" items={ingredients.filter((g) => g.kind === "salato")} refresh={refresh} />
       <KindList kind="dolce" title="🍫 Ingredienti dolci" items={ingredients.filter((g) => g.kind === "dolce")} refresh={refresh} />
-      <Fold title="✨ Crea il tuo piatto">
-        <p className="mb-3 text-xl text-muted-foreground">Per ogni categoria scegli se il cliente può comporre un piatto da zero e con quali ingredienti. Il prezzo finale = prezzo base + ingredienti scelti.</p>
-        <ul className="space-y-2">
-          {categories.map((c) => <CategoryCustom key={[c.id, c.custom_price, c.custom_title, c.custom_title_en, c.custom_title_fr, c.custom_title_es, c.custom_title_de, c.custom_title_ar].join("|")} c={c} refresh={refresh} />)}
-        </ul>
-      </Fold>
+      <TranslateIngredientsButton refresh={refresh} />
     </div>
   );
 }

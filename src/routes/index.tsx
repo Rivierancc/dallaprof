@@ -397,7 +397,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
         <>
           {ffOn && shown.length === 0 && <p className="mb-6 text-3xl text-muted-foreground">{ffOn.emoji} {ffOn.label}: —</p>}
           <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : "grid gap-6"} style={dl.scroll ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
-            {cat && customIngredients(cat.custom_kind, lib).length > 0 && (
+            {cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length > 0 && (
               <Button variant="ghost" onClick={() => setCompose(cat)} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
                 <div className="grid h-44 w-full place-items-center rounded-2xl bg-muted text-8xl">✨</div>
                 <h3 className="mt-4 break-words font-display text-4xl leading-tight">{customTitleFor(cat, language)}</h3>
@@ -424,7 +424,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                 <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
               </Button>
             ))}
-            {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
+            {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
           </div>
         </>
       )}
@@ -651,7 +651,7 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
   const { language, orderType } = useCustomer()
   const t = copy[language]
   const [ids, setIds] = useState<string[]>([])
-  const list = customIngredients(category.custom_kind, lib)
+  const list = customIngredients(category.custom_kind, lib, category.custom_excluded)
   const chosen = list.filter((g) => ids.includes(g.id))
   const total = category.custom_price + chosen.reduce((s, g) => s + g.price, 0)
   const groups = ([["salato", t.savory], ["dolce", t.sweet]] as const).flatMap(([k, title]) => {

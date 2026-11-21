@@ -32,7 +32,7 @@ import {
 } from "@/lib/menu.functions";
 import { fileToSmallJpeg } from "@/lib/image";
 import { PhotoCrop } from "@/components/photo-crop";
-import { IngredientsPanel } from "@/components/ingredients-panel";
+import { IngredientsPanel, CategoryCustom } from "@/components/ingredients-panel";
 import { DividerView, useDivider } from "@/components/menu-divider";
 import { Fold } from "@/components/fold";
 import { ComboOffersPanel } from "@/components/combo-offers-panel";
@@ -557,6 +557,7 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
   const divider = useDivider();
   const qc = useQueryClient();
   const setRecipe = useServerFn(setCategoryRecipe);
+  const { data: menuData } = useSuspenseQuery(menuQueryOptions);
   const [busy, setBusy] = useState(false);
   const [closed, setClosed] = useState<Set<string>>(new Set());
   const toggleRow = (id: string) => setClosed((c) => { const n = new Set(c); if (n.has(id)) n.delete(id); else n.add(id); return n; });
@@ -583,6 +584,7 @@ function ProductsSection({ active, products, h, onClose }: { active: MenuCategor
           + Nuovo piatto
         </button>
       </div>
+      <CategoryCustom key={[active.id, active.custom_kind, active.custom_price, active.custom_title, active.custom_title_en, active.custom_title_fr, active.custom_title_es, active.custom_title_de, active.custom_title_ar, active.custom_excluded.join(",")].join("|")} c={active} ingredients={menuData.ingredients} refresh={() => qc.invalidateQueries({ queryKey: ["menu"] })} />
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3">
         <span className="text-xl font-bold">📖 Scheda ingredienti in cucina per tutta la categoria:</span>
         <button disabled={busy} onClick={toggleAll} className={`tap rounded-xl px-5 py-2 text-xl font-bold disabled:opacity-50 ${anyOn ? "bg-accent text-accent-foreground" : "bg-secondary"}`}>

@@ -257,6 +257,7 @@ export type Database = {
       menu_categories: {
         Row: {
           active: boolean
+          custom_excluded: Json
           custom_kind: string
           custom_price: number
           custom_title: string
@@ -276,6 +277,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          custom_excluded?: Json
           custom_kind?: string
           custom_price?: number
           custom_title?: string
@@ -295,6 +297,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          custom_excluded?: Json
           custom_kind?: string
           custom_price?: number
           custom_title?: string

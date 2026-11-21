@@ -65,6 +65,7 @@ export type MenuCategory = {
   custom_title_es: string;
   custom_title_de: string;
   custom_title_ar: string;
+  custom_excluded: string[];
   name_tr: Translations;
   strip: number;
 };
@@ -147,7 +148,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
   const db = (await publishable());
   const [c, p, g, b] = await Promise.all([
     db.from("menu_categories")
-      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, custom_title_de, custom_title_ar, name_tr, strip")
+      .select("id, slug, name, image_path, position, custom_kind, custom_price, custom_title, custom_title_en, custom_title_fr, custom_title_es, custom_title_de, custom_title_ar, custom_excluded, name_tr, strip")
       .eq("active", true)
       .order("position", { ascending: true }),
     db.from("menu_products")
@@ -183,6 +184,7 @@ export const getMenu = createServerFn({ method: "GET" }).handler(async (): Promi
       custom_title_es: r.custom_title_es,
       custom_title_de: r.custom_title_de ?? "",
       custom_title_ar: r.custom_title_ar ?? "",
+      custom_excluded: Array.isArray(r.custom_excluded) ? (r.custom_excluded as unknown[]).map(String) : [],
       name_tr: cleanTranslations(r.name_tr),
       strip: Number(r.strip) || 0,
     })),
@@ -720,16 +722,17 @@ export const deleteIngredientSafe = createServerFn({ method: "POST" })
   });
 
 export const setCategoryCustom = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; kind: string; price: number | string }) => {
+  .inputValidator((d: { id: string; kind: string; price: number | string; excluded?: string[] }) => {
+    const excluded = Array.isArray(d.excluded) ? d.excluded.map(String).slice(0, 1000) : undefined;
     const price = Number(String(d.price ?? "0").replace(",", "."));
     if (!Number.isFinite(price) || price < 0) throw new Error("Prezzo non valido");
     const kind = ["dolce", "salato", "entrambi"].includes(d.kind) ? d.kind : "none";
-    return { id: String(d.id), kind, price: Math.round(price * 100) / 100 };
+    return { id: String(d.id), kind, price: Math.round(price * 100) / 100, excluded };
   })
   .handler(async ({ data }) => {
     await staffOnly();
     const db = await admin();
-    const { error } = await db.from("menu_categories").update({ custom_kind: data.kind, custom_price: data.price }).eq("id", data.id);
+    const { error } = await db.from("menu_categories").update({ custom_kind: data.kind, custom_price: data.price, ...(data.excluded ? { custom_excluded: data.excluded } : {}) } as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });

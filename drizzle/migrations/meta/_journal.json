@@ -316,6 +316,13 @@
       "when": 1795201430751,
       "tag": "0044_master_recovery_email",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1795271119197,
+      "tag": "0045_category_custom_excluded",
+      "breakpoints": true
     }
   ]
 }

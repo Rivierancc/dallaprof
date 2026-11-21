@@ -59,3 +59,35 @@ export const translateDescriptions = createServerFn({ method: "POST" })
     }
     return { done, failed };
   });
+
+const ING_COLS = { EN: "name_en", FR: "name_fr", ES: "name_es", DE: "name_de", AR: "name_ar" } as const;
+
+/** Riempie solo le lingue vuote dei nomi degli ingredienti dell'archivio. */
+export const translateIngredients = createServerFn({ method: "POST" }).handler(async () => {
+  const { requireStaff } = await import("@/lib/staff.server");
+  await requireStaff();
+  const db = await admin();
+  const { data: rows, error } = await db.from("menu_ingredients").select("id, name, name_en, name_fr, name_es, name_de, name_ar");
+  if (error) throw new Error(error.message);
+  let done = 0, failed = 0;
+  for (const r of rows ?? []) {
+    const text = (r.name ?? "").trim();
+    if (!text) continue;
+    const langs = (Object.keys(ING_COLS) as Lang[]).filter((l) => !String((r as Record<string, unknown>)[ING_COLS[l]] ?? "").trim());
+    if (!langs.length) continue;
+    try {
+      const t = await translateOne(text, langs);
+      const patch: Record<string, string> = {};
+      for (const l of langs) if (t[l]) patch[ING_COLS[l]] = t[l]!.slice(0, 120);
+      if (Object.keys(patch).length) {
+        const { error: e } = await db.from("menu_ingredients").update(patch as never).eq("id", r.id);
+        if (e) throw e;
+        done++;
+      }
+    } catch (e) {
+      console.error("translate ingredient failed", r.id, e);
+      failed++;
+    }
+  }
+  return { done, failed };
+});

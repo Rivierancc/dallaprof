@@ -74,6 +74,7 @@ export type Category = {
   custom_title_es: string;
   custom_title_de: string;
   custom_title_ar: string;
+  custom_excluded: string[];
   name_tr: import("@/lib/customer").Translations;
   strip: number;
 };
@@ -105,8 +106,9 @@ export const ingredientLabel = (name: string, list: Ingredient[], language: "IT"
 // Un ingrediente dell'archivio segnato "non disponibile" sparisce dal totem.
 export const ingredientOff = (name: string, list: Ingredient[]) =>
   list.some((x) => x.name.toLowerCase() === name.toLowerCase() && !x.available);
-export const customIngredients = (kind: Category["custom_kind"], list: Ingredient[]) =>
-  kind === "none" ? [] : list.filter((g) => g.available && (kind === "entrambi" || g.kind === kind));
+// Ingredienti offerti nel «Crea il tuo» di una categoria: spento = nessuno; gli esclusi della categoria non compaiono.
+export const customIngredients = (kind: Category["custom_kind"], list: Ingredient[], excluded: string[] = []) =>
+  kind === "none" ? [] : list.filter((g) => g.available && !excluded.includes(g.id) && (kind === "entrambi" || g.kind === kind));
 
 export const euro = (n: number) => `€ ${n.toFixed(2).replace(".", ",")}`;
 
