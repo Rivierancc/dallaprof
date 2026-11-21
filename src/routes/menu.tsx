@@ -930,7 +930,6 @@ function ProductRow({
       </select>
       <DeleteButton onConfirm={() => void run(onDelete)} />
       {toggleBtn}
-      <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
       <textarea
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
@@ -940,6 +939,8 @@ function ProductRow({
         placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
         className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
       />
+      {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
+      {open && <ProductRules p={p} />}
       <button type="button" onClick={() => setTrOpen((o) => !o)} aria-expanded={trOpen} className="tap w-full basis-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">🌍 Traduzioni (EN, FR, ES, DE, AR) {trOpen ? "▲" : "▼"}</button>
       {trOpen && <div className="flex w-full basis-full flex-wrap items-center gap-3">
         <button type="button" disabled={!p.description.trim()} onClick={() => void onRetranslate()} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold disabled:opacity-50" title="Traduce di nuovo la descrizione italiana in tutte le lingue">
@@ -950,9 +951,8 @@ function ProductRow({
       {trOpen && <div className="grid w-full basis-full gap-3 md:grid-cols-3">
         {(["EN", "FR", "ES", "DE", "AR"] as const).map((language) => <TranslationField key={language} language={language} value={({ EN: p.description_en, FR: p.description_fr, ES: p.description_es, DE: p.description_de, AR: p.description_ar })[language]} onSave={(text) => run(() => onTranslation(language, text))} />)}
       </div>}
-      {open && <OptionsEditor p={p} onSave={(i, e) => run(() => onOptions(i, e))} />}
-      {open && <ProductRules p={p} />}
-      <div className="flex w-full basis-full justify-end">
+      <div className="flex w-full basis-full flex-wrap items-center gap-3">
+        <BadgeEditor p={p} onSave={(on, text, blink) => run(() => onBadge(on, text, blink))} />
         <button onClick={onToggle} aria-expanded={!collapsed} className="tap rounded-xl bg-secondary px-4 py-3 text-xl font-bold" title="Comprimi la scheda del piatto">▲ Comprimi piatto</button>
       </div>
     </li>
@@ -1131,7 +1131,7 @@ function BadgeEditor({ p, onSave }: { p: MenuProduct; onSave: (on: boolean, text
     onSave(on, t.trim(), blink);
   };
   return (
-    <div className="flex w-full basis-full flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-3">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3 rounded-xl bg-muted/50 p-3">
       <span className="text-xl font-bold">💬 Fumetto</span>
       <button
         role="switch"
