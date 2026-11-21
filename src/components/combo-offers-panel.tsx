@@ -55,6 +55,8 @@ export function ComboOffersPanel({ bare = false }: { bare?: boolean } = {}) {
               ) : <ComboEditor p={p} onCollapse={() => toggle(p.id)} />}
             </Fragment>
           ))}
+          {menus.length > 0 && <DividerView divider={divider} />}
+          <NewMenuDrawer>
           <select value="" onChange={(e) => e.target.value && setExtra((x) => [...x, e.target.value])} className={`${box} w-full`}>
             <option value="">+ Crea un menu da un piatto…</option>
             {menu.categories.map((c) => (
@@ -63,6 +65,7 @@ export function ComboOffersPanel({ bare = false }: { bare?: boolean } = {}) {
               </optgroup>
             ))}
           </select>
+          </NewMenuDrawer>
         </div>
       </Fold>
     </div>
@@ -243,6 +246,20 @@ function Drawer({ title, hint, children }: { title: string; hint: string; childr
     <div>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap w-full rounded-xl bg-secondary px-4 py-3 text-left text-xl font-bold">{title} <span className="font-normal text-muted-foreground">({hint})</span> {open ? "▲" : "▼"}</button>
       {open && <div className="mt-3">{children}<div className="mt-3 flex justify-end"><button type="button" onClick={() => setOpen(false)} className={`${btn} bg-secondary`}>▲ Chiudi</button></div></div>}
+    </div>
+  );
+}
+
+// Cassetto «Nuovo menu»: chiuso di default, si apre solo quando serve.
+function NewMenuDrawer({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl border-2 border-border bg-background/20 p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => setOpen(!open)} className="mr-auto text-left text-2xl font-bold">➕ Nuovo menu</button>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="tap pill3d bg-secondary px-4 py-3 text-xl font-bold">{open ? "▲ Comprimi" : "▼ Apri"}</button>
+      </div>
+      {open && <div className="mt-3 grid gap-3"><p className="text-lg text-muted-foreground">Scegli il piatto da cui partire: diventa un menu qui sopra.</p>{children}</div>}
     </div>
   );
 }

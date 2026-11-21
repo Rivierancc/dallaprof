@@ -4,7 +4,7 @@ export type ManualMode = "fast_food" | "restaurant" | "both";
 export type ManualEntry = { only?: "fast_food" | "restaurant"; title: string; where: string; steps: string[]; tips?: string[] };
 export type ManualSection = { only?: "fast_food" | "restaurant"; id: string; title: string; entries: ManualEntry[] };
 
-export const MANUAL_UPDATED = "21 novembre 2026 (pulsanti 3D)"
+export const MANUAL_UPDATED = "21 novembre 2026 (pulsanti 3D, cassetto Nuovo menu)"
 // 16/11: bandierine e icone del totem disegnate, visibili anche su Windows 7.
 
 export const MANUAL: ManualSection[] = [
