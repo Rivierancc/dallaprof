@@ -223,7 +223,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           <Button variant="ghost" onClick={() => setDineOption("qui")} className={`whitespace-normal tap flex h-28 items-center justify-center gap-4 rounded-3xl border-4 border-accent bg-card px-4 [@media(max-height:900px)]:h-16 [@media(max-height:900px)]:gap-2 ${custom ? "glow ring-4 ring-accent" : ""}`}>
             <span className="text-5xl [@media(max-height:900px)]:text-3xl"><HereIcon /></span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.here}</span>
           </Button>
-          <Button variant="ghost" onClick={() => setDineOption("asporto")} className={`whitespace-normal tap flex h-28 items-center justify-center gap-4 rounded-3xl border-4 border-primary bg-card px-4 [@media(max-height:900px)]:h-16 [@media(max-height:900px)]:gap-2 ${custom ? "glow ring-4 ring-primary" : ""}`}>
+          <Button variant="ghost" onClick={() => setDineOption("asporto")} className={`whitespace-normal tap flex h-28 items-center justify-center gap-4 rounded-3xl border-4 border-primary bg-card px-4 hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary [@media(max-height:900px)]:h-16 [@media(max-height:900px)]:gap-2 ${custom ? "glow ring-4 ring-primary" : ""}`}>
             <span className="text-5xl [@media(max-height:900px)]:text-3xl"><TakeawayIcon /></span><span className="font-display text-5xl [@media(max-height:900px)]:text-3xl">{t.takeaway}</span>
           </Button>
         </div>
