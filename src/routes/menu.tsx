@@ -497,12 +497,13 @@ function MenuEditor() {
                 onDrop={() => dropCategory(c.id)}
                 className="flex items-stretch gap-2"
               >
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col justify-center gap-2" style={{ ["--a" as string]: `oklch(0.66 0.17 ${(i * 47 + 245) % 360})`, ["--b" as string]: `oklch(0.42 0.14 ${(i * 47 + 245) % 360})` }}>
                   <button
                     onClick={() => moveCategory(c.id, -1)}
                     disabled={i === 0 || !!order}
                     aria-label={`Sposta su ${c.name}`}
-                    className="tap flex-1 rounded-xl bg-primary px-3 text-3xl font-bold text-primary-foreground disabled:opacity-25"
+                    style={{ background: "radial-gradient(circle at 35% 25%, color-mix(in oklch, var(--a), white 35%), var(--a) 45%, var(--b))", boxShadow: "0 4px 0 var(--b), 0 6px 10px rgb(0 0 0 / 0.4), inset 0 1px 1px rgb(255 255 255 / 0.5)" }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-primary-foreground transition-transform active:translate-y-1 active:shadow-none disabled:opacity-25"
                   >
                     ▲
                   </button>
@@ -510,7 +511,8 @@ function MenuEditor() {
                     onClick={() => moveCategory(c.id, 1)}
                     disabled={i === cats.length - 1 || !!order}
                     aria-label={`Sposta giù ${c.name}`}
-                    className="tap flex-1 rounded-xl bg-primary px-3 text-3xl font-bold text-primary-foreground disabled:opacity-25"
+                    style={{ background: "radial-gradient(circle at 35% 25%, color-mix(in oklch, var(--a), white 35%), var(--a) 45%, var(--b))", boxShadow: "0 4px 0 var(--b), 0 6px 10px rgb(0 0 0 / 0.4), inset 0 1px 1px rgb(255 255 255 / 0.5)" }}
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-primary-foreground transition-transform active:translate-y-1 active:shadow-none disabled:opacity-25"
                   >
                     ▼
                   </button>

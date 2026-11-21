@@ -738,8 +738,13 @@ function CategoryStrip({ cats, onPick, size, initial, light }: { cats: Category[
     update()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cats.length])
+  // Prove da PC: clicca e trascina col mouse; il tocco resta quello nativo.
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
+  const onDown = (e: { pointerType: string; clientX: number }) => { if (e.pointerType !== "mouse" || !ref.current) return; drag.current = { x: e.clientX, left: ref.current.scrollLeft, moved: false }; ref.current.style.scrollSnapType = "none" }
+  const onMoveDrag = (e: { pointerType: string; clientX: number }) => { const d = drag.current; const el = ref.current; if (!d || !el) return; const dx = e.clientX - d.x; if (Math.abs(dx) > 6) d.moved = true; if (d.moved) el.scrollLeft = d.left - dx }
+  const onUp = () => { const el = ref.current; if (el) el.style.scrollSnapType = ""; setTimeout(() => { drag.current = null }, 0) }
   return (
-    <div ref={ref} onScroll={update} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
+    <div ref={ref} onScroll={update} onPointerDown={onDown} onPointerMove={onMoveDrag} onPointerUp={onUp} onPointerLeave={onUp} onClickCapture={(e) => { if (drag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} onDragStart={(e) => e.preventDefault()} className="relative col-span-full flex snap-x snap-mandatory items-center gap-4 overflow-x-auto py-4 [scrollbar-width:none]">
       <div aria-hidden className={`${light ? "w-[4%]" : "w-[20%]"} shrink-0`} />
       {cats.map((c, i) => (
         <Button variant="ghost" data-strip-item key={c.id} onClick={() => onPick(c.id)} className={`whitespace-normal tap relative shrink-0 snap-center overflow-hidden rounded-3xl ${light ? "bg-secondary" : "bg-card"} transition-[opacity,border-color] duration-300 ${light ? "w-[36%]" : "w-[55%] border-4"} ${i === center ? (light ? "" : "border-accent") : `${light ? "" : "border-transparent"} opacity-70`}`} style={{ height: `${tile.h * 1.15 * (light ? 0.5 : 1)}rem` }}>
