@@ -884,15 +884,19 @@ function ProductRow({
           ▼
         </button>
       </div>
-      <textarea
-        value={desc}
-        onChange={(e) => setDesc(e.target.value)}
-        onBlur={() => desc.trim() !== p.description && run(() => onDescription(desc.trim()))}
-        rows={2}
-        maxLength={300}
-        placeholder="Descrizione / ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
-        className="w-full basis-full rounded-xl bg-muted px-4 py-3 text-xl outline-none"
-      />
+      <label className="block w-full basis-full rounded-xl bg-muted px-4 py-3">
+        <span className="block text-2xl font-bold">Descrizione:</span>
+        <textarea
+          ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; } }}
+          value={desc}
+          onChange={(e) => { setDesc(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${e.target.scrollHeight}px`; }}
+          onBlur={() => desc.trim() !== p.description && run(() => onDescription(desc.trim()))}
+          rows={1}
+          maxLength={300}
+          placeholder="ingredienti (es. pane brioche, manzo 180g, cheddar, insalata)"
+          className="block w-full resize-none overflow-hidden bg-transparent text-xl outline-none"
+        />
+      </label>
       <button
         role="switch"
         aria-checked={p.is_featured}
