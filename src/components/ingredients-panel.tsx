@@ -95,7 +95,9 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
     try { await setCategoryCustom({ data: { id: c.id, kind, price: p, excluded: ex } }); await refresh(); toast.success("Salvato"); } catch (e) { err(e); }
   };
   const offered = ingredients.filter((g) => c.custom_kind === "entrambi" || g.kind === c.custom_kind).sort((a, b) => (a.group || "~").localeCompare(b.group || "~") || a.name.localeCompare(b.name));
-  const toggle = (id: string) => { const ex = excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id]; setExcluded(ex); void save(c.custom_kind, price, ex); };
+  const toggle = (id: string) => setExcluded(excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id]);
+  const [open, setOpen] = useState(false);
+  const dirty = [...excluded].sort().join(",") !== [...c.custom_excluded].sort().join(",");
   const title = c.custom_title.trim() || `Crea il tuo ${c.name}`;
   return (
     <div className={`mb-4 rounded-2xl border-2 p-4 ${on ? "border-accent bg-background/40" : "border-border bg-background/20"}`}>
@@ -103,7 +105,7 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
         <span className="mr-auto text-2xl font-bold">✨ {title}</span>
         <span className={`rounded-full px-4 py-1 text-lg font-bold ${on ? "bg-success text-success-foreground" : "bg-secondary"}`}>{on ? "Acceso sul totem" : "Spento · non si vede sul totem"}</span>
       </div>
-      <Fold title="Impostazioni «Crea il tuo»" hint={on ? `${offered.length - offered.filter((g) => excluded.includes(g.id)).length} ingredienti` : "spento"}>
+      <Fold open={open} onToggle={setOpen} title="Impostazioni «Crea il tuo»" hint={on ? `${offered.length - offered.filter((g) => excluded.includes(g.id)).length} ingredienti` : "spento"}>
         <div className="flex flex-wrap items-center gap-3">
           <select aria-label={`Crea il tuo ${c.name}`} value={c.custom_kind} onChange={(e) => save(e.target.value)} className={field}>
             <option value="none">Spento (non si vede sul totem)</option>
@@ -129,6 +131,12 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
                 );
               })}
               {!offered.length && <p className="text-lg text-muted-foreground">Nessun ingrediente in archivio di questo tipo.</p>}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {dirty && <span className="text-lg font-bold text-accent">Modifiche non ancora salvate</span>}
+              <button onClick={async () => { await save(c.custom_kind, price, excluded); setOpen(false); }} className="tap rounded-xl bg-success px-5 py-3 text-xl font-bold text-success-foreground">✓ Ho finito, salva e chiudi</button>
+              <button disabled={!dirty} onClick={() => save(c.custom_kind, price, excluded)} className="tap rounded-xl bg-secondary px-5 py-3 text-xl font-bold disabled:opacity-50">Salva senza chiudere</button>
+              <button disabled={!dirty} onClick={() => setExcluded(c.custom_excluded)} className="tap rounded-xl bg-secondary px-5 py-3 text-xl font-bold disabled:opacity-50">✕ Annulla</button>
             </div>
           </div>
         )}
