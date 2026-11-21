@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteIngredient, saveIngredient, setCategoryCustom, setCategoryCustomTitles, setCategoryNameTr, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
+import { deleteIngredient, fillIngredientPrices, saveIngredient, setCategoryCustom, setCategoryCustomTitles, setCategoryNameTr, type MenuCategory, type MenuIngredient } from "@/lib/menu.functions";
 import { Fold } from "@/components/fold";
 import { TranslationsEditor } from "@/components/translations-editor";
 import { translateIngredients } from "@/lib/translate.functions";
@@ -97,6 +97,7 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
   const offered = ingredients.filter((g) => c.custom_kind === "entrambi" || g.kind === c.custom_kind).sort((a, b) => (a.group || "~").localeCompare(b.group || "~") || a.name.localeCompare(b.name));
   const toggle = (id: string) => setExcluded(excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id]);
   const [open, setOpen] = useState(false);
+  const [newKind, setNewKind] = useState<"salato" | "dolce">("salato");
   const dirty = [...excluded].sort().join(",") !== [...c.custom_excluded].sort().join(",");
   const title = c.custom_title.trim() || `Crea il tuo ${c.name}`;
   return (
@@ -132,6 +133,22 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
               })}
               {!offered.length && <p className="text-lg text-muted-foreground">Nessun ingrediente in archivio di questo tipo.</p>}
             </div>
+            <Fold title="💶 Prezzi e nuovi ingredienti" hint="archivio unico">
+              <p className="mb-2 text-lg text-muted-foreground">I prezzi sono quelli dell'archivio generale: se li cambi qui cambiano ovunque. 0 = gratis, incluso nel prezzo base.</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {offered.map((g) => <PriceRow key={g.id + g.price} g={g} refresh={refresh} />)}
+              </div>
+              <p className="mb-2 mt-4 text-xl font-bold">＋ Nuovo ingrediente (va nell'archivio generale)</p>
+              {c.custom_kind === "entrambi" && (
+                <select aria-label="Tipo nuovo ingrediente" value={newKind} onChange={(e) => setNewKind(e.target.value as "salato" | "dolce")} className={`${field} mb-2`}>
+                  <option value="salato">🧀 Salato</option><option value="dolce">🍫 Dolce</option>
+                </select>
+              )}
+              <IngredientForm listId={`grp-${c.id}`} label="+ Aggiungi" initial={empty} onSave={async (d) => {
+                await saveIngredient({ data: { ...d, kind: c.custom_kind === "entrambi" ? newKind : c.custom_kind, price: d.price || "0", available: true } });
+                await refresh(); toast.success("Ingrediente aggiunto");
+              }} />
+            </Fold>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {dirty && <span className="text-lg font-bold text-accent">Modifiche non ancora salvate</span>}
               <button onClick={async () => { await save(c.custom_kind, price, excluded); setOpen(false); }} className="tap rounded-xl bg-success px-5 py-3 text-xl font-bold text-success-foreground">✓ Ho finito, salva e chiudi</button>
@@ -167,6 +184,35 @@ export function CategoryCustom({ c, ingredients, refresh }: { c: MenuCategory; i
   );
 }
 
+function PriceRow({ g, refresh }: { g: MenuIngredient; refresh: () => Promise<unknown> }) {
+  const [v, setV] = useState(fmt(g.price));
+  const commit = async () => {
+    const n = Number(v.replace(",", "."));
+    if (!Number.isFinite(n) || n < 0) { setV(fmt(g.price)); return; }
+    if (Math.round(n * 100) === Math.round(g.price * 100)) return;
+    try { await saveIngredient({ data: { id: g.id, name: g.name, name_en: g.name_en, name_fr: g.name_fr, name_es: g.name_es, name_de: g.name_de, name_ar: g.name_ar, group: g.group, kind: g.kind, price: v, available: g.available } }); await refresh(); toast.success(`${g.name}: € ${fmt(n)}`); } catch (e) { err(e); }
+  };
+  return (
+    <label className="flex items-center gap-2 rounded-xl bg-background/40 px-3 py-2 text-lg">
+      <span className="min-w-0 flex-1 truncate">{g.name}</span>
+      €<input aria-label={`Prezzo ${g.name}`} inputMode="decimal" value={v} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} className={`${field} w-24 py-2 text-center`} />
+      <span className={`w-16 text-sm font-bold ${Number(v.replace(",", ".")) > 0 ? "text-accent" : "text-muted-foreground"}`}>{Number(v.replace(",", ".")) > 0 ? "a pagam." : "gratis"}</span>
+    </label>
+  );
+}
+
+function FillPricesButton({ refresh }: { refresh: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button disabled={busy} variant="secondary" onClick={async () => {
+      setBusy(true);
+      try { const r = await fillIngredientPrices(); await refresh(); toast.success(r.done ? `Prezzi copiati dal menu: ${r.done} ingredienti` : "Nessun prezzo nuovo da copiare"); }
+      catch (e) { err(e); }
+      finally { setBusy(false); }
+    }} className="tap h-auto w-fit whitespace-normal px-5 py-3 text-xl font-bold">{busy ? "Copia in corso…" : "💶 Prendi i prezzi dagli extra del menu (solo ingredienti a 0 €)"}</Button>
+  );
+}
+
 function TranslateIngredientsButton({ refresh }: { refresh: () => Promise<unknown> }) {
   const [busy, setBusy] = useState(false);
   return (
@@ -188,6 +234,7 @@ export function IngredientsPanel({ ingredients, refresh }: { categories?: MenuCa
       </p>
       <KindList kind="salato" title="🧀 Ingredienti salati" items={ingredients.filter((g) => g.kind === "salato")} refresh={refresh} />
       <KindList kind="dolce" title="🍫 Ingredienti dolci" items={ingredients.filter((g) => g.kind === "dolce")} refresh={refresh} />
+      <FillPricesButton refresh={refresh} />
       <TranslateIngredientsButton refresh={refresh} />
     </div>
   );

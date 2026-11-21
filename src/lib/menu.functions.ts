@@ -1027,3 +1027,27 @@ export const getSaverPhotos = createServerFn({ method: "GET" })
     const m = await sign(data.paths);
     return data.paths.map((p) => ({ path: p, url: m[p] ?? "" })).filter((x) => x.url);
   });
+
+// Copia nell'archivio i prezzi degli extra già usati nei piatti, solo per gli ingredienti ancora a 0 €.
+export const fillIngredientPrices = createServerFn({ method: "POST" }).handler(async () => {
+  await staffOnly();
+  const db = await admin();
+  const [{ data: prods, error: e1 }, { data: ings, error: e2 }] = await Promise.all([
+    db.from("menu_products").select("extras, combo_extras"),
+    db.from("menu_ingredients").select("id, name, price"),
+  ]);
+  if (e1 || e2) throw new Error((e1 ?? e2)!.message);
+  const best = new Map<string, number>();
+  for (const p of prods ?? []) for (const e of [...cleanExtras(p.extras), ...cleanExtras(p.combo_extras)]) {
+    const k = e.name.trim().toLowerCase();
+    if (e.price > (best.get(k) ?? 0)) best.set(k, e.price);
+  }
+  let done = 0;
+  for (const g of ings ?? []) {
+    const p = best.get(g.name.trim().toLowerCase());
+    if (!p || Number(g.price) > 0) continue;
+    const { error } = await db.from("menu_ingredients").update({ price: p }).eq("id", g.id);
+    if (!error) done++;
+  }
+  return { done };
+});
