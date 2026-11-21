@@ -461,7 +461,7 @@ function MenuEditor() {
       ) : (
         <div className="mx-auto max-w-5xl">
         {(panel || foldOpen) ? (
-          <button onClick={() => { setPanel(null); setFoldOpen(false); }} className="tap mb-4 rounded-2xl bg-secondary px-6 py-3 text-2xl font-bold">← Torna alla selezione</button>
+          <button onClick={() => { setPanel(null); setFoldOpen(false); setSel(null); }} className="tap mb-4 rounded-2xl bg-secondary px-6 py-3 text-2xl font-bold">← Torna alla selezione</button>
         ) : (
         <div className="mb-8 grid grid-cols-2 gap-x-6 gap-y-10 py-6 sm:grid-cols-4">
           {([
