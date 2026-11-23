@@ -1000,7 +1000,7 @@ function OptionsEditor({
   onSave: (ingredients: string[], extras: { name: string; price: number }[]) => void;
 }) {
   const { data: menuAll } = useSuspenseQuery(menuQueryOptions);
-  const exSources = menuAll.products.filter((x) => x.id !== p.id && x.extras.length);
+  const exSources = menuAll.products.filter((x) => x.id !== p.id && x.extras.length).sort((a, b) => a.name.localeCompare(b.name, "it", { sensitivity: "base" }));
   const [ing, setIng] = useState("");
   const [exName, setExName] = useState("");
   const [exPrice, setExPrice] = useState("");
