@@ -160,8 +160,10 @@ const OVERRIDES: [SaverOverride, string][] = [
   ["open", "🟢 Forza aperto (ignora giorno chiuso)"],
 ];
 
+export type ScreensaverView = "all" | "closed" | "slots" | "media" | "tv";
+
 /** Admin: calendario settimanale, fasce orarie, modalità solo vetrina e foto/video base. */
-export function ScreensaverSettings() {
+export function ScreensaverSettings({ view = "all" }: { view?: ScreensaverView } = {}) {
   const { data: saved } = useQuery(bannerQueryOptions);
   const { data: menu } = useQuery(menuQueryOptions);
   const qc = useQueryClient();
@@ -231,35 +233,42 @@ export function ScreensaverSettings() {
     void save({ saverPhotos: [], saverKind: "photos" });
   };
 
-  return <div className="space-y-6">
-    <div className={`rounded-2xl border-2 p-4 ${liveShowcase ? "border-accent bg-accent/15" : "border-border bg-card/60"}`}>
-      <p className="font-display text-2xl text-accent">
-        {liveShowcase ? "🖼️ Adesso sul totem: SOLO VETRINA (ordini bloccati)" : "🟢 Adesso sul totem: APERTO (ordini attivi)"}
-      </p>
-      <p className="mt-1 text-lg text-muted-foreground">
-        {s.forcedSlotId ? `Fascia forzata manualmente: ${s.slots.find((x) => x.id === s.forcedSlotId)?.name || "Fascia"}` : liveSlots.length ? `Fasce attive ora: ${liveSlots.map((x) => x.name || "Senza nome").join(", ")}` : "Nessuna fascia attiva in questo orario (usa foto/video base)."}
-      </p>
-      <p className="mt-3 mb-2 text-lg font-medium">Controllo manuale fuori orario</p>
-      <div className="flex flex-wrap gap-2">
-        {OVERRIDES.map(([id, label]) => (
-          <Button key={id} variant={s.override === id ? "default" : "secondary"} onClick={() => void save({ saverOverride: id })}>{label}</Button>
-        ))}
-      </div>
-      {vetrinaUrl && (
-        <div className="mt-4 border-t border-border/60 pt-3">
-          <p className="text-lg font-medium">📺 Pagina Vetrina per un altro schermo (TV, monitor o tablet)</p>
-          <p className="text-base text-muted-foreground">
-            Apri <b className="break-all text-foreground">{vetrinaUrl}</b> su un altro dispositivo: fa girare i piatti con prezzo e QR code del menu senza bloccare il totem.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard?.writeText(vetrinaUrl); setMsg("Indirizzo Vetrina copiato ✓"); }}>📋 Copia indirizzo</Button>
-            <Button size="sm" asChild variant="secondary"><a href={vetrinaUrl} target="_blank" rel="noreferrer">↗ Apri Vetrina</a></Button>
-          </div>
-        </div>
-      )}
-    </div>
+  const show = (k: Exclude<ScreensaverView, "all">) => view === "all" || view === k;
+  const statusSummary = s.forcedSlotId
+    ? `Fascia forzata manualmente: ${s.slots.find((x) => x.id === s.forcedSlotId)?.name || "Fascia"}`
+    : liveSlots.length ? `Fasce attive ora: ${liveSlots.map((x) => x.name || "Senza nome").join(", ")}` : "Nessuna fascia attiva in questo orario (usa foto/video base).";
 
-    <div className="space-y-3 rounded-2xl border-2 border-border p-4">
+  return <div className="space-y-6">
+    {(show("closed") || show("tv")) && (
+      <div className={`rounded-2xl border-2 p-4 ${liveShowcase ? "border-accent bg-accent/15" : "border-border bg-card/60"}`}>
+        <p className="font-display text-2xl text-accent">
+          {liveShowcase ? "🖼️ Adesso sul totem: SOLO VETRINA (ordini bloccati)" : "🟢 Adesso sul totem: APERTO (ordini attivi)"}
+        </p>
+        <p className="mt-1 text-lg text-muted-foreground">{statusSummary}</p>
+        {show("closed") && <>
+          <p className="mt-3 mb-2 text-lg font-medium">Controllo manuale fuori orario</p>
+          <div className="flex flex-wrap gap-2">
+            {OVERRIDES.map(([id, label]) => (
+              <Button key={id} variant={s.override === id ? "default" : "secondary"} onClick={() => void save({ saverOverride: id })}>{label}</Button>
+            ))}
+          </div>
+        </>}
+        {show("tv") && vetrinaUrl && (
+          <div className={view === "tv" ? "mt-4 border-t border-border/60 pt-4 space-y-2" : "mt-4 border-t border-border/60 pt-3"}>
+            <p className="text-lg font-medium">📺 Pagina Vetrina per un altro schermo (TV, monitor o tablet)</p>
+            <p className="text-base text-muted-foreground">
+              Apri <b className="break-all text-foreground">{vetrinaUrl}</b> su un altro dispositivo: fa girare i piatti con prezzo e QR code del menu senza bloccare il totem.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard?.writeText(vetrinaUrl); setMsg("Indirizzo Vetrina copiato ✓"); }}>📋 Copia indirizzo</Button>
+              <Button size="sm" asChild variant="secondary"><a href={vetrinaUrl} target="_blank" rel="noreferrer">↗ Apri Vetrina</a></Button>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {show("closed") && <div className="space-y-3 rounded-2xl border-2 border-border p-4">
       <h4 className="font-display text-2xl text-accent">📅 Calendario settimanale (giorni aperti / solo vetrina)</h4>
       <p className="text-lg text-muted-foreground">Tocca i giorni in cui il locale è chiuso: il totem passerà da solo in modalità solo vetrina bloccando gli ordini.</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-7">
@@ -286,9 +295,9 @@ export function ScreensaverSettings() {
         </label>
         <Button onClick={() => void save({ saverShowcaseMsg: (showcaseMsg ?? s.showcaseMessage).trim() || DEFAULT_SHOWCASE_MSG })}>Salva scritta</Button>
       </div>
-    </div>
+    </div>}
 
-    <div className="space-y-3 rounded-2xl border-2 border-border p-4">
+    {show("slots") && <div className="space-y-3 rounded-2xl border-2 border-border p-4">
       <h4 className="font-display text-2xl text-accent">🕒 Fasce orarie e giorni speciali</h4>
       <p className="text-lg text-muted-foreground">Crea fasce per pranzo, merenda, cena o piatti del giorno (es. «Giovedì Trippa») con piatti del menu e immagini dedicate.</p>
       <div className="flex flex-wrap gap-2">
@@ -317,9 +326,9 @@ export function ScreensaverSettings() {
       ) : (
         <p className="rounded-xl border border-border p-3 text-lg text-muted-foreground">Nessuna fascia creata: aggiungi una fascia qui sopra oppure usa le foto/video di base qui sotto.</p>
       )}
-    </div>
+    </div>}
 
-    <div className="space-y-4 rounded-2xl border-2 border-border p-4">
+    {show("media") && <div className="space-y-4 rounded-2xl border-2 border-border p-4">
       <h4 className="font-display text-2xl text-accent">🖼️ Salvaschermo di base (inattività e foto/video generali)</h4>
       <p className="text-lg text-muted-foreground">Quando il locale è aperto e nessuno tocca lo schermo, parte dopo il tempo scelto. Se non c'è una fascia oraria attiva, usa queste foto o il video.</p>
       <div className="flex flex-wrap gap-2">
@@ -344,7 +353,7 @@ export function ScreensaverSettings() {
       </> : (
         <p className="rounded-xl border border-border p-3 text-lg text-muted-foreground">Nessuna foto generale caricata: usa le fasce qui sopra oppure carica almeno una foto o un video.</p>
       )}
-    </div>
+    </div>}
     {msg && <p role="status" className="text-xl">{msg}</p>}
   </div>;
 }

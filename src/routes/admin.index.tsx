@@ -75,25 +75,35 @@ const TABS: { id: TabId; icon: string; label: string; tone: StaffOrbTone }[] = [
   { id: "locale", icon: "🏪", label: "Locale e cucina", tone: "yellow" },
   { id: "clienti", icon: "👥", label: "Clienti e sconti", tone: "pink" },
 ];
-type AdminSection = { id: string; icon: string; label: string; content: ReactNode };
+type AdminSection = { id: string; icon: string; label: string; content?: ReactNode; children?: AdminSection[] };
 function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Parameters<typeof CategoryOrderPanel>[0]["categories"] }; refresh: () => Promise<unknown> }) {
   const tabs = ro ? TABS.filter(({ id }) => id !== "totem" && id !== "clienti") : TABS;
   const [tab, setTab] = useState<TabId | null>(null);
   const [section, setSection] = useState<string | null>(null);
+  const [subSection, setSubSection] = useState<string | null>(null);
   const activeTab = tabs.find(({ id }) => id === tab);
   const sections: Record<TabId, AdminSection[]> = {
     totem: [
-      { id: "themes", icon: "🎉", label: "Temi delle ricorrenze", content: <ThemesPanel /> },
-      { id: "idle", icon: "⏱️", label: "Inattività e salvaschermo", content: <>
-        <section><h3 className="mb-3 font-display text-3xl text-accent">Ritorno all'inizio</h3><IdleSettings /></section>
-        <section className="mt-6 border-t-2 border-shared pt-6"><h3 className="mb-3 font-display text-3xl text-accent">Salvaschermo, calendario settimanale e fasce orarie</h3><ScreensaverSettings /></section>
-      </> },
-      { id: "banner", icon: "📢", label: "Scritta in alto sul totem", content: <BannerSettings /> },
-      { id: "news", icon: "📰", label: "Notizie ultima ora", content: <NewsSettingsPanel /> },
-      { id: "kiosk", icon: "⛶", label: "Pulsante modalità chiosco", content: <KioskButtonSettings /> },
-      { id: "cart", icon: "🛒", label: "Altezza del carrello sul totem", content: <CartLiftSettings /> },
-      { id: "divider", icon: "🎨", label: "Linea tra i piatti", content: <DividerSettings /> },
-      { id: "languages", icon: "🌍", label: "Lingue del totem", content: <LanguageSettings /> },
+      { id: "saver", icon: "⏱️", label: "Salvaschermo e Orari", children: [
+        { id: "closed", icon: "📅", label: "Giorni di chiusura", content: <ScreensaverSettings view="closed" /> },
+        { id: "slots", icon: "⏰", label: "Fasce orarie", content: <ScreensaverSettings view="slots" /> },
+        { id: "media", icon: "🖼️", label: "Foto e video vetrina", content: <ScreensaverSettings view="media" /> },
+        { id: "idle", icon: "⏱️", label: "Tempo di inattività", content: <IdleSettings /> },
+        { id: "tv", icon: "📺", label: "Schermo TV esterno", content: <ScreensaverSettings view="tv" /> },
+      ] },
+      { id: "comms", icon: "📢", label: "Comunicazioni ai clienti", children: [
+        { id: "banner", icon: "📢", label: "Scritta in alto sul totem", content: <BannerSettings /> },
+        { id: "news", icon: "📰", label: "Notizie ultima ora", content: <NewsSettingsPanel /> },
+      ] },
+      { id: "screen", icon: "🖥️", label: "Schermo e Regolazioni fisiche", children: [
+        { id: "kiosk", icon: "⛶", label: "Pulsante modalità chiosco", content: <KioskButtonSettings /> },
+        { id: "cart", icon: "🛒", label: "Altezza del carrello", content: <CartLiftSettings /> },
+        { id: "divider", icon: "🎨", label: "Linea tra i piatti", content: <DividerSettings /> },
+      ] },
+      { id: "lang-themes", icon: "🌍", label: "Lingue e Ricorrenze", children: [
+        { id: "languages", icon: "🌍", label: "Lingue attive sul totem", content: <LanguageSettings /> },
+        { id: "themes", icon: "🎉", label: "Temi festività", content: <ThemesPanel /> },
+      ] },
     ],
     menu: [
       { id: "categories", icon: "↕️", label: "Ordine categorie e strisce", content: <CategoryOrderPanel categories={menu.categories} refresh={refresh} /> },
@@ -115,20 +125,26 @@ function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Par
   };
   const activeSections = activeTab ? sections[activeTab.id] : [];
   const activeSection = activeSections.find(({ id }) => id === section);
+  const activeSubSection = activeSection?.children?.find(({ id }) => id === subSection);
   const tones: StaffOrbTone[] = ["blue", "orange", "yellow", "pink", "green"];
+  const backLabel = activeSubSection ? activeSection!.label : activeSection ? activeTab!.label : "Categorie Admin";
+  const heading = activeSubSection ? `${activeSubSection.icon} ${activeSubSection.label}` : activeSection ? `${activeSection.icon} ${activeSection.label}` : activeTab ? `${activeTab.icon} ${activeTab.label}` : "";
+  const goBack = () => { if (activeSubSection) setSubSection(null); else if (activeSection) setSection(null); else setTab(null); };
+  const leaf = activeSubSection ?? (activeSection && !activeSection.children ? activeSection : null);
+  const orbItems = activeSection?.children ?? activeSections;
   return <div className="mx-auto mt-2 max-w-5xl">
     {activeTab ? <>
       <div className="my-5 flex flex-wrap items-center gap-4 border-b-2 border-shared pb-5">
-        <Button variant="secondary" className="h-auto whitespace-normal px-6 py-3 text-2xl font-bold" onClick={() => { if (activeSection) setSection(null); else setTab(null); }}>← {activeSection ? activeTab.label : "Categorie Admin"}</Button>
-        <h2 className="font-display text-4xl">{activeSection ? `${activeSection.icon} ${activeSection.label}` : `${activeTab.icon} ${activeTab.label}`}</h2>
+        <Button variant="secondary" className="h-auto whitespace-normal px-6 py-3 text-2xl font-bold" onClick={goBack}>← {backLabel}</Button>
+        <h2 className="font-display text-4xl">{heading}</h2>
       </div>
-      {activeSection ? <section key={activeSection.id} aria-label={activeSection.label} className="pb-8">
-        <FoldPresentation.Provider value="content">{activeSection.content}</FoldPresentation.Provider>
-      </section> : <nav className="grid grid-cols-2 gap-x-6 gap-y-10 py-6 sm:grid-cols-4" aria-label={`Sottocategorie ${activeTab.label}`}>
-        {activeSections.map(({ id, icon, label }, index) => <StaffOrb key={id} icon={icon} label={label} tone={tones[index % tones.length] ?? "blue"} onClick={() => setSection(id)} />)}
+      {leaf ? <section key={leaf.id} aria-label={leaf.label} className="pb-8">
+        <FoldPresentation.Provider value="content">{leaf.content}</FoldPresentation.Provider>
+      </section> : <nav className="grid grid-cols-2 gap-x-6 gap-y-10 py-6 sm:grid-cols-4" aria-label={`Sottocategorie ${activeSection ? activeSection.label : activeTab.label}`}>
+        {orbItems.map(({ id, icon, label }, index) => <StaffOrb key={id} icon={icon} label={label} tone={tones[index % tones.length] ?? "blue"} onClick={() => { if (activeSection?.children) setSubSection(id); else { setSection(id); setSubSection(null); } }} />)}
       </nav>}
     </> : <nav className="grid grid-cols-2 gap-x-6 gap-y-10 py-6 sm:grid-cols-4" aria-label="Categorie Admin">
-      {tabs.map(({ id, icon, label, tone }) => <StaffOrb key={id} icon={icon} label={label} tone={tone} onClick={() => { setTab(id); setSection(null); }} />)}
+      {tabs.map(({ id, icon, label, tone }) => <StaffOrb key={id} icon={icon} label={label} tone={tone} onClick={() => { setTab(id); setSection(null); setSubSection(null); }} />)}
     </nav>}
   </div>;
 }
