@@ -129,6 +129,12 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy, idle])
   const [party, setParty] = useState(false)
+  // Prove da PC: trascina in verticale col mouse la colonna categorie a sinistra.
+  const sidebarRef = useRef<HTMLElement>(null)
+  const sidebarDrag = useRef<{ y: number; top: number; moved: boolean } | null>(null)
+  const onSidebarDown = (e: { pointerType: string; clientY: number }) => { if (e.pointerType !== "mouse" || !sidebarRef.current) return; sidebarDrag.current = { y: e.clientY, top: sidebarRef.current.scrollTop, moved: false } }
+  const onSidebarMove = (e: { pointerType: string; clientY: number }) => { const d = sidebarDrag.current; const el = sidebarRef.current; if (!d || !el) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 6) d.moved = true; if (d.moved) el.scrollTop = d.top - dy }
+  const onSidebarUp = () => { setTimeout(() => { sidebarDrag.current = null }, 0) }
   const lt = loyaltyCopy(language)
   const disc = loyalty && member ? discountFor(loyalty, member, total) : { pct: 0, reason: null, amount: 0, step: false }
   const toPay = Math.round((total - disc.amount) * 100) / 100
@@ -363,23 +369,25 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           </Button>
         )}
         {shown.map((p: Product) => (
-          <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
-            <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
-            {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "★ " : ""}<OffersIcon /> {menuName(p.name, p.combo_name)}</h3> : null}
-            <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
-              {p.image ? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
-            </div>
-            <div className="mt-4">
+          <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className={`whitespace-normal tap relative h-auto flex flex-col justify-between rounded-3xl bg-card text-left text-foreground hover:bg-secondary! hover:text-foreground ${isOffers ? "p-4" : "min-h-64 p-5"}`}>
+            <Badge p={p} pos={isOffers ? "right-2 -top-2 scale-75 origin-top-right" : "right-3 top-3"} />
+            {isOffers ? <h3 className="w-full shrink-0 font-display text-4xl leading-tight sm:text-5xl">{p.combo_offer ? "★ " : ""}<OffersIcon /> {menuName(p.name, p.combo_name)}</h3> : null}
+            {(!isOffers || p.image) && (
+              <div className={isOffers ? "mt-2 w-full shrink-0 overflow-hidden rounded-2xl bg-muted" : "grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted"}>
+                {p.image ? <img src={p.image} alt={p.name} style={{ height: isOffers ? "8rem" : `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
+              </div>
+            )}
+            <div className={isOffers ? "mt-2 w-full flex-1" : "mt-4"}>
               {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
               {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
                 <div key={d.id} data-dish={d.id} className="mt-1">
-                  <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
-                  {descriptionFor(d, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="leading-snug text-muted-foreground">{descriptionFor(d, language)}</p>}
+                  <p className="font-display text-2xl leading-tight text-accent sm:text-3xl">🍔 {d.name}</p>
+                  {descriptionFor(d, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: Math.min(2, dt.lines), overflow: "hidden" }} className="leading-snug text-muted-foreground">{descriptionFor(d, language)}</p>}
                 </div>
               ))}
               {!isOffers && descriptionFor(p, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="mt-1 leading-snug text-muted-foreground">{descriptionFor(p, language)}</p>}
             </div>
-            <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
+            <span style={{ fontSize: `${dt.price}rem` }} className={`${isOffers ? "mt-2.5" : "mt-3"} inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground`}>{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
           </Button>
         ))}
         {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
@@ -419,7 +427,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
       {sidebarMode ? (
         <div className="flex items-start gap-4 sm:gap-6">
-          <aside aria-label="Categorie" className="sticky top-44 w-28 shrink-0 overflow-y-auto pr-1 [scrollbar-width:none] sm:w-40 md:w-48 [&::-webkit-scrollbar]:hidden" style={{ maxHeight: "calc(100dvh - 11rem)", paddingBottom: `${10 + cartLift}rem` }}>
+          <aside ref={sidebarRef} aria-label="Categorie" onPointerDown={onSidebarDown} onPointerMove={onSidebarMove} onPointerUp={onSidebarUp} onPointerLeave={onSidebarUp} onClickCapture={(e) => { if (sidebarDrag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} onDragStart={(e) => e.preventDefault()} className="sticky top-44 w-28 shrink-0 select-none overflow-y-auto pr-1 [scrollbar-width:none] sm:w-40 md:w-48 [&::-webkit-scrollbar]:hidden" style={{ maxHeight: "calc(100dvh - 11rem)", paddingBottom: `${10 + cartLift}rem` }}>
             <div className="flex flex-col gap-3 p-1">
               {offerMenus.length > 0 && (
                 <Button variant="ghost" aria-pressed={viewCat === OFFERS} onClick={() => { setActiveCat(OFFERS); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${viewCat === OFFERS ? "border-accent bg-secondary ring-2 ring-accent/60" : "border-border/70 bg-card hover:bg-secondary/80"}`}>
@@ -432,7 +440,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                 return (
                   <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${on ? "border-accent bg-secondary ring-2 ring-accent/60" : "border-border/70 bg-card hover:bg-secondary/80"}`}>
                     {c.image
-                      ? <img src={c.image} alt="" className="h-14 w-full rounded-xl object-cover sm:h-20" />
+                      ? <img src={c.image} alt="" draggable={false} className="h-14 w-full rounded-xl object-cover sm:h-20" />
                       : <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl">{categoryIcon(c.name)}</div>}
                     <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
                   </Button>
