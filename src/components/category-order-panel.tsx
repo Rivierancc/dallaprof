@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
-import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, dishLayoutFor } from "@/lib/category-layout";
+import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, FINGER_SPEEDS, dishLayoutFor } from "@/lib/category-layout";
 import { reorderCategories, saveBanner, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
@@ -71,6 +71,12 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
             ? <p className="mt-2 text-lg text-muted-foreground">Le categorie scorrono in verticale a sinistra con pulsanti compatti (foto sopra, nome sotto) e i piatti si vedono subito a destra. Le altre impostazioni restano salvate.</p>
             : !layout.strips && <p className="mt-2 text-lg text-muted-foreground">Le strisce assegnate restano ricordate: riattivandole tornano come prima.</p>}
         </div>
+        {layout.sidebar && <div>
+          <p className="mb-2 text-xl font-bold">Velocità del dito sulle categorie</p>
+          <div className="flex flex-wrap gap-2">
+            {FINGER_SPEEDS.map((o) => <button key={o.sec} onClick={() => void setLayout({ fingerSpeed: o.sec })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.fingerSpeed === o.sec ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{o.label}</button>)}
+          </div>
+        </div>}
         <div>
           <p className="mb-2 text-xl font-bold">Grandezza delle categorie</p>
           <div className="flex flex-wrap gap-2">{CATEGORY_SIZES.map((l, i) => <button key={l} onClick={() => void setLayout({ catSize: i - 1 })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.size === i ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{l}</button>)}</div>

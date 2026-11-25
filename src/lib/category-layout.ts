@@ -1,10 +1,19 @@
 /** Livello mostrato = valore salvato + 1: il livello più piccolo è salvato come -1, così le scelte già fatte non cambiano. */
 /** Aspetto delle categorie sul totem, salvato insieme alle impostazioni condivise del chiosco. */
-export type CategoryLayout = { strips: boolean; sidebar: boolean; size: number }
+export type CategoryLayout = { strips: boolean; sidebar: boolean; size: number; fingerSpeed: number }
 export const CATEGORY_SIZES = ["Molto piccole", "Piccole", "Medie", "Normali", "Grandi", "Molto grandi"] as const
+export const FINGER_SPEEDS = [
+  { sec: 4, label: "⚡ Veloce (4s)" },
+  { sec: 6, label: "🚶 Media (6s)" },
+  { sec: 9, label: "🐢 Lenta (9s)" },
+  { sec: 12, label: "⏱️ Molto lenta (12s)" },
+  { sec: 0, label: "⛔ Spento" },
+] as const
 export function cleanCategoryLayout(s: Record<string, unknown> | undefined | null): CategoryLayout {
   const size = Number(s?.["catSize"])
-  return { strips: s?.["catStrips"] !== false, sidebar: s?.["catSidebar"] === true, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3 }
+  const rawSpeed = s?.["fingerSpeed"]
+  const speed = typeof rawSpeed === "number" && Number.isFinite(rawSpeed) && (rawSpeed === 0 || (rawSpeed >= 2 && rawSpeed <= 20)) ? rawSpeed : 6
+  return { strips: s?.["catStrips"] !== false, sidebar: s?.["catSidebar"] === true, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3, fingerSpeed: speed }
 }
 
 /** Icona automatica quando una categoria non ha ancora una foto (usata nella colonna a sinistra). */

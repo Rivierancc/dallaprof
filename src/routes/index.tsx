@@ -11,7 +11,7 @@ import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
 import { categoryIcon, cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { menuQueryOptions, type Category, type CartItem, type CartEdit, type Product, type Ingredient, euro, ingredientLabel, ingredientOff, customIngredients } from "@/lib/menu"
 import { useQuery } from "@tanstack/react-query"
@@ -459,10 +459,14 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           </aside>
           <section className="relative min-w-0 flex-1">
             {viewCat === null ? (
-              <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ height: `calc(100dvh - ${19 + cartLift}rem)` }}>
-                <div aria-hidden="true" className="sidebar-finger pointer-events-none select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
-                  <span>👈</span>
-                </div>
+              <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ height: `calc(100dvh - ${19 + cartLift}rem)`, overflowY: "clip" }}>
+                {catLayout.fingerSpeed > 0 && (
+                  <div aria-hidden="true" className="sidebar-finger-track select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
+                    <div className="sidebar-finger" style={{ "--finger-duration": `${catLayout.fingerSpeed}s` } as CSSProperties}>
+                      <span>👈</span>
+                    </div>
+                  </div>
+                )}
                 <p className="font-display text-5xl leading-tight text-accent sm:text-6xl">{t.pickCatTitle}</p>
                 <p className="mt-4 max-w-md text-2xl leading-snug text-muted-foreground sm:text-3xl">{t.pickCatHint}</p>
               </div>
