@@ -36,3 +36,4 @@
 - [ ] Modalità ristorante (passo 4): campanella dalla cucina alla sala, messaggi veloci cucina↔cameriere e portate divise con «Porta tutto insieme»; poi varianti/ingredienti nella comanda del cameriere.
 - [ ] Da pubblicare: modalità ristorante completa sul sito online (l'utente decide quando).
 - [x] Ingrandimento del testo anche in Cucina e Cassa col pulsante «🔠» in alto (ogni tocco sale di un livello, poi riparte dal normale) e due livelli in più, Gigante e Massima; provato cliccando in cucina e in cassa: 18,96 → 23,70 → 28,44 → 34,13 → 41,72 → 49,30 px e ritorno, nessuna riga tagliata e nessuno scorrimento laterale; manuale aggiornato e 106 prove automatiche superate.
+- [x] Descrizione azienda: due misure in più («Gigante» e «Colossale»), cursore fino a 8 e prova nel locale di prova con anteprima a schermo intero senza sovrapposizioni; manuale aggiornato.
