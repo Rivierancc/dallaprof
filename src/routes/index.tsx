@@ -9,7 +9,7 @@ import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner, bannerQueryOptions } from "@/components/display-banner"
 import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/lib/allergens"
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
-import { categoryIcon, cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
+import { categoryIcon, cleanCategoryLayout, SIDEBAR_STYLE, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -67,6 +67,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const { data: bannerSettings } = useQuery(bannerQueryOptions)
   const catLayout = cleanCategoryLayout(bannerSettings)
   const tile = TILE[catLayout.size]!
+  const sb = SIDEBAR_STYLE[catLayout.sidebarSize + 1]!
   const { data, isLoading } = useQuery(menuQueryOptions)
   const [demoDone, setDemoDone] = useState(false)
   const queryClient = useQueryClient()
@@ -426,22 +427,22 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
       {sidebarMode ? (
         <div className="flex items-start gap-4 sm:gap-6">
-          <aside ref={sidebarRef} aria-label="Categorie" onPointerDown={onSidebarDown} onPointerMove={onSidebarMove} onPointerUp={onSidebarUp} onPointerLeave={onSidebarUp} onClickCapture={(e) => { if (sidebarDrag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} onDragStart={(e) => e.preventDefault()} className="sticky top-44 -ml-4 w-28 shrink-0 select-none overflow-y-auto border-r-2 border-border bg-secondary pl-2 pr-3 [scrollbar-width:none] sm:-ml-6 sm:w-40 sm:pl-3 md:w-48 [&::-webkit-scrollbar]:hidden" style={{ maxHeight: `calc(100dvh - ${19 + cartLift}rem)`, paddingBottom: "0.75rem" }}>
+          <aside ref={sidebarRef} aria-label="Categorie" onPointerDown={onSidebarDown} onPointerMove={onSidebarMove} onPointerUp={onSidebarUp} onPointerLeave={onSidebarUp} onClickCapture={(e) => { if (sidebarDrag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} onDragStart={(e) => e.preventDefault()} className={`sticky top-44 -ml-4 ${sb.aside} shrink-0 select-none overflow-y-auto border-r-2 border-border bg-secondary pl-2 pr-3 [scrollbar-width:none] sm:-ml-6 sm:pl-3 [&::-webkit-scrollbar]:hidden`} style={{ maxHeight: `calc(100dvh - ${19 + cartLift}rem)`, paddingBottom: "0.75rem" }}>
             <div className="flex flex-col gap-3 p-1">
               {offerMenus.length > 0 && (
-                <Button variant="ghost" aria-pressed={viewCat === OFFERS} onClick={() => { setActiveCat(OFFERS); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${viewCat === OFFERS ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
-                  <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl"><OffersIcon /></div>
-                  <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${viewCat === OFFERS ? "glow text-accent" : "text-foreground"}`}>{translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}</span>
+                <Button variant="ghost" aria-pressed={viewCat === OFFERS} onClick={() => { setActiveCat(OFFERS); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${viewCat === OFFERS ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
+                  <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}><OffersIcon /></div>
+                  <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${viewCat === OFFERS ? "glow text-accent" : "text-foreground"}`}>{translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}</span>
                 </Button>
               )}
               {categories.map((c: Category) => {
                 const on = viewCat === c.id
                 return (
-                  <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
+                  <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
                     {c.image
-                      ? <img src={c.image} alt="" draggable={false} className="h-14 w-full rounded-xl object-cover sm:h-20" />
-                      : <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl">{categoryIcon(c.name)}</div>}
-                    <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
+                      ? <img src={c.image} alt="" draggable={false} className={`w-full rounded-xl object-cover ${sb.img}`} />
+                      : <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}>{categoryIcon(c.name)}</div>}
+                    <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
                   </Button>
                 )
               })}
@@ -449,9 +450,9 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
                 const id = FF + f.id
                 const on = viewCat === id
                 return (
-                  <Button variant="ghost" key={id} aria-pressed={on} onClick={() => { setActiveCat(id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
-                    <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl">{f.emoji}</div>
-                    <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${on ? "glow text-accent" : "text-foreground"}`}>{f.label}</span>
+                  <Button variant="ghost" key={id} aria-pressed={on} onClick={() => { setActiveCat(id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
+                    <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}>{f.emoji}</div>
+                    <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${on ? "glow text-accent" : "text-foreground"}`}>{f.label}</span>
                   </Button>
                 )
               })}

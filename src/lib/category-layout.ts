@@ -1,7 +1,18 @@
 /** Livello mostrato = valore salvato + 1: il livello più piccolo è salvato come -1, così le scelte già fatte non cambiano. */
 /** Aspetto delle categorie sul totem, salvato insieme alle impostazioni condivise del chiosco. */
-export type CategoryLayout = { strips: boolean; sidebar: boolean; size: number; fingerSpeed: number; fingerSize: number }
+export type CategoryLayout = { strips: boolean; sidebar: boolean; sidebarSize: -1 | 0 | 1; size: number; fingerSpeed: number; fingerSize: number }
 export const CATEGORY_SIZES = ["Molto piccole", "Piccole", "Medie", "Normali", "Grandi", "Molto grandi"] as const
+export const SIDEBAR_SIZES = [
+  { step: -1 as const, label: "▫️ Più piccoli" },
+  { step: 0 as const, label: "◽ Normali" },
+  { step: 1 as const, label: "◻️ Più grandi" },
+] as const
+/** Classi della colonna laterale per i 3 livelli (-1, 0, +1). */
+export const SIDEBAR_STYLE = [
+  { aside: "w-24 sm:w-32 md:w-36", btn: "gap-1 p-1.5", img: "h-10 sm:h-14", icon: "h-10 text-2xl sm:h-14 sm:text-3xl", label: "text-sm sm:text-base" },
+  { aside: "w-28 sm:w-40 md:w-48", btn: "gap-1.5 p-2", img: "h-14 sm:h-20", icon: "h-14 text-3xl sm:h-20 sm:text-4xl", label: "text-base sm:text-xl" },
+  { aside: "w-36 sm:w-48 md:w-56", btn: "gap-2 p-2.5", img: "h-20 sm:h-24", icon: "h-20 text-4xl sm:h-24 sm:text-5xl", label: "text-lg sm:text-2xl" },
+] as const
 export const FINGER_SPEEDS = [
   { sec: 4, label: "⚡ Veloce (4s)" },
   { sec: 6, label: "🚶 Media (6s)" },
@@ -22,7 +33,9 @@ export function cleanCategoryLayout(s: Record<string, unknown> | undefined | nul
   const speed = typeof rawSpeed === "number" && Number.isFinite(rawSpeed) && (rawSpeed === 0 || (rawSpeed >= 2 && rawSpeed <= 20)) ? rawSpeed : 6
   const rawSize = s?.["fingerSize"]
   const fsize = typeof rawSize === "number" && Number.isFinite(rawSize) && rawSize >= 0.8 && rawSize <= 3 ? rawSize : 1
-  return { strips: s?.["catStrips"] !== false, sidebar: s?.["catSidebar"] === true, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3, fingerSpeed: speed, fingerSize: fsize }
+  const rawSb = s?.["sidebarSize"]
+  const sidebarSize: -1 | 0 | 1 = rawSb === -1 || rawSb === 0 || rawSb === 1 ? rawSb : 0
+  return { strips: s?.["catStrips"] !== false, sidebar: s?.["catSidebar"] === true, sidebarSize, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3, fingerSpeed: speed, fingerSize: fsize }
 }
 
 /** Icona automatica quando una categoria non ha ancora una foto (usata nella colonna a sinistra). */

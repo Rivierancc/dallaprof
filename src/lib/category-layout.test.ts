@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { categoryIcon, cleanCategoryLayout } from "./category-layout";
 describe("cleanCategoryLayout", () => {
-  it("strisce accese, colonna spenta e grandezza normale se mai impostate", () => expect(cleanCategoryLayout({})).toEqual({ strips: true, sidebar: false, size: 3, fingerSpeed: 6, fingerSize: 1 }));
+  it("strisce accese, colonna spenta e grandezza normale se mai impostate", () => expect(cleanCategoryLayout({})).toEqual({ strips: true, sidebar: false, sidebarSize: 0, size: 3, fingerSpeed: 6, fingerSize: 1 }));
   it("riquadri fissi quando spente", () => expect(cleanCategoryLayout({ catStrips: false }).strips).toBe(false));
   it("colonna a sinistra quando accesa", () => expect(cleanCategoryLayout({ catSidebar: true }).sidebar).toBe(true));
+  it("grandezza pulsanti a sinistra salvata (-1, 0, 1) e normale se fuori scala", () => {
+    expect(cleanCategoryLayout({ sidebarSize: -1 }).sidebarSize).toBe(-1);
+    expect(cleanCategoryLayout({ sidebarSize: 0 }).sidebarSize).toBe(0);
+    expect(cleanCategoryLayout({ sidebarSize: 1 }).sidebarSize).toBe(1);
+    expect(cleanCategoryLayout({ sidebarSize: 2 }).sidebarSize).toBe(0);
+    expect(cleanCategoryLayout({ sidebarSize: -2 }).sidebarSize).toBe(0);
+    expect(cleanCategoryLayout({ sidebarSize: "grande" }).sidebarSize).toBe(0);
+  });
   it("grandezza fuori scala torna normale", () => expect(cleanCategoryLayout({ catSize: 9 }).size).toBe(3));
   it("velocità del dito salvata, spenta (0) o ripristinata se fuori scala", () => {
     expect(cleanCategoryLayout({ fingerSpeed: 4 }).fingerSpeed).toBe(4);
