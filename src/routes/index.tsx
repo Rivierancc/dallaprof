@@ -345,8 +345,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   // Filtri sulla prima striscia: «__ff:id» raccoglie i piatti adatti da tutte le categorie.
   const FF = "__ff:"
   const sidebarMode = catLayout.sidebar
-  const firstSidebarCat = offerMenus.length > 0 ? OFFERS : (categories[0]?.id ?? null)
-  const viewCat = sidebarMode ? (activeCat ?? firstSidebarCat) : activeCat
+  const viewCat = activeCat
   const cat = categories.find((c) => c.id === viewCat)
   const ffCat = viewCat?.startsWith(FF) ? foodFilters.find((f) => FF + f.id === viewCat) : undefined
   const inCat = viewCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : viewCat ? products.filter((p) => p.category_id === viewCat) : []
@@ -401,7 +400,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       <div className={sidebarMode ? "sticky top-0 z-30 -mx-4 -mt-6 mb-4 border-b border-border/40 bg-background px-4 pt-6 pb-3 sm:-mx-6 sm:px-6" : activeCat !== null ? "sticky top-0 z-30 -mx-8 -mt-8 mb-6 bg-background px-8 pt-8 pb-2" : ""}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         {sidebarMode ? <h1 className="font-display text-4xl leading-none text-accent sm:text-5xl">{currentCatTitle.toUpperCase()}</h1> : <span />}
-        <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
+        <Button variant="ghost" onClick={() => { setActiveCat(null); resetCustomer() }} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
       </header>
       {!sidebarMode && activeCat !== null && <>
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-4 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
@@ -413,7 +412,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             </div>
           )}
       </>}
-      {sidebarMode && foodFilters.length > 0 && !ffCat && (
+      {sidebarMode && viewCat !== null && foodFilters.length > 0 && !ffCat && (
         <div dir="ltr" className="flex gap-2 overflow-x-auto pb-1">
           {foodFilters.map((f) => (
             <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-5 py-2 font-display text-2xl focus-visible:ring-0 ${foodFilter === f.id ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
@@ -458,7 +457,17 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
               })}
             </div>
           </aside>
-          <section className="min-w-0 flex-1">{dishesContent}</section>
+          <section className="relative min-w-0 flex-1">
+            {viewCat === null ? (
+              <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ minHeight: `calc(100dvh - ${19 + cartLift}rem)` }}>
+                <div aria-hidden="true" className="sidebar-finger pointer-events-none select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
+                  <span>👈</span>
+                </div>
+                <p className="font-display text-5xl leading-tight text-accent sm:text-6xl">{t.pickCatTitle}</p>
+                <p className="mt-4 max-w-md text-2xl leading-snug text-muted-foreground sm:text-3xl">{t.pickCatHint}</p>
+              </div>
+            ) : dishesContent}
+          </section>
         </div>
       ) : activeCat === null ? (
         <div className={`grid gap-6 ${tile.cols === 1 ? "grid-cols-1" : tile.cols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>

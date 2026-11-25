@@ -169,3 +169,29 @@ html.saver-open::-webkit-scrollbar, html.saver-open body::-webkit-scrollbar { di
   transform: translateY(3px);
   box-shadow: inset 0 2px 3px color-mix(in oklch, white 25%, transparent), 0 1px 0 color-mix(in oklch, currentColor 10%, black 70%);
 }
+
+/* Dito animato che scende lungo la colonna delle categorie prima della prima scelta */
+@keyframes sidebar-finger-glide {
+  0% { top: 1.25rem; opacity: 0; }
+  7% { top: 1.25rem; opacity: 1; }
+  88% { top: calc(100% - 5.5rem); opacity: 1; }
+  100% { top: calc(100% - 4.5rem); opacity: 0; }
+}
+@keyframes sidebar-finger-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-0.55rem); }
+}
+.sidebar-finger {
+  position: absolute;
+  inset-inline-start: -0.5rem;
+  animation: sidebar-finger-glide 8s linear infinite;
+}
+.sidebar-finger > span {
+  display: inline-block;
+  animation: sidebar-finger-nudge 1.1s ease-in-out infinite;
+  filter: drop-shadow(0 4px 10px rgb(0 0 0 / 0.65));
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-finger { top: 1.5rem; animation: none; }
+  .sidebar-finger > span { animation: none; }
+}
