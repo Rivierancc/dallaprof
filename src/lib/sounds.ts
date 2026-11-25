@@ -73,3 +73,72 @@ export function playBirthdaySong() {
     if (c.state !== "running") void c.resume().then(run).catch(() => {}); else run();
   } catch { /* audio non disponibile */ }
 }
+
+function withAudio(fn: (c: AudioContext) => void) {
+  if (typeof window === "undefined") return;
+  try {
+    ctx ??= new AudioContext();
+    const c = ctx;
+    if (c.state !== "running") void c.resume().then(() => fn(c)).catch(() => {});
+    else fn(c);
+  } catch { /* audio non disponibile */ }
+}
+
+/** Suono di vetro che si crepa: colpi secchi + tintinnio ad alta frequenza. */
+export function playGlassCrack() {
+  withAudio((c) => {
+    const t0 = c.currentTime + 0.01;
+    const len = Math.floor(c.sampleRate * 0.35);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * Math.exp(-i / (c.sampleRate * 0.06));
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const hp = c.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 1800;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.55, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
+    src.connect(hp).connect(g).connect(c.destination);
+    src.start(t0);
+    for (const [f, s] of [[3100, 0], [4200, 0.04], [2500, 0.09], [5100, 0.14]] as const) {
+      const o = c.createOscillator(), og = c.createGain();
+      o.type = "triangle"; o.frequency.setValueAtTime(f, t0 + s);
+      o.frequency.exponentialRampToValueAtTime(f * 0.55, t0 + s + 0.09);
+      og.gain.setValueAtTime(0.18, t0 + s); og.gain.exponentialRampToValueAtTime(0.0001, t0 + s + 0.09);
+      o.connect(og).connect(c.destination); o.start(t0 + s); o.stop(t0 + s + 0.1);
+    }
+  });
+}
+
+/** Breve morso stile Pac-Man (waka). */
+export function playPacmanChomp(atOffset = 0) {
+  withAudio((c) => {
+    const t = c.currentTime + 0.01 + atOffset;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(480, t);
+    o.frequency.exponentialRampToValueAtTime(170, t + 0.11);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.28, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + 0.13);
+  });
+}
+
+/** Rutto comico sintetizzato alla fine della mangiata del panino. */
+export function playBurp() {
+  withAudio((c) => {
+    const t0 = c.currentTime + 0.02;
+    const o = c.createOscillator(), lfo = c.createOscillator(), lfoG = c.createGain(), bp = c.createBiquadFilter(), g = c.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(92, t0); o.frequency.exponentialRampToValueAtTime(52, t0 + 0.65);
+    lfo.type = "sine"; lfo.frequency.value = 26; lfoG.gain.value = 18;
+    lfo.connect(lfoG).connect(o.frequency);
+    bp.type = "bandpass"; bp.frequency.setValueAtTime(340, t0); bp.frequency.exponentialRampToValueAtTime(170, t0 + 0.65); bp.Q.value = 2.2;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.45, t0 + 0.06);
+    g.gain.setValueAtTime(0.4, t0 + 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.72);
+    o.connect(bp).connect(g).connect(c.destination);
+    lfo.start(t0); o.start(t0); lfo.stop(t0 + 0.75); o.stop(t0 + 0.75);
+  });
+}

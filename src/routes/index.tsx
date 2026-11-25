@@ -1,5 +1,6 @@
 import { HereIcon, TakeawayIcon, OffersIcon, CartIcon } from "@/components/compat-icons";
 import { Screensaver } from "@/components/screensaver"
+import { TotemPranks } from "@/components/totem-pranks"
 import { venuePageTitle } from "@/lib/page-title";
 import { useRestaurantOnly } from "@/lib/venue-mode";
 import { Link as SalaLink } from "@tanstack/react-router";
@@ -60,6 +61,7 @@ function Totem() {
   return <>
     {license?.state === "demo" && license.demo.badge && <div className="pointer-events-none fixed bottom-3 left-3 z-50 rounded-full bg-accent px-4 py-1 font-display text-xl text-accent-foreground">Modalità dimostrativa</div>}
     <Screensaver />
+    <TotemPranks />
     <TotemMain simulate={!!license && !realOrders(license)} limit={license?.state === "demo" ? license.demo.max_products : null} />
   </>
 }

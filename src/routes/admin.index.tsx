@@ -14,6 +14,7 @@ import { ThemesPanel } from "@/components/themes-panel";
 import { CompanySettings } from "@/components/company-identity";
 import { BannerSettings, IdleSettings, CartLiftSettings, InfoSettings, KioskButtonSettings } from "@/components/display-banner";
 import { ScreensaverSettings } from "@/components/screensaver";
+import { PranksSettings } from "@/components/totem-pranks";
 import { FoodFilterSettings } from "@/components/food-filter-settings";
 import { NewsSettingsPanel } from "@/components/news-ticker";
 import { DividerSettings } from "@/components/menu-divider";
@@ -94,6 +95,7 @@ function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Par
       { id: "comms", icon: "📢", label: "Comunicazioni ai clienti", children: [
         { id: "banner", icon: "📢", label: "Scritta in alto sul totem", content: <BannerSettings /> },
         { id: "news", icon: "📰", label: "Notizie ultima ora", content: <NewsSettingsPanel /> },
+        { id: "pranks", icon: "🎭", label: "Scherzetti sul totem", content: <PranksSettings /> },
       ] },
       { id: "screen", icon: "🖥️", label: "Schermo e Regolazioni fisiche", children: [
         { id: "kiosk", icon: "⛶", label: "Pulsante modalità chiosco", content: <KioskButtonSettings /> },
