@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { CustomerEditor } from "@/components/customer-editor";
 import { deleteCustomer, getLoyalty, sendCustomerEmails, listCustomers, saveLoyalty, setBirthdayGift, type CustomerRow } from "@/lib/loyalty.functions";
 import { birthdayNear, type Loyalty } from "@/lib/loyalty";
 import { euro, menuQueryOptions } from "@/lib/menu";
@@ -108,6 +109,7 @@ export function CustomersPanel() {
   const [onlyBday, setOnlyBday] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [giftFor, setGiftFor] = useState<string | null>(null);
+  const [editFor, setEditFor] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   const [text, setText] = useState("Ciao {nome}, ");
   const remove = async (c: CustomerRow) => {
@@ -152,9 +154,11 @@ export function CustomersPanel() {
               {c.email && <Button variant="secondary" disabled={!subject.trim()} onClick={() => void send([c])}>✉️ Email</Button>}
               <Button variant={c.gift && c.gift.year === new Date().getFullYear() && c.gift.ids.length ? "default" : "secondary"} onClick={() => setGiftFor(giftFor === c.id ? null : c.id)}>🎁 Regalo{c.gift && c.gift.year === new Date().getFullYear() ? (c.gift.used ? " (consegnato)" : ` (${c.gift.ids.length})`) : ""}</Button>
               <Button variant="secondary" onClick={() => setOpen(open === c.id ? null : c.id)}>📜 Storico</Button>
+              <Button variant={editFor === c.id ? "default" : "secondary"} onClick={() => setEditFor(editFor === c.id ? null : c.id)}>✏️ Modifica</Button>
               <Button variant="destructive" aria-label={`Cancella ${c.name}`} onClick={() => void remove(c)}>🗑️</Button>
             </span>
           </div>
+          {editFor === c.id && <CustomerEditor c={c} onClose={() => setEditFor(null)} />}
           {giftFor === c.id && <GiftPicker c={c} onDone={() => undefined} />}
           {open === c.id && <div className="mt-3 space-y-2 text-lg">
             {c.top.length > 0 && <p><b>Preferiti:</b> {c.top.map((t) => `${t.name} ×${t.qty}`).join(" · ")}</p>}

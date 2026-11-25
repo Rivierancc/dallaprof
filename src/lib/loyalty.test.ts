@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { validPhone as vp10 } from "@/lib/loyalty";
 import { it as it10, expect as ex10 } from "vitest";
 it10("cellulare: valgono anche i numeri da 9 cifre", () => { ex10(vp10("33317608")).toBe(false); ex10(vp10("333176086")).toBe(true); ex10(vp10("3331760866")).toBe(true); });
-import { birthdayNear, cleanLoyalty, discountFor, favourites, normalizePhone, validBirthday } from "@/lib/loyalty";
+import { birthdayNear, cleanCustomerEdit, cleanLoyalty, discountFor, favourites, normalizePhone, validBirthday } from "@/lib/loyalty";
 
 const rules = cleanLoyalty({ on: true, pct: 5, welcome_pct: 10, birthday_pct: 20, birthday_days: 0 });
 
@@ -42,5 +42,21 @@ describe("programma clienti", () => {
   });
   it("favourites ordered by quantity", () => {
     expect(favourites([{ items: [{ productId: "a", qty: 1 }, { productId: "b", qty: 3 }] }, { items: [{ productId: "a", qty: 1 }] }])).toEqual(["b", "a"]);
+  });
+  it("modifica scheda cliente: normalizza e accetta nome, cognome, cellulare, email e compleanno", () => {
+    expect(cleanCustomerEdit({ name: "  Mario ", surname: "Rossi ", phone: "+39 333 123 4567", email: "MARIO@Example.IT", day: 14, month: 5 })).toEqual({
+      name: "Mario", surname: "Rossi", phone: "3331234567", email: "mario@example.it", birth_day: 14, birth_month: 5,
+    });
+    expect(cleanCustomerEdit({ name: "Anna", phone: "", email: "anna@esempio.it", day: null, month: null })).toEqual({
+      name: "Anna", surname: "", phone: "", email: "anna@esempio.it", birth_day: null, birth_month: null,
+    });
+  });
+  it("modifica scheda cliente: rifiuta dati incompleti o non validi", () => {
+    expect(() => cleanCustomerEdit({ name: "A", phone: "3331234567" })).toThrow();
+    expect(() => cleanCustomerEdit({ name: "Mario", phone: "", email: "" })).toThrow();
+    expect(() => cleanCustomerEdit({ name: "Mario", phone: "123", email: "mario@esempio.it" })).toThrow();
+    expect(() => cleanCustomerEdit({ name: "Mario", phone: "3331234567", email: "non-una-mail" })).toThrow();
+    expect(() => cleanCustomerEdit({ name: "Mario", phone: "3331234567", day: 31, month: 2 })).toThrow();
+    expect(() => cleanCustomerEdit({ name: "Mario", phone: "3331234567", day: 10, month: "" })).toThrow();
   });
 });

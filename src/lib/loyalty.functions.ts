@@ -1,5 +1,5 @@
 import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
-import { birthdayNear, cleanLoyalty, favourites, normalizePhone, PAID_STATUSES, validBirthday, validPhone } from "@/lib/loyalty";
+import { birthdayNear, cleanCustomerEdit, cleanLoyalty, favourites, normalizePhone, PAID_STATUSES, validBirthday, validPhone } from "@/lib/loyalty";
 
 // Ogni query passa da venueAdmin(): i clienti di un locale non sono mai visibili negli altri.
 const db = createServerOnlyFn(async () => (await import("@/lib/venue.server")).venueAdmin());
@@ -146,6 +146,35 @@ export const deleteCustomer = createServerFn({ method: "POST" })
     await q.from("orders").update({ customer_id: null }).eq("customer_id", data.id);
     const { error } = await q.from("venue_customers").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Modifica anagrafica di un cliente del locale (nome, cognome, cellulare, email, compleanno). */
+export const updateCustomer = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; name: string; surname?: string; phone?: string; email?: string; day?: unknown; month?: unknown }) => {
+    if (!UUID.test(d?.id)) throw new Error("Cliente non valido");
+    return { id: d.id, ...cleanCustomerEdit(d) };
+  })
+  .handler(async ({ data }) => {
+    await staffOnly();
+    const q = await db();
+    if (data.phone) {
+      const { data: dup } = await q.from("venue_customers").select("id").eq("phone", data.phone).neq("id", data.id).maybeSingle();
+      if (dup) throw new Error("Questo cellulare è già registrato su un altro cliente");
+    }
+    if (data.email) {
+      const { data: dup } = await q.from("venue_customers").select("id").ilike("email", data.email).neq("id", data.id).maybeSingle();
+      if (dup) throw new Error("Questa email è già registrata su un altro cliente");
+    }
+    const { error } = await q.from("venue_customers").update({
+      name: data.name,
+      surname: data.surname,
+      phone: data.phone || mailKey(data.email),
+      email: data.email,
+      birth_day: data.birth_day,
+      birth_month: data.birth_month,
+    }).eq("id", data.id);
+    if (error) throw new Error(error.code === "23505" ? "Cellulare o email già usati da un altro cliente" : error.message);
     return { ok: true as const };
   });
 

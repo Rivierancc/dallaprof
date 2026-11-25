@@ -26,6 +26,25 @@ export function validBirthday(day: unknown, month: unknown): { day: number; mont
   return d <= max ? { day: d, month: m } : null;
 }
 
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,24}$/i;
+
+/** Valida e pulisce i dati modificati di una scheda cliente (nome, cognome, cellulare, email, compleanno). */
+export function cleanCustomerEdit(d: { name?: unknown; surname?: unknown; phone?: unknown; email?: unknown; day?: unknown; month?: unknown }) {
+  const name = String(d?.name ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+  const surname = String(d?.surname ?? "").trim().replace(/\s+/g, " ").slice(0, 60);
+  const phone = normalizePhone(String(d?.phone ?? ""));
+  const email = String(d?.email ?? "").trim().toLowerCase().slice(0, 254);
+  if (name.length < 2) throw new Error("Scrivi il nome (almeno 2 lettere)");
+  if (phone && !validPhone(phone)) throw new Error("Numero di cellulare non valido");
+  if (email && !EMAIL_RE.test(email)) throw new Error("Email non valida");
+  if (!phone && !email) throw new Error("Serve almeno il cellulare o l'email");
+  const hasDay = d?.day !== null && d?.day !== undefined && String(d.day).trim() !== "" && Number(d.day) !== 0;
+  const hasMonth = d?.month !== null && d?.month !== undefined && String(d.month).trim() !== "" && Number(d.month) !== 0;
+  const b = hasDay || hasMonth ? validBirthday(d.day, d.month) : null;
+  if ((hasDay || hasMonth) && !b) throw new Error("Data di nascita non valida");
+  return { name, surname, phone, email, birth_day: b?.day ?? null, birth_month: b?.month ?? null };
+}
+
 /** Il compleanno cade oggi o nei prossimi `days` giorni (0 = solo oggi). */
 export function birthdayNear(day: number | null, month: number | null, days: number, now = new Date()) {
   if (!day || !month) return false;
