@@ -89,7 +89,6 @@ export function Screensaver() {
   if (!showcase && !useVideo && slides.length === 0) return null;
 
   const activeIndex = slides.length ? i % slides.length : 0;
-  const activeSlotName = slides.length ? (slides[activeIndex]?.slotName ?? "") : "";
   // In vetrina senza diapositive il messaggio è già scritto al centro: la pillola in alto non serve.
   const showPill = !showcase || slides.length > 0;
   return (
@@ -123,13 +122,9 @@ export function Screensaver() {
           </div>
         )}
       {/* Invito a ordinare (o messaggio vetrina) in alto, in una pillola compatta:
-          il basso resta libero per nome, descrizione e prezzo del piatto. */}
+          il basso resta libero per nome, descrizione e prezzo del piatto.
+          Il nome della fascia oraria non si scrive mai sullo schermo. */}
       <div className="pointer-events-none absolute inset-x-0 top-6 z-20 flex flex-col items-center gap-3 px-6">
-        {activeSlotName && (
-          <span className="rounded-full bg-background/85 px-5 py-1.5 font-display text-3xl text-accent shadow-lg backdrop-blur">
-            {activeSlotName}
-          </span>
-        )}
         {showPill && (
           <div className="rounded-full border border-border/60 bg-background/75 px-8 py-3 text-center shadow-2xl backdrop-blur-md">
             {showcase ? (

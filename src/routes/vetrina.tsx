@@ -46,7 +46,7 @@ function VetrinaPage() {
   useEffect(() => {
     const slug = browserSlug();
     const menuUrl = `${window.location.origin}${slug ? `/${slug}` : ""}/menu-digitale`;
-    void QRCode.toDataURL(menuUrl, { width: 320, margin: 1 }).then(setQr);
+    void QRCode.toDataURL(menuUrl, { width: 512, margin: 1 }).then(setQr);
   }, []);
 
   useEffect(() => {
@@ -116,7 +116,6 @@ function VetrinaPage() {
 
   const useVideo = activeSlots.length === 0 && s.kind === "video" && !!videoUrl;
   const activeIndex = slides.length ? i % slides.length : 0;
-  const activeSlotName = slides.length ? (slides[activeIndex]?.slotName ?? "") : "";
 
   return (
     <div className="fixed inset-0 flex select-none flex-col overflow-hidden bg-background">
@@ -144,14 +143,6 @@ function VetrinaPage() {
           </div>
         )}
 
-        {activeSlotName && (
-          <div className="pointer-events-none absolute left-6 top-6 z-20">
-            <span className="rounded-full border border-border/60 bg-background/80 px-6 py-2 font-display text-3xl text-accent shadow-lg backdrop-blur-md">
-              {activeSlotName}
-            </span>
-          </div>
-        )}
-
         <button
           type="button"
           onClick={toggleFs}
@@ -166,9 +157,9 @@ function VetrinaPage() {
             aria-label="QR code menu digitale"
             className="absolute bottom-6 right-6 z-20 flex flex-col items-center rounded-2xl border border-border/70 bg-background/90 p-3 text-center shadow-2xl backdrop-blur-md"
           >
-            <img src={qr} alt="QR code del menu digitale" className="h-28 w-28 rounded-lg bg-foreground p-1 sm:h-32 sm:w-32" />
-            <p className="mt-2 font-display text-xl leading-none text-accent">Menu digitale</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Inquadra col telefono</p>
+            <img src={qr} alt="QR code del menu digitale" className="h-40 w-40 rounded-lg bg-foreground p-1.5 sm:h-48 sm:w-48" />
+            <p className="mt-2 font-display text-2xl leading-none text-accent">Menu digitale</p>
+            <p className="mt-1 text-sm text-muted-foreground">Inquadra col telefono</p>
           </aside>
         )}
       </main>
