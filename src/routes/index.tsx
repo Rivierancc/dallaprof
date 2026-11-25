@@ -122,7 +122,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   useEffect(() => {
     if (!busy || !idle || idle <= 0) return
     let timer = setTimeout(go, idle * 1000)
-    function go() { setCart([]); setCustom(null); setActiveCat(null); setLastCat(null); setShowCart(false); setShowSuggest(false); setSuggestSeen(false); setMember(null); setAskMember(false); setCompose(null); resetCustomer(); window.scrollTo({ top: 0 }) }
+    function go() { setCart([]); setCustom(null); setActiveCat(null); setLastCat(null); setFoodFilter(null); setShowCart(false); setShowSuggest(false); setSuggestSeen(false); setMember(null); setAskMember(false); setCompose(null); resetCustomer(); window.scrollTo({ top: 0 }) }
     const bump = () => { clearTimeout(timer); timer = setTimeout(go, idle * 1000) }
     const evs = ["pointerdown", "keydown", "scroll", "touchstart"] as const
     evs.forEach((e) => window.addEventListener(e, bump, { passive: true, capture: true }))
@@ -131,7 +131,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   }, [busy, idle])
   const [party, setParty] = useState(false)
   // Prove da PC: trascina in verticale col mouse la colonna categorie a sinistra.
-  const sidebarRef = useRef<HTMLElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
   const sidebarDrag = useRef<{ y: number; top: number; moved: boolean } | null>(null)
   const onSidebarDown = (e: { pointerType: string; clientY: number }) => { if (e.pointerType !== "mouse" || !sidebarRef.current) return; sidebarDrag.current = { y: e.clientY, top: sidebarRef.current.scrollTop, moved: false } }
   const onSidebarMove = (e: { pointerType: string; clientY: number }) => { const d = sidebarDrag.current; const el = sidebarRef.current; if (!d || !el) return; const dy = e.clientY - d.y; if (Math.abs(dy) > 6) d.moved = true; if (d.moved) el.scrollTop = d.top - dy }
@@ -349,13 +349,13 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
   const viewCat = activeCat
   const cat = categories.find((c) => c.id === viewCat)
   const ffCat = viewCat?.startsWith(FF) ? foodFilters.find((f) => FF + f.id === viewCat) : undefined
-  const inCat = viewCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : viewCat ? products.filter((p) => p.category_id === viewCat) : []
+  const inCat = viewCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : viewCat ? products.filter((p) => p.category_id === viewCat) : sidebarMode && ffOn ? products.filter((p) => !isCombo(p)) : []
   const shown = ffOn ? inCat.filter((p) => dishMatches(p, ffOn)) : inCat
   const isOffers = viewCat === OFFERS
   const dl = dishLayoutFor(bannerSettings, viewCat ?? "")
   const dt = DISH_TILE[dl.size]!
   const cartLift = Math.min(20, Math.max(0, Number(bannerSettings?.["cart_lift"] ?? 4) || 0))
-  const currentCatTitle = isOffers ? translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat ? translatedFor(cat.name, cat.name_tr, language) : ""
+  const currentCatTitle = isOffers ? translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat ? translatedFor(cat.name, cat.name_tr, language) : sidebarMode && ffOn ? `${ffOn.emoji} ${ffOn.label}` : ""
   const sidebarGridClass = dt.cols === 1 ? "grid grid-cols-1 gap-4 sm:gap-5" : dt.cols === 2 ? "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5" : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5"
   const dishesContent = (
     <>
@@ -401,7 +401,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       <div className={sidebarMode ? "sticky top-0 z-30 -mx-4 -mt-6 mb-4 border-b border-border/40 bg-background px-4 pt-6 pb-3 sm:-mx-6 sm:px-6" : activeCat !== null ? "sticky top-0 z-30 -mx-8 -mt-8 mb-6 bg-background px-8 pt-8 pb-2" : ""}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
         {sidebarMode ? <h1 className="font-display text-4xl leading-none text-accent sm:text-5xl">{currentCatTitle.toUpperCase()}</h1> : <span />}
-        <Button variant="ghost" onClick={() => { setActiveCat(null); resetCustomer() }} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
+        <Button variant="ghost" onClick={() => { setActiveCat(null); setFoodFilter(null); resetCustomer() }} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
       </header>
       {!sidebarMode && activeCat !== null && <>
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-4 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
@@ -413,7 +413,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             </div>
           )}
       </>}
-      {sidebarMode && viewCat !== null && foodFilters.length > 0 && !ffCat && (
+      {sidebarMode && foodFilters.length > 0 && (
         <div dir="ltr" className="flex gap-2 overflow-x-auto pb-1">
           {foodFilters.map((f) => (
             <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-5 py-2 font-display text-2xl focus-visible:ring-0 ${foodFilter === f.id ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
@@ -427,39 +427,33 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
       {sidebarMode ? (
         <div className="flex items-start gap-4 sm:gap-6">
-          <aside ref={sidebarRef} aria-label="Categorie" onPointerDown={onSidebarDown} onPointerMove={onSidebarMove} onPointerUp={onSidebarUp} onPointerLeave={onSidebarUp} onClickCapture={(e) => { if (sidebarDrag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} onDragStart={(e) => e.preventDefault()} className={`sticky top-44 -ml-4 ${sb.aside} shrink-0 select-none overflow-y-auto border-r-2 border-border bg-secondary pl-2 pr-3 [scrollbar-width:none] sm:-ml-6 sm:pl-3 [&::-webkit-scrollbar]:hidden`} style={{ maxHeight: `calc(100dvh - ${19 + cartLift}rem)`, paddingBottom: "0.75rem" }}>
-            <div className="flex flex-col gap-3 p-1">
-              {offerMenus.length > 0 && (
+          <aside aria-label="Categorie" onDragStart={(e) => e.preventDefault()} className={`sticky ${foodFilters.length > 0 ? "top-56" : "top-44"} -ml-4 ${sb.aside} flex shrink-0 select-none flex-col overflow-hidden border-r-2 border-border bg-secondary pl-2 pr-3 sm:-ml-6 sm:pl-3`} style={{ maxHeight: `calc(100dvh - ${(foodFilters.length > 0 ? 22 : 19) + cartLift}rem)` }}>
+            {offerMenus.length > 0 && (
+              <div className="shrink-0 border-b border-border/60 p-1 pb-2.5">
                 <Button variant="ghost" aria-pressed={viewCat === OFFERS} onClick={() => { setActiveCat(OFFERS); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${viewCat === OFFERS ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
                   <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}><OffersIcon /></div>
                   <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${viewCat === OFFERS ? "glow text-accent" : "text-foreground"}`}>{translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}</span>
                 </Button>
-              )}
-              {categories.map((c: Category) => {
-                const on = viewCat === c.id
-                return (
-                  <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
-                    {c.image
-                      ? <img src={c.image} alt="" draggable={false} className={`w-full rounded-xl object-cover ${sb.img}`} />
-                      : <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}>{categoryIcon(c.name)}</div>}
-                    <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
-                  </Button>
-                )
-              })}
-              {foodFilters.map((f) => {
-                const id = FF + f.id
-                const on = viewCat === id
-                return (
-                  <Button variant="ghost" key={id} aria-pressed={on} onClick={() => { setActiveCat(id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
-                    <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}>{f.emoji}</div>
-                    <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${on ? "glow text-accent" : "text-foreground"}`}>{f.label}</span>
-                  </Button>
-                )
-              })}
+              </div>
+            )}
+            <div ref={sidebarRef} onPointerDown={onSidebarDown} onPointerMove={onSidebarMove} onPointerUp={onSidebarUp} onPointerLeave={onSidebarUp} onClickCapture={(e) => { if (sidebarDrag.current?.moved) { e.stopPropagation(); e.preventDefault() } }} className="min-h-0 flex-1 overflow-y-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex flex-col gap-3 p-1 pt-2.5">
+                {categories.map((c: Category) => {
+                  const on = viewCat === c.id
+                  return (
+                    <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center whitespace-normal rounded-2xl border-2 text-center ${sb.btn} ${on ? "border-accent bg-secondary ring-2 ring-accent/60 hover:bg-secondary" : "border-border/60 bg-background/70 hover:bg-background"}`}>
+                      {c.image
+                        ? <img src={c.image} alt="" draggable={false} className={`w-full rounded-xl object-cover ${sb.img}`} />
+                        : <div className={`grid w-full place-items-center rounded-xl bg-muted/70 ${sb.icon}`}>{categoryIcon(c.name)}</div>}
+                      <span className={`line-clamp-2 w-full font-display leading-tight uppercase ${sb.label} ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
           </aside>
           <section className="relative min-w-0 flex-1">
-            {viewCat === null ? (
+            {viewCat === null && !ffOn ? (
               <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ height: `calc(100dvh - ${19 + cartLift}rem)`, overflowY: "clip" }}>
                 {catLayout.fingerSpeed > 0 && (
                   <div aria-hidden="true" className="sidebar-finger-track select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
