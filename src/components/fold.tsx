@@ -1,7 +1,12 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+
+// An external section selector already supplies the first heading and open control.
+export const FoldPresentation = createContext<"default" | "content">("default");
 
 /** Sezione richiudibile del pannello staff: chiusa di default, si apre toccando il titolo. */
 export function Fold({ title, hint, children, open = false, onToggle, bare }: { title: ReactNode; hint?: ReactNode; children: ReactNode; open?: boolean; onToggle?: (open: boolean) => void; bare?: boolean }) {
+  const presentation = useContext(FoldPresentation);
+  if (presentation === "content") return <FoldPresentation.Provider value="default">{children}</FoldPresentation.Provider>;
   // bare: il titolo è già un pulsante esterno, qui si mostra solo il contenuto a tutta larghezza.
   if (bare) return <div className="rounded-3xl border-2 border-accent bg-card p-5 shadow-lg"><p className="mb-4 font-display text-4xl">{title}</p>{children}</div>;
   return (

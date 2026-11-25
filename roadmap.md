@@ -1,4 +1,5 @@
 # Intervento totem
+- [x] Admin e sottocategorie con icone rotonde colorate 3D come Gestione menu; comandi invariati, 33 prove superate e navigazione verificata nel locale di prova su computer e telefono.
 - [x] Lingue tedesco e arabo accendibili da Admin; barra lingue/orologio compatta su telefono; pulsante chiosco accanto al logo.
 - [x] Cuoricino Lovable via da tutto il progetto: icona dei preferiti/schermata Home sostituita col logo aziendale e badge «Edit with Lovable» nascosto sul sito pubblicato. L'icona ora segue da sola il logo: indirizzo pubblico /api/public/icon che serve il logo corrente (verificato byte per byte), così cambiandolo da Admin l'icona si aggiorna entro pochi minuti senza chiedere in chat; manuale aggiornato.
 - [x] Schermo diviso in Cassa: pulsantino «▦ Cucina» mostra il tabellone cucina accanto agli incassi (tabellone condiviso in kitchen-board.tsx, scelta ricordata sul dispositivo); manuale aggiornato, 78 prove automatiche superate, pagine senza errori. Prova della divisione nelle pagine sbloccate in attesa del PIN del personale.

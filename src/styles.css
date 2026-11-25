@@ -68,7 +68,35 @@
   --input: #46332c;
   --ring: #fcca21;
   --shadow-glow: 0 20px 60px -15px rgba(230, 45, 40, 0.6);
+  --staff-orb-blue: oklch(0.62 0.17 245);
+  --staff-orb-blue-base: oklch(0.42 0.15 250);
+  --staff-orb-orange: oklch(0.72 0.17 55);
+  --staff-orb-orange-base: oklch(0.5 0.15 45);
+  --staff-orb-yellow: oklch(0.82 0.15 90);
+  --staff-orb-yellow-base: oklch(0.58 0.12 80);
+  --staff-orb-pink: oklch(0.66 0.2 0);
+  --staff-orb-pink-base: oklch(0.45 0.16 5);
+  --staff-orb-green: oklch(0.7 0.17 150);
+  --staff-orb-green-base: oklch(0.44 0.12 150);
+  --staff-highlight: oklch(1 0 0);
+  --staff-shadow: oklch(0 0 0);
+  --staff-control-shadow: inset 0 2px 3px color-mix(in oklch, var(--staff-highlight) 35%, transparent), inset 0 -3px 6px color-mix(in oklch, var(--staff-shadow) 25%, transparent), 0 4px 0 color-mix(in oklch, var(--staff-shadow) 70%, transparent), 0 6px 10px color-mix(in oklch, var(--staff-shadow) 35%, transparent);
 }
+
+.staff-orb-blue { --orb-face: var(--staff-orb-blue); --orb-base: var(--staff-orb-blue-base); }
+.staff-orb-orange { --orb-face: var(--staff-orb-orange); --orb-base: var(--staff-orb-orange-base); }
+.staff-orb-yellow { --orb-face: var(--staff-orb-yellow); --orb-base: var(--staff-orb-yellow-base); }
+.staff-orb-pink { --orb-face: var(--staff-orb-pink); --orb-base: var(--staff-orb-pink-base); }
+.staff-orb-green { --orb-face: var(--staff-orb-green); --orb-base: var(--staff-orb-green-base); }
+.staff-orb {
+  background: radial-gradient(circle at 35% 28%, color-mix(in oklch, var(--orb-face) 55%, var(--staff-highlight)), var(--orb-face) 45%, var(--orb-base));
+  box-shadow: inset 0 3px 6px color-mix(in oklch, var(--staff-highlight) 45%, transparent), inset 0 -8px 14px color-mix(in oklch, var(--staff-shadow) 30%, transparent), 0 8px 0 var(--orb-base), 0 14px 22px color-mix(in oklch, var(--staff-shadow) 55%, transparent);
+  transition: transform 100ms, box-shadow 100ms;
+}
+.staff-orb-button:active .staff-orb { transform: translateY(0.375rem); }
+.admin-page button:not(.staff-orb-button) { border-radius: 9999px; box-shadow: var(--staff-control-shadow); }
+.admin-page button:not(.staff-orb-button):active:not(:disabled) { transform: translateY(2px); }
+@media (prefers-reduced-motion: reduce) { .staff-orb { transition: none; } }
 
 @layer base {
   * { border-color: var(--color-border); }

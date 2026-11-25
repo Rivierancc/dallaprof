@@ -40,3 +40,4 @@
 - Licensing: `license` row per venue (service-role only), managed from master-password /superadmin; customers read `license_state_v`, orders insert checks `license_allows_orders_v`; why: restaurateurs must not bypass their licence.
 - Multi-venue: every table has `venue_id`; `/<slug>/...` is stripped by the router rewrite (src/lib/venue.ts) and sent as x-venue; server code uses venueAdmin()/scoped(); staff cookies per slug; why: venues never see each other's data.
 - Fast-food customers: `venue_customers` (service-role, unique venue+phone) only via loyalty.functions/venueAdmin(); orders.customer_id linked server-side; why: never recognised across venues.
+- Admin uses StaffOrb selectors; reuse panels to preserve access.
