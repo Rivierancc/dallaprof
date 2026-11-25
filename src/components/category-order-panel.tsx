@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Fold } from "@/components/fold";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { bannerQueryOptions } from "@/components/display-banner";
-import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, FINGER_SPEEDS, dishLayoutFor } from "@/lib/category-layout";
+import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, FINGER_SIZES, FINGER_SPEEDS, dishLayoutFor } from "@/lib/category-layout";
 import { reorderCategories, saveBanner, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
@@ -75,6 +75,12 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
           <p className="mb-2 text-xl font-bold">Velocità del dito sulle categorie</p>
           <div className="flex flex-wrap gap-2">
             {FINGER_SPEEDS.map((o) => <button key={o.sec} onClick={() => void setLayout({ fingerSpeed: o.sec })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.fingerSpeed === o.sec ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{o.label}</button>)}
+          </div>
+        </div>}
+        {layout.sidebar && layout.fingerSpeed > 0 && <div>
+          <p className="mb-2 text-xl font-bold">Grandezza del dito</p>
+          <div className="flex flex-wrap gap-2">
+            {FINGER_SIZES.map((o) => <button key={o.scale} onClick={() => void setLayout({ fingerSize: o.scale })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.fingerSize === o.scale ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{o.label}</button>)}
           </div>
         </div>}
         <div>

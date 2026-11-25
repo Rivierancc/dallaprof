@@ -179,7 +179,7 @@ html.saver-open::-webkit-scrollbar, html.saver-open body::-webkit-scrollbar { di
 }
 @keyframes sidebar-finger-nudge {
   0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(-0.55rem); }
+  50% { transform: translateX(calc(-0.55rem * var(--finger-scale, 1))); }
 }
 .sidebar-finger-track {
   position: absolute;
@@ -194,6 +194,8 @@ html.saver-open::-webkit-scrollbar, html.saver-open body::-webkit-scrollbar { di
 }
 .sidebar-finger > span {
   display: inline-block;
+  font-size: calc(1em * var(--finger-scale, 1));
+  line-height: 1;
   will-change: transform;
   animation: sidebar-finger-nudge 1.1s ease-in-out infinite;
   filter: drop-shadow(0 4px 10px rgb(0 0 0 / 0.65));

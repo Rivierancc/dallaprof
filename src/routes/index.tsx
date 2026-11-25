@@ -462,7 +462,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
               <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ height: `calc(100dvh - ${19 + cartLift}rem)`, overflowY: "clip" }}>
                 {catLayout.fingerSpeed > 0 && (
                   <div aria-hidden="true" className="sidebar-finger-track select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
-                    <div className="sidebar-finger" style={{ "--finger-duration": `${catLayout.fingerSpeed}s` } as CSSProperties}>
+                    <div className="sidebar-finger" style={{ "--finger-duration": `${catLayout.fingerSpeed}s`, "--finger-scale": catLayout.fingerSize } as CSSProperties}>
                       <span>👈</span>
                     </div>
                   </div>
