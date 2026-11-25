@@ -459,7 +459,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           </aside>
           <section className="relative min-w-0 flex-1">
             {viewCat === null ? (
-              <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ minHeight: `calc(100dvh - ${19 + cartLift}rem)` }}>
+              <div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ height: `calc(100dvh - ${19 + cartLift}rem)` }}>
                 <div aria-hidden="true" className="sidebar-finger pointer-events-none select-none text-5xl sm:text-6xl rtl:scale-x-[-1]">
                   <span>👈</span>
                 </div>
