@@ -88,6 +88,9 @@ export function Screensaver() {
   if (!showcase && !useVideo && slides.length === 0) return null;
 
   const activeIndex = slides.length ? i % slides.length : 0;
+  const activeSlotName = slides.length ? (slides[activeIndex]?.slotName ?? "") : "";
+  // In vetrina senza diapositive il messaggio è già scritto al centro: la pillola in alto non serve.
+  const showPill = !showcase || slides.length > 0;
   return (
     <div
       role={showcase ? "region" : "button"}
@@ -112,32 +115,38 @@ export function Screensaver() {
                 </div>
               </div>
             )}
-            {slide.slotName && (
-              <span className="absolute left-8 top-8 rounded-full bg-background/85 px-6 py-2 font-display text-4xl text-accent shadow-lg backdrop-blur">
-                {slide.slotName}
-              </span>
-            )}
           </div>
         )) : (
           <div className="grid h-full w-full place-items-center p-12 text-center">
             <p className="font-display text-7xl text-accent">{s.showcaseMessage || DEFAULT_SHOWCASE_MSG}</p>
           </div>
         )}
+      {/* Invito a ordinare (o messaggio vetrina) in alto, in una pillola compatta:
+          il basso resta libero per nome, descrizione e prezzo del piatto. */}
+      <div className="pointer-events-none absolute inset-x-0 top-6 z-20 flex flex-col items-center gap-3 px-6">
+        {activeSlotName && (
+          <span className="rounded-full bg-background/85 px-5 py-1.5 font-display text-3xl text-accent shadow-lg backdrop-blur">
+            {activeSlotName}
+          </span>
+        )}
+        {showPill && (
+          <div className="rounded-full border border-border/60 bg-background/75 px-8 py-3 text-center shadow-2xl backdrop-blur-md">
+            {showcase ? (
+              <p className="font-display text-4xl leading-none text-accent">{s.showcaseMessage || DEFAULT_SHOWCASE_MSG}</p>
+            ) : (
+              <>
+                <p className="animate-pulse font-display text-4xl leading-none text-foreground">👆 Tocca lo schermo per ordinare</p>
+                <p className="mt-1.5 font-display text-2xl leading-none text-muted-foreground">Touch the screen to order</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       {showcase && (
         <Link to="/admin" className="absolute right-6 top-6 z-20 rounded-full bg-background/70 px-4 py-2 text-lg text-muted-foreground opacity-40 backdrop-blur transition-opacity hover:opacity-100 focus:opacity-100">
           🔒 Personale
         </Link>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-16 pb-32 text-center">
-        {showcase ? (
-          <p className="font-display text-6xl text-accent">{s.showcaseMessage || DEFAULT_SHOWCASE_MSG}</p>
-        ) : (
-          <>
-            <p className="animate-pulse font-display text-8xl text-foreground">👆 Tocca lo schermo per ordinare</p>
-            <p className="mt-3 font-display text-5xl text-muted-foreground">Touch the screen to order</p>
-          </>
-        )}
-      </div>
       <div className="absolute inset-x-0 bottom-0"><NewsTicker /></div>
     </div>
   );
