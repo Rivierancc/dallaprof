@@ -6,6 +6,11 @@ import { bannerQueryOptions } from "@/components/display-banner";
 import { cleanCategoryLayout, CATEGORY_SIZES, DISH_SIZES, FINGER_SIZES, FINGER_SPEEDS, dishLayoutFor } from "@/lib/category-layout";
 import { reorderCategories, saveBanner, setCategoryStrip, type MenuCategory } from "@/lib/menu.functions";
 
+const arrow3d = {
+  background: "radial-gradient(circle at 35% 25%, color-mix(in oklch, var(--a), white 35%), var(--a) 45%, var(--b))",
+  boxShadow: "0 4px 0 var(--b), 0 6px 10px rgb(0 0 0 / 0.4), inset 0 1px 1px rgb(255 255 255 / 0.5)",
+};
+
 export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCategory[]; refresh: () => Promise<unknown> }) {
   const [cats, setCats] = useState(categories);
   const [saving, setSaving] = useState(false);
@@ -77,8 +82,8 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
             {FINGER_SPEEDS.map((o) => <button key={o.sec} onClick={() => void setLayout({ fingerSpeed: o.sec })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.fingerSpeed === o.sec ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{o.label}</button>)}
           </div>
         </div>}
-        {layout.sidebar && layout.fingerSpeed > 0 && <div>
-          <p className="mb-2 text-xl font-bold">Grandezza del dito</p>
+        {layout.sidebar && <div className={layout.fingerSpeed === 0 ? "opacity-50" : undefined}>
+          <p className="mb-2 text-xl font-bold">Grandezza del dito{layout.fingerSpeed === 0 ? " (dito spento)" : ""}</p>
           <div className="flex flex-wrap gap-2">
             {FINGER_SIZES.map((o) => <button key={o.scale} onClick={() => void setLayout({ fingerSize: o.scale })} className={`tap rounded-xl px-4 py-3 text-xl ${layout.fingerSize === o.scale ? "bg-primary font-bold text-primary-foreground" : "bg-secondary"}`}>{o.label}</button>)}
           </div>
@@ -98,8 +103,10 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
               <option value={0}>Nessuna striscia</option>
               {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>Striscia {n}</option>)}
             </select>
-            <button onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Sposta su ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▲</button>
-            <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} aria-label={`Sposta giù ${c.name}`} className="tap rounded-xl bg-primary px-4 py-2 text-2xl font-bold text-primary-foreground disabled:opacity-25">▼</button>
+            <div className="flex items-center gap-2" style={{ ["--a" as string]: `oklch(0.66 0.17 ${(i * 47 + 245) % 360})`, ["--b" as string]: `oklch(0.42 0.14 ${(i * 47 + 245) % 360})` }}>
+              <button onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Sposta su ${c.name}`} style={arrow3d} className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-primary-foreground transition-transform active:translate-y-1 active:shadow-none disabled:opacity-25">▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === cats.length - 1} aria-label={`Sposta giù ${c.name}`} style={arrow3d} className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-primary-foreground transition-transform active:translate-y-1 active:shadow-none disabled:opacity-25">▼</button>
+            </div>
           </div>{banner && dishRow(c.id, c.name)}</li>
         ))}
         {banner && <li className="space-y-2 rounded-2xl bg-background/40 p-3"><span className="pl-12 text-2xl font-bold">🍱 Menu in offerta</span>{dishRow("__offers", "Menu in offerta")}</li>}
