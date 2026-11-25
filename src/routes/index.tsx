@@ -9,7 +9,7 @@ import { CompanyIdentity } from "@/components/company-identity"
 import { BannerView, useBanner, bannerQueryOptions } from "@/components/display-banner"
 import { ALLERGENS, ALLERGENS_TITLE, FROZEN_TEXT, dishInfo, infoFlags } from "@/lib/allergens"
 import { cleanFilters, dishMatches, filtersOn } from "@/lib/food-filters"
-import { cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
+import { categoryIcon, cleanCategoryLayout, TILE, dishLayoutFor, DISH_TILE } from "@/lib/category-layout"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -334,28 +334,68 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
   const OFFERS = "__offers"
   const offerMenus = products.filter((p) => isCombo(p) && !p.sold_out).sort((a, b) => Number(b.combo_offer) - Number(a.combo_offer))
-  const cat = categories.find((c) => c.id === activeCat)
   const foodFilters = filtersOn(bannerSettings) ? cleanFilters(bannerSettings?.["food_filters"]).filter((f) => f.on) : []
   const ffOn = foodFilters.find((f) => f.id === foodFilter)
   // Filtri sulla prima striscia: «__ff:id» raccoglie i piatti adatti da tutte le categorie.
   const FF = "__ff:"
-  const ffCat = activeCat?.startsWith(FF) ? foodFilters.find((f) => FF + f.id === activeCat) : undefined
-  const inCat = activeCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : activeCat? products.filter((p) => p.category_id === activeCat) : []
+  const sidebarMode = catLayout.sidebar
+  const firstSidebarCat = offerMenus.length > 0 ? OFFERS : (categories[0]?.id ?? null)
+  const viewCat = sidebarMode ? (activeCat ?? firstSidebarCat) : activeCat
+  const cat = categories.find((c) => c.id === viewCat)
+  const ffCat = viewCat?.startsWith(FF) ? foodFilters.find((f) => FF + f.id === viewCat) : undefined
+  const inCat = viewCat === OFFERS ? offerMenus : ffCat ? products.filter((p) => !isCombo(p) && dishMatches(p, ffCat)) : viewCat ? products.filter((p) => p.category_id === viewCat) : []
   const shown = ffOn ? inCat.filter((p) => dishMatches(p, ffOn)) : inCat
-  const isOffers = activeCat === OFFERS
-  const dl = dishLayoutFor(bannerSettings, activeCat ?? "")
+  const isOffers = viewCat === OFFERS
+  const dl = dishLayoutFor(bannerSettings, viewCat ?? "")
   const dt = DISH_TILE[dl.size]!
   const cartLift = Math.min(20, Math.max(0, Number(bannerSettings?.["cart_lift"] ?? 4) || 0))
+  const currentCatTitle = isOffers ? translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat ? translatedFor(cat.name, cat.name_tr, language) : ""
+  const sidebarGridClass = dt.cols === 1 ? "grid grid-cols-1 gap-4 sm:gap-5" : dt.cols === 2 ? "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5" : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5"
+  const dishesContent = (
+    <>
+      {ffOn && shown.length === 0 && <p className="mb-6 text-3xl text-muted-foreground">{ffOn.emoji} {ffOn.label}: —</p>}
+      <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : sidebarMode ? sidebarGridClass : "grid gap-6"} style={dl.scroll || sidebarMode ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
+        {cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length > 0 && (
+          <Button variant="ghost" onClick={() => setCompose(cat)} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
+            <div className="grid h-44 w-full place-items-center rounded-2xl bg-muted text-8xl">✨</div>
+            <h3 className="mt-4 break-words font-display text-4xl leading-tight">{customTitleFor(cat, language)}</h3>
+            <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(cat.custom_price)}</span>
+          </Button>
+        )}
+        {shown.map((p: Product) => (
+          <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
+            <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
+            {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "★ " : ""}<OffersIcon /> {menuName(p.name, p.combo_name)}</h3> : null}
+            <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
+              {p.image ? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
+            </div>
+            <div className="mt-4">
+              {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
+              {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
+                <div key={d.id} data-dish={d.id} className="mt-1">
+                  <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
+                  {descriptionFor(d, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="leading-snug text-muted-foreground">{descriptionFor(d, language)}</p>}
+                </div>
+              ))}
+              {!isOffers && descriptionFor(p, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="mt-1 leading-snug text-muted-foreground">{descriptionFor(p, language)}</p>}
+            </div>
+            <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
+          </Button>
+        ))}
+        {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
+      </div>
+    </>
+  )
 
   return (
-    <main className="min-h-screen p-8" style={{ paddingBottom: `${12 + cartLift}rem` }}>
+    <main className={`min-h-screen ${sidebarMode ? "px-4 py-6 sm:px-6" : "p-8"}`} style={{ paddingBottom: `${12 + cartLift}rem` }}>
       
-      <div className={activeCat !== null ? "sticky top-0 z-30 -mx-8 -mt-8 mb-6 bg-background px-8 pt-8 pb-2" : ""}>
+      <div className={sidebarMode ? "sticky top-0 z-30 -mx-4 -mt-6 mb-4 border-b border-border/40 bg-background px-4 pt-6 pb-3 sm:-mx-6 sm:px-6" : activeCat !== null ? "sticky top-0 z-30 -mx-8 -mt-8 mb-6 bg-background px-8 pt-8 pb-2" : ""}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 pt-20">
-        <span />
+        {sidebarMode ? <h1 className="font-display text-4xl leading-none text-accent sm:text-5xl">{currentCatTitle.toUpperCase()}</h1> : <span />}
         <Button variant="ghost" onClick={() => resetCustomer()} className="whitespace-normal tap rounded-full bg-secondary px-6 py-3 font-display text-3xl uppercase">{dineOption === "qui" ? <><HereIcon /> {t.here}</> : <><TakeawayIcon /> {t.takeaway}</>} ▼</Button>
       </header>
-      {activeCat !== null && <>
+      {!sidebarMode && activeCat !== null && <>
           <Button variant="ghost" onClick={() => setActiveCat(null)} className="whitespace-normal tap mb-4 rounded-full bg-accent px-8 py-4 font-display text-4xl text-accent-foreground">← {t.back} · {isOffers ? translatedFor(data?.offersTitle ?? "", data?.offersTitleTr, language) : ffCat ? `${ffCat.emoji} ${ffCat.label}` : cat && translatedFor(cat.name, cat.name_tr, language)}</Button>
           {foodFilters.length > 0 && !ffCat && (
             <div dir="ltr" className="mb-2 flex gap-3 overflow-x-auto pb-2">
@@ -365,12 +405,54 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
             </div>
           )}
       </>}
+      {sidebarMode && foodFilters.length > 0 && !ffCat && (
+        <div dir="ltr" className="flex gap-2 overflow-x-auto pb-1">
+          {foodFilters.map((f) => (
+            <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-5 py-2 font-display text-2xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
+          ))}
+        </div>
+      )}
       </div>
       {memberDialog}
       {partyBanner}
-      {activeCat === null && memberBar}
+      {(sidebarMode || activeCat === null) && memberBar}
 
-      {activeCat === null? (
+      {sidebarMode ? (
+        <div className="flex items-start gap-4 sm:gap-6">
+          <aside aria-label="Categorie" className="sticky top-44 w-28 shrink-0 overflow-y-auto pr-1 [scrollbar-width:none] sm:w-40 md:w-48 [&::-webkit-scrollbar]:hidden" style={{ maxHeight: "calc(100dvh - 11rem)", paddingBottom: `${10 + cartLift}rem` }}>
+            <div className="flex flex-col gap-3 p-1">
+              {offerMenus.length > 0 && (
+                <Button variant="ghost" aria-pressed={viewCat === OFFERS} onClick={() => { setActiveCat(OFFERS); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${viewCat === OFFERS ? "border-accent bg-secondary ring-2 ring-accent/60" : "border-border/70 bg-card hover:bg-secondary/80"}`}>
+                  <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl"><OffersIcon /></div>
+                  <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${viewCat === OFFERS ? "glow text-accent" : "text-foreground"}`}>{translatedFor(data?.offersTitle ?? "Menu in offerta", data?.offersTitleTr, language)}</span>
+                </Button>
+              )}
+              {categories.map((c: Category) => {
+                const on = viewCat === c.id
+                return (
+                  <Button variant="ghost" key={c.id} aria-pressed={on} onClick={() => { setActiveCat(c.id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${on ? "border-accent bg-secondary ring-2 ring-accent/60" : "border-border/70 bg-card hover:bg-secondary/80"}`}>
+                    {c.image
+                      ? <img src={c.image} alt="" className="h-14 w-full rounded-xl object-cover sm:h-20" />
+                      : <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl">{categoryIcon(c.name)}</div>}
+                    <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${on ? "glow text-accent" : "text-foreground"}`}>{translatedFor(c.name, c.name_tr, language)}</span>
+                  </Button>
+                )
+              })}
+              {foodFilters.map((f) => {
+                const id = FF + f.id
+                const on = viewCat === id
+                return (
+                  <Button variant="ghost" key={id} aria-pressed={on} onClick={() => { setActiveCat(id); window.scrollTo({ top: 0, behavior: "smooth" }) }} className={`tap flex h-auto w-full flex-col items-center gap-1.5 whitespace-normal rounded-2xl border-2 p-2 text-center ${on ? "border-accent bg-secondary ring-2 ring-accent/60" : "border-border/70 bg-card hover:bg-secondary/80"}`}>
+                    <div className="grid h-14 w-full place-items-center rounded-xl bg-muted/70 text-3xl sm:h-20 sm:text-4xl">{f.emoji}</div>
+                    <span className={`line-clamp-2 w-full font-display text-base leading-tight uppercase sm:text-xl ${on ? "glow text-accent" : "text-foreground"}`}>{f.label}</span>
+                  </Button>
+                )
+              })}
+            </div>
+          </aside>
+          <section className="min-w-0 flex-1">{dishesContent}</section>
+        </div>
+      ) : activeCat === null ? (
         <div className={`grid gap-6 ${tile.cols === 1 ? "grid-cols-1" : tile.cols === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
           {catLayout.strips && (offerMenus.length > 0 || foodFilters.length > 0 || categories.some((c) => !c.strip)) && (
             <div className="col-span-full flex items-center gap-3">
@@ -394,43 +476,11 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           ))}
         </div>
       ) : (
-        <>
-          {ffOn && shown.length === 0 && <p className="mb-6 text-3xl text-muted-foreground">{ffOn.emoji} {ffOn.label}: —</p>}
-          <div className={dl.scroll ? "flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [&>*]:shrink-0 [&>*]:snap-start" : "grid gap-6"} style={dl.scroll ? undefined : { gridTemplateColumns: `repeat(${dt.cols}, minmax(0, 1fr))` }}>
-            {cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length > 0 && (
-              <Button variant="ghost" onClick={() => setCompose(cat)} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap h-auto flex min-h-64 flex-col justify-between rounded-3xl border-4 border-dashed border-accent bg-card p-5 text-left">
-                <div className="grid h-44 w-full place-items-center rounded-2xl bg-muted text-8xl">✨</div>
-                <h3 className="mt-4 break-words font-display text-4xl leading-tight">{customTitleFor(cat, language)}</h3>
-                <span className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-4xl text-primary-foreground">{euro(cat.custom_price)}</span>
-              </Button>
-            )}
-            {shown.map((p: Product) => (
-              <Button variant="ghost" key={p.id} onClick={(e) => { const d = (e.target as HTMLElement).closest("[data-dish]")?.getAttribute("data-dish"); setStartDish(isOffers && d ? d : null); setCustom(p) }} style={dl.scroll ? { width: `${dt.w}rem` } : undefined} className="whitespace-normal tap relative h-auto flex min-h-64 flex-col justify-between rounded-3xl bg-card p-5 text-left hover:bg-secondary!">
-                <Badge p={p} pos={isOffers ? "right-3 top-36" : "right-3 top-3"} />
-                {isOffers ? <h3 className="shrink-0 font-display text-5xl leading-tight">{p.combo_offer ? "★ " : ""}<OffersIcon /> {menuName(p.name, p.combo_name)}</h3> : null}
-                <div className="grid flex-1 place-items-center overflow-hidden rounded-2xl bg-muted">
-                  {p.image? <img src={p.image} alt={p.name} style={{ height: `${dt.img}rem` }} className="w-full object-cover" /> : <div style={{ height: `${dt.img}rem` }} className="w-full bg-muted" />}
-                </div>
-                <div className="mt-4">
-                  {!isOffers && <h3 style={{ fontSize: `${dt.title}rem` }} className="font-display leading-tight">{p.name}</h3>}
-                  {isOffers && [p, ...p.combo_alts.map((id) => products.find((x) => x.id === id)).filter((x): x is Product => !!x && !x.sold_out)].map((d) => (
-                    <div key={d.id} data-dish={d.id} className="mt-1">
-                      <p className="font-display text-3xl text-accent">🍔 {d.name}</p>
-                      {descriptionFor(d, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="leading-snug text-muted-foreground">{descriptionFor(d, language)}</p>}
-                    </div>
-                  ))}
-                  {!isOffers && descriptionFor(p, language) && <p style={{ fontSize: `${dt.desc}rem`, display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: dt.lines, overflow: "hidden" }} className="mt-1 leading-snug text-muted-foreground">{descriptionFor(p, language)}</p>}
-                </div>
-                <span style={{ fontSize: `${dt.price}rem` }} className="mt-3 inline-block w-fit rounded-full bg-primary px-5 py-2 font-display text-primary-foreground">{euro(isOffers ? p.combo_price ?? p.price : p.price)}</span>
-              </Button>
-            ))}
-            {shown.length === 0 && !(cat && customIngredients(cat.custom_kind, lib, cat.custom_excluded).length) && <p className="col-span-full text-3xl text-muted-foreground">{t.empty}</p>}
-          </div>
-        </>
+        dishesContent
       )}
 
       {custom && (
-        <Customize key={custom.id + (editing ?? "")} menuFirst={activeCat === OFFERS || !!startDish} initial={editing ? cart.find((x) => x.id === editing)?.edit : undefined} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (editing) { setEditing(null); setShowCart(true) } if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish, edit) => {
+        <Customize key={custom.id + (editing ?? "")} menuFirst={viewCat === OFFERS || !!startDish} initial={editing ? cart.find((x) => x.id === editing)?.edit : undefined} startDish={startDish} product={offerPick ? { ...custom, price: suggestPrice(custom.price, custom.suggest, spent) } : custom} all={products} lib={lib} onSwitch={(host, d) => { setStartDish(d); setCustom(host) }} onClose={() => { setCustom(null); if (editing) { setEditing(null); setShowCart(true) } if (offerPick) { setOfferPick(false); setShowSuggest(true) } }} onAdd={(extras, removed, base, asMenu, dish, edit) => {
           if (!dineOption) { setShowCart(false); return }
           const price = Math.round((base + extras.reduce((s, e) => s + e.price, 0)) * 100) / 100
           const prev = editing ? cart.find((x) => x.id === editing) : undefined

@@ -63,10 +63,13 @@ export function CategoryOrderPanel({ categories, refresh }: { categories: MenuCa
         <div>
           <p className="mb-2 text-xl font-bold">Come si vedono le categorie</p>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => void setLayout({ catStrips: false })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${!layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>▦ Riquadri fissi</button>
-            <button onClick={() => void setLayout({ catStrips: true })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>↔️ Strisce scorrevoli</button>
+            <button onClick={() => void setLayout({ catStrips: false, catSidebar: false })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${!layout.sidebar && !layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>▦ Riquadri fissi</button>
+            <button onClick={() => void setLayout({ catStrips: true, catSidebar: false })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${!layout.sidebar && layout.strips ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>↔️ Strisce scorrevoli</button>
+            <button onClick={() => void setLayout({ catSidebar: true })} className={`tap rounded-xl px-5 py-3 text-xl font-bold ${layout.sidebar ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>◧ Colonna a sinistra</button>
           </div>
-          {!layout.strips && <p className="mt-2 text-lg text-muted-foreground">Le strisce assegnate restano ricordate: riattivandole tornano come prima.</p>}
+          {layout.sidebar
+            ? <p className="mt-2 text-lg text-muted-foreground">Le categorie scorrono in verticale a sinistra con pulsanti compatti (foto sopra, nome sotto) e i piatti si vedono subito a destra. Le altre impostazioni restano salvate.</p>
+            : !layout.strips && <p className="mt-2 text-lg text-muted-foreground">Le strisce assegnate restano ricordate: riattivandole tornano come prima.</p>}
         </div>
         <div>
           <p className="mb-2 text-xl font-bold">Grandezza delle categorie</p>

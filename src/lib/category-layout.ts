@@ -1,10 +1,27 @@
 /** Livello mostrato = valore salvato + 1: il livello più piccolo è salvato come -1, così le scelte già fatte non cambiano. */
 /** Aspetto delle categorie sul totem, salvato insieme alle impostazioni condivise del chiosco. */
-export type CategoryLayout = { strips: boolean; size: number }
+export type CategoryLayout = { strips: boolean; sidebar: boolean; size: number }
 export const CATEGORY_SIZES = ["Molto piccole", "Piccole", "Medie", "Normali", "Grandi", "Molto grandi"] as const
 export function cleanCategoryLayout(s: Record<string, unknown> | undefined | null): CategoryLayout {
   const size = Number(s?.["catSize"])
-  return { strips: s?.["catStrips"] !== false, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3 }
+  return { strips: s?.["catStrips"] !== false, sidebar: s?.["catSidebar"] === true, size: Number.isInteger(size) && size >= -1 && size <= 4 ? size + 1 : 3 }
+}
+
+/** Icona automatica quando una categoria non ha ancora una foto (usata nella colonna a sinistra). */
+export function categoryIcon(name: string): string {
+  const n = name.toLowerCase()
+  if (/menu|offerta|combo/.test(n)) return "🍱"
+  if (/burger|panin|hamburger|sandwich|toast|hot\s*dog/.test(n)) return "🍔"
+  if (/pizz|schiacciat|focacc|pinsa|piadin/.test(n)) return "🍕"
+  if (/caff|bar|colazion|cappuccin|tè|caffetter/.test(n)) return "☕"
+  if (/bibit|bevand|drink|birr|vin|acqua|aperitiv/.test(n)) return "🥤"
+  if (/dolc|dessert|torta|gelat|crepe|waffle|pasticc/.test(n)) return "🍰"
+  if (/fritt|patatin|stuzzic|antipast|sfizi/.test(n)) return "🍟"
+  if (/insalat|contorn|verdur|poke|bowl/.test(n)) return "🥗"
+  if (/past|prim|lasagn|gnocch|risott/.test(n)) return "🍝"
+  if (/carn|second|grigl|pollo|bistecc/.test(n)) return "🥩"
+  if (/pesc|mare|frutti/.test(n)) return "🐟"
+  return "🍽️"
 }
 /** Altezza riquadro (rem) e grandezza scritta (rem) per ogni livello. */
 export const TILE = [

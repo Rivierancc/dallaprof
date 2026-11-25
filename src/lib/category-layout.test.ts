@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { cleanCategoryLayout } from "./category-layout";
+import { categoryIcon, cleanCategoryLayout } from "./category-layout";
 describe("cleanCategoryLayout", () => {
-  it("strisce accese e grandezza normale se mai impostate", () => expect(cleanCategoryLayout({})).toEqual({ strips: true, size: 3 }));
+  it("strisce accese, colonna spenta e grandezza normale se mai impostate", () => expect(cleanCategoryLayout({})).toEqual({ strips: true, sidebar: false, size: 3 }));
   it("riquadri fissi quando spente", () => expect(cleanCategoryLayout({ catStrips: false }).strips).toBe(false));
+  it("colonna a sinistra quando accesa", () => expect(cleanCategoryLayout({ catSidebar: true }).sidebar).toBe(true));
   it("grandezza fuori scala torna normale", () => expect(cleanCategoryLayout({ catSize: 9 }).size).toBe(3));
+});
+describe("categoryIcon", () => {
+  it("sceglie un'icona coerente col nome quando manca la foto", () => {
+    expect(categoryIcon("Schiacciate")).toBe("🍕");
+    expect(categoryIcon("Caffetteria")).toBe("☕");
+    expect(categoryIcon("Bibite fresche")).toBe("🥤");
+    expect(categoryIcon("Specialità della casa")).toBe("🍽️");
+  });
 });
 
 import { dishLayoutFor as dlf } from "./category-layout"
