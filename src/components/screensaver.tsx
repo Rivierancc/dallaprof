@@ -9,6 +9,7 @@ import { ScreensaverSlotEditor } from "@/components/screensaver-slot-editor";
 import { Button } from "@/components/ui/button";
 import { NewsTicker } from "@/components/news-ticker";
 import { useCustomer } from "@/components/customer-session";
+import { browserSlug } from "@/lib/venue";
 
 export { readSaver, type Saver } from "@/lib/screensaver";
 
@@ -172,6 +173,11 @@ export function ScreensaverSettings() {
   const urlMap = useMemo(() => Object.fromEntries((mine ?? []).map((x) => [x.path, x.url])), [mine]);
   const [showcaseMsg, setShowcaseMsg] = useState<string | null>(null);
   useEffect(() => { if (showcaseMsg === null && saved) setShowcaseMsg(s.showcaseMessage); }, [saved, showcaseMsg, s.showcaseMessage]);
+  const [vetrinaUrl, setVetrinaUrl] = useState("");
+  useEffect(() => {
+    const slug = browserSlug();
+    setVetrinaUrl(`${window.location.origin}${slug ? `/${slug}` : ""}/vetrina`);
+  }, []);
   if (!saved) return null;
 
   const save = async (p: Record<string, unknown>) => {
@@ -239,6 +245,18 @@ export function ScreensaverSettings() {
           <Button key={id} variant={s.override === id ? "default" : "secondary"} onClick={() => void save({ saverOverride: id })}>{label}</Button>
         ))}
       </div>
+      {vetrinaUrl && (
+        <div className="mt-4 border-t border-border/60 pt-3">
+          <p className="text-lg font-medium">📺 Pagina Vetrina per un altro schermo (TV, monitor o tablet)</p>
+          <p className="text-base text-muted-foreground">
+            Apri <b className="break-all text-foreground">{vetrinaUrl}</b> su un altro dispositivo: fa girare i piatti con prezzo e QR code del menu senza bloccare il totem.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" onClick={() => { void navigator.clipboard?.writeText(vetrinaUrl); setMsg("Indirizzo Vetrina copiato ✓"); }}>📋 Copia indirizzo</Button>
+            <Button size="sm" asChild variant="secondary"><a href={vetrinaUrl} target="_blank" rel="noreferrer">↗ Apri Vetrina</a></Button>
+          </div>
+        </div>
+      )}
     </div>
 
     <div className="space-y-3 rounded-2xl border-2 border-border p-4">
