@@ -9,7 +9,7 @@ import type { CompanyStyle } from "@/lib/company-style";
 const companyQuery = queryOptions({ queryKey: ["company"], queryFn: () => getCompany(), staleTime: 10_000, refetchInterval: 20_000 });
 type Company = Awaited<ReturnType<typeof getCompany>>;
 const logoSizes = ["w-40", "w-56", "w-80", "w-[25rem]", "w-[35rem]", "w-[45rem]"];
-const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl"];
+const textSizes = ["text-lg", "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl", "text-7xl", "text-8xl"];
 const textColors: Record<string, string> = { foreground: "text-foreground", accent: "text-accent", primary: "text-primary", success: "text-success", muted: "text-muted-foreground", destructive: "text-destructive" };
 const alignments = { left: "text-left", center: "text-center", right: "text-right" };
 
@@ -22,7 +22,7 @@ function IdentityView({ company, preview = false }: { company: Company; preview?
     {company.logo && <div className={`relative overflow-hidden ${logoSizes[s.logoSize - 1]} max-w-full shrink-0 ${shape}`} style={s.logoShape === "heart" ? { clipPath: `url(#${id})` } : undefined}>
       <img src={company.logo} alt={preview ? "Anteprima logo azienda" : "Logo azienda"} draggable={false} className={`absolute inset-0 h-full w-full ${s.logoShape === "original" ? "object-contain" : "object-cover"}`} style={{ transform: `translate(${s.logoX}%, ${s.logoY}%) scale(${s.logoZoom / 100})` }} />
     </div>}
-    {company.description && <p className={`w-full max-w-3xl whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color] ?? ""} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`} style={s.color.startsWith("#") ? { color: s.color } : undefined}>{company.description}</p>}
+    {company.description && <p className={`w-full ${s.textSize >= 7 ? "max-w-6xl" : "max-w-3xl"} whitespace-pre-wrap break-words leading-snug ${textSizes[s.textSize - 1]} ${textColors[s.color] ?? ""} ${alignments[s.align]} ${s.bold ? "font-bold" : "font-normal"} ${s.italic ? "italic" : "not-italic"} ${s.underline ? "underline" : "no-underline"}`} style={s.color.startsWith("#") ? { color: s.color } : undefined}>{company.description}</p>}
   </section>;
 }
 
@@ -79,7 +79,7 @@ export function CompanySettings() {
   if (error) return <p role="alert">Impossibile caricare logo e descrizione.</p>;
   if (isLoading || !draft) return <p className="text-muted-foreground">Caricamento…</p>;
   const setStyle = (patch: Partial<CompanyStyle>) => { setDraft({ ...draft, style: { ...draft.style, ...patch } }); setMessage(""); };
-  const sizes = ["Piccolo", "Medio", "Grande", "Molto grande", "Enorme", "Grandissimo"];
+  const sizes = ["Piccolo", "Medio", "Grande", "Molto grande", "Enorme", "Grandissimo", "Gigante", "Colossale"];
   return <div className="space-y-5">
     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" aria-label="Carica logo azienda" hidden disabled={busy} onChange={(e) => { const image = e.target.files?.[0]; if (image) void selectLogo(image); e.target.value = ""; }} />
     <div className="flex flex-wrap gap-3">
@@ -111,7 +111,7 @@ export function CompanySettings() {
     </label>
     <div className="space-y-3">
       <p className="text-xl">Dimensione descrizione: {sizes[draft.style.textSize - 1]}</p>
-      <Slider aria-label="Dimensione descrizione" min={1} max={6} step={1} value={[draft.style.textSize]} disabled={busy} onValueChange={([textSize]) => { if (textSize !== undefined) setStyle({ textSize }); }} className="max-w-md py-4" />
+      <Slider aria-label="Dimensione descrizione" min={1} max={8} step={1} value={[draft.style.textSize]} disabled={busy} onValueChange={([textSize]) => { if (textSize !== undefined) setStyle({ textSize }); }} className="max-w-md py-4" />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Formato descrizione">
         {([["bold", "Grassetto", Bold], ["italic", "Corsivo", Italic], ["underline", "Sottolineato", Underline]] as const).map(([key, label, Icon]) => <Button key={key} size="icon" title={label} aria-label={label} aria-pressed={draft.style[key]} disabled={busy} variant={draft.style[key] ? "default" : "secondary"} onClick={() => setStyle({ [key]: !draft.style[key] })}><Icon /></Button>)}
         {([["left", "Allinea a sinistra", AlignLeft], ["center", "Allinea al centro", AlignCenter], ["right", "Allinea a destra", AlignRight]] as const).map(([align, label, Icon]) => <Button key={align} size="icon" title={label} aria-label={label} aria-pressed={draft.style.align === align} disabled={busy} variant={draft.style.align === align ? "default" : "secondary"} onClick={() => setStyle({ align })}><Icon /></Button>)}

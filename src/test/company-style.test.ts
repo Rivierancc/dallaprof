@@ -25,8 +25,12 @@ describe("regolazioni logo", () => {
     expect(cleanCompanyStyle({ color: "#a1b2c3" }).color).toBe("#a1b2c3");
     expect(cleanCompanyStyle({ color: "red" }).color).toBe("foreground");
   });
-  it("accetta la descrizione grandissimo e limita oltre il massimo", () => {
-    expect(cleanCompanyStyle({ textSize: 6 }).textSize).toBe(6);
-    expect(cleanCompanyStyle({ textSize: 9 }).textSize).toBe(6);
+  it("accetta la descrizione colossale e limita oltre il massimo", () => {
+    expect(cleanCompanyStyle({ textSize: 7 }).textSize).toBe(7);
+    expect(cleanCompanyStyle({ textSize: 8 }).textSize).toBe(8);
+    expect(cleanCompanyStyle({ textSize: 9 }).textSize).toBe(8);
+  });
+  it("lascia il logo al suo massimo di sei taglie", () => {
+    expect(cleanCompanyStyle({ textSize: 8, logoSize: 8 }).logoSize).toBe(6);
   });
 });
