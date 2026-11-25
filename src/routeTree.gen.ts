@@ -21,6 +21,7 @@ import { Route as MenuDigitaleRouteImport } from './routes/menu-digitale'
 import { Route as SalaRouteImport } from './routes/sala'
 import { Route as ScorteRouteImport } from './routes/scorte'
 import { Route as SuperadminRouteImport } from './routes/superadmin'
+import { Route as VetrinaRouteImport } from './routes/vetrina'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as OrdineConfermatoIndexRouteImport } from './routes/ordine-confermato.index'
 import { Route as OrdineConfermatoIdRouteImport } from './routes/ordine-confermato.$id'
@@ -86,6 +87,11 @@ const SuperadminRoute = SuperadminRouteImport.update({
   path: '/superadmin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VetrinaRoute = VetrinaRouteImport.update({
+  id: '/vetrina',
+  path: '/vetrina',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/sala': typeof SalaRoute
   '/scorte': typeof ScorteRoute
   '/superadmin': typeof SuperadminRoute
+  '/vetrina': typeof VetrinaRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
   '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/sala': typeof SalaRoute
   '/scorte': typeof ScorteRoute
   '/superadmin': typeof SuperadminRoute
+  '/vetrina': typeof VetrinaRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin': typeof AdminIndexRoute
   '/ordine-confermato': typeof OrdineConfermatoIndexRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/sala': typeof SalaRoute
   '/scorte': typeof ScorteRoute
   '/superadmin': typeof SuperadminRoute
+  '/vetrina': typeof VetrinaRoute
   '/ordine-confermato/$id': typeof OrdineConfermatoIdRoute
   '/admin/': typeof AdminIndexRoute
   '/ordine-confermato/': typeof OrdineConfermatoIndexRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/sala'
     | '/scorte'
     | '/superadmin'
+    | '/vetrina'
     | '/ordine-confermato/$id'
     | '/admin/'
     | '/ordine-confermato/'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/sala'
     | '/scorte'
     | '/superadmin'
+    | '/vetrina'
     | '/ordine-confermato/$id'
     | '/admin'
     | '/ordine-confermato'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/sala'
     | '/scorte'
     | '/superadmin'
+    | '/vetrina'
     | '/ordine-confermato/$id'
     | '/admin/'
     | '/ordine-confermato/'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   SalaRoute: typeof SalaRoute
   ScorteRoute: typeof ScorteRoute
   SuperadminRoute: typeof SuperadminRoute
+  VetrinaRoute: typeof VetrinaRoute
   OrdineConfermatoIdRoute: typeof OrdineConfermatoIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   OrdineConfermatoIndexRoute: typeof OrdineConfermatoIndexRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperadminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vetrina': {
+      id: '/vetrina'
+      path: '/vetrina'
+      fullPath: '/vetrina'
+      preLoaderRoute: typeof VetrinaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalaRoute: SalaRoute,
   ScorteRoute: ScorteRoute,
   SuperadminRoute: SuperadminRoute,
+  VetrinaRoute: VetrinaRoute,
   OrdineConfermatoIdRoute: OrdineConfermatoIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   OrdineConfermatoIndexRoute: OrdineConfermatoIndexRoute,
