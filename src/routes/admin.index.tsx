@@ -82,7 +82,7 @@ function AdminTabs({ ro, menu, refresh }: { ro: boolean; menu: { categories: Par
       <ThemesPanel />
       <Box><Fold title="⏱️ Inattività e salvaschermo">
         <section className="rounded-2xl border-2 border-border bg-background/60 p-4"><h3 className="mb-3 font-display text-3xl text-accent">Ritorno all'inizio</h3><IdleSettings /></section>
-        <section className="mt-6 rounded-2xl border-2 border-border bg-background/60 p-4"><h3 className="mb-3 font-display text-3xl text-accent">Salvaschermo con foto e video</h3><ScreensaverSettings /></section>
+        <section className="mt-6 rounded-2xl border-2 border-border bg-background/60 p-4"><h3 className="mb-3 font-display text-3xl text-accent">Salvaschermo, calendario settimanale e fasce orarie</h3><ScreensaverSettings /></section>
       </Fold></Box>
       <Box><Fold title="📢 Scritta in alto sul totem"><BannerSettings /></Fold></Box>
       <Box><Fold title="📰 Notizie ultima ora"><NewsSettingsPanel /></Fold></Box>

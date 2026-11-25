@@ -871,7 +871,7 @@ export const getBanner = createServerFn({ method: "GET" }).handler(async (): Pro
 
 export const saveBanner = createServerFn({ method: "POST" })
   .inputValidator((d: { settings: Record<string, unknown> }) => {
-    if (!d || typeof d.settings !== "object" || JSON.stringify(d.settings).length > 20000) throw new Error("Dati non validi");
+    if (!d || typeof d.settings !== "object" || JSON.stringify(d.settings).length > 100000) throw new Error("Dati non validi");
     return d;
   })
   .handler(async ({ data }) => {
@@ -1019,7 +1019,7 @@ export const uploadSaverPhoto = createServerFn({ method: "POST" })
 
 export const getSaverPhotos = createServerFn({ method: "GET" })
   .inputValidator((d: { paths: string[] }) => {
-    const paths = (Array.isArray(d.paths) ? d.paths : []).map(String).filter((p) => /^saver-[0-9a-f-]{36}\.(jpg|png|webp)$/.test(p)).slice(0, 20);
+    const paths = (Array.isArray(d.paths) ? d.paths : []).map(String).filter((p) => /^saver-[0-9a-f-]{36}\.(jpg|png|webp)$/.test(p)).slice(0, 100);
     return { paths };
   })
   .handler(async ({ data }) => {

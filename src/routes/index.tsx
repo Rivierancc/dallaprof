@@ -59,6 +59,7 @@ function Totem() {
   )
   return <>
     {license?.state === "demo" && license.demo.badge && <div className="pointer-events-none fixed bottom-3 left-3 z-50 rounded-full bg-accent px-4 py-1 font-display text-xl text-accent-foreground">Modalità dimostrativa</div>}
+    <Screensaver />
     <TotemMain simulate={!!license && !realOrders(license)} limit={license?.state === "demo" ? license.demo.max_products : null} />
   </>
 }
@@ -207,7 +208,6 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 
   if (!dineOption) return (
     <main className="flex min-h-dvh flex-col px-6 pb-6 pt-28">
-      <Screensaver />
       <div className="-mx-6 mb-4"><HomeBanner /></div>
       <div className="flex-1" />
       
