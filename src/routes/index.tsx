@@ -400,7 +400,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
           {foodFilters.length > 0 && !ffCat && (
             <div dir="ltr" className="mb-2 flex gap-3 overflow-x-auto pb-2">
               {foodFilters.map((f) => (
-                <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-6 py-3 font-display text-3xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
+                <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-6 py-3 font-display text-3xl focus-visible:ring-0 ${foodFilter === f.id ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
               ))}
             </div>
           )}
@@ -408,7 +408,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
       {sidebarMode && foodFilters.length > 0 && !ffCat && (
         <div dir="ltr" className="flex gap-2 overflow-x-auto pb-1">
           {foodFilters.map((f) => (
-            <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-5 py-2 font-display text-2xl ${foodFilter === f.id ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
+            <Button variant="ghost" key={f.id} aria-pressed={foodFilter === f.id} onClick={() => setFoodFilter(foodFilter === f.id ? null : f.id)} className={`tap h-auto shrink-0 rounded-full px-5 py-2 font-display text-2xl focus-visible:ring-0 ${foodFilter === f.id ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground"}`}>{f.emoji} {f.label}{foodFilter === f.id ? " ✕" : ""}</Button>
           ))}
         </div>
       )}
@@ -515,6 +515,7 @@ function TotemMain({ simulate, limit }: { simulate: boolean; limit: number | nul
 }
 
 const p2 = (p: Product) => Number(p.price) || 0
+const chip = (on: boolean, danger = false) => `tap rounded-full px-6 py-3 text-2xl font-bold focus-visible:ring-0 ${on ? (danger ? "bg-destructive text-destructive-foreground hover:bg-destructive hover:text-destructive-foreground" : "bg-success text-success-foreground hover:bg-success hover:text-success-foreground") : "bg-muted text-foreground hover:bg-muted hover:text-foreground"}`
 
 function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch, onClose, onAdd }: { product: Product; startDish?: string | null; initial?: CartEdit | undefined; menuFirst?: boolean; all: Product[]; lib: Ingredient[]; onSwitch: (host: Product, dish: string | null) => void; onClose: () => void; onAdd: (extras: { name: string; price: number }[], removed: string[], base: number, asMenu: boolean, dish: Product, edit: CartEdit) => void }) {
   const { language, orderType } = useCustomer()
@@ -618,7 +619,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
             <section className="mt-6">
               <h3 className="font-display text-4xl text-muted-foreground">🍔 {({ IT: "Scegli il piatto", EN: "Choose your main", FR: "Choisissez le plat", ES: "Elige el plato", DE: "Wähle das Gericht", AR: "اختر الطبق" } as const)[language]}</h3>
               <div className="mt-3 flex flex-wrap gap-3">
-                {alts.map((x) => <Button variant="ghost" key={x.id} aria-pressed={dish.id === x.id} onClick={() => pickDish(x.id)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${dish.id === x.id ? "bg-success text-success-foreground" : "bg-muted"}`}>{dish.id === x.id ? "✓ " : ""}{x.name}</Button>)}
+                {alts.map((x) => <Button variant="ghost" key={x.id} aria-pressed={dish.id === x.id} onClick={() => pickDish(x.id)} className={chip(dish.id === x.id)}>{dish.id === x.id ? "✓ " : ""}{x.name}</Button>)}
               </div>
             </section>
           )}
@@ -636,7 +637,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
                 <div className="mt-3 flex flex-wrap gap-3">
                   {g.options.map((o) => {
                     const on = (picks[g.name] ?? []).includes(o.name)
-                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
+                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={chip(on)}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
                   })}
                 </div>
               </section>
@@ -649,7 +650,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
               <div className="mt-3 flex flex-wrap gap-3">
                 {ingredients.map((ing) => {
                   const on = removed.includes(ing)
-                  return <Button variant="ghost" key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>{on? `${t.without} ` : ""}{flags.allergens && flags.underline && dishInfo([ing], lib).allergens.length > 0 ? <u className="underline-offset-4">{L(ing)}</u> : L(ing)}</Button>
+                  return <Button variant="ghost" key={ing} onClick={() => setRemoved((r) => (on? r.filter((x) => x!== ing) : [...r, ing]))} className={chip(on, true)}>{on? `${t.without} ` : ""}{flags.allergens && flags.underline && dishInfo([ing], lib).allergens.length > 0 ? <u className="underline-offset-4">{L(ing)}</u> : L(ing)}</Button>
                 })}
               </div>
             </section>
@@ -661,7 +662,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
                 {offers.map((e) => {
                   const on = extras.includes(e.name)
                   const full = !on && !canAddExtra(dish.max_extras, chosen.length)
-                  return <Button variant="ghost" key={e.name} disabled={full} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : canAddExtra(dish.max_extras, x.length) ? [...x, e.name] : x))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on? "bg-success text-success-foreground" : "bg-muted"}`}>+ {L(e.name)} · {euro(e.price)}</Button>
+                  return <Button variant="ghost" key={e.name} disabled={full} onClick={() => setExtras((x) => (on? x.filter((n) => n!== e.name) : canAddExtra(dish.max_extras, x.length) ? [...x, e.name] : x))} className={chip(on)}>+ {L(e.name)} · {euro(e.price)}</Button>
                 })}
               </div>
             </section>
@@ -680,7 +681,7 @@ function Customize({ product, startDish, initial, menuFirst, all, lib, onSwitch,
                 <div className="mt-3 flex flex-wrap gap-3">
                   {g.options.map((o) => {
                     const on = (picks[g.name] ?? []).includes(o.name)
-                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
+                    return <Button variant="ghost" key={o.name} aria-pressed={on} onClick={() => toggle(g, o.name)} className={chip(on)}>{on ? "✓ " : ""}{L(o.name)}{o.price > 0 ? ` · ${euro(o.price)}` : ""}</Button>
                   })}
                 </div>
               </section>
@@ -728,7 +729,7 @@ function Compose({ category, lib, onClose, onAdd }: { category: Category; lib: I
               <div className="mt-3 flex flex-wrap gap-3">
                 {g.items.map((x) => {
                   const on = ids.includes(x.id)
-                  return <Button variant="ghost" key={x.id} aria-pressed={on} onClick={() => setIds((v) => (on ? v.filter((i) => i !== x.id) : [...v, x.id]))} className={`tap rounded-full px-6 py-3 text-2xl font-bold ${on ? "bg-success text-success-foreground" : "bg-muted"}`}>{on ? "✓ " : "+ "}{ingredientLabel(x.name, lib, language)}{x.price > 0 ? ` · ${euro(x.price)}` : ""}</Button>
+                  return <Button variant="ghost" key={x.id} aria-pressed={on} onClick={() => setIds((v) => (on ? v.filter((i) => i !== x.id) : [...v, x.id]))} className={chip(on)}>{on ? "✓ " : "+ "}{ingredientLabel(x.name, lib, language)}{x.price > 0 ? ` · ${euro(x.price)}` : ""}</Button>
                 })}
               </div>
             </section>
