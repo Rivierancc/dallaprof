@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TimeSelect } from "@/components/time-select";
 import { uploadSaverPhoto } from "@/lib/menu.functions";
 import { euro, type Product } from "@/lib/menu";
 import { WEEKDAYS, type SaverSlot, type Weekday } from "@/lib/screensaver";
@@ -101,12 +102,8 @@ export function ScreensaverSlotEditor({ slot, forced, products, photoUrls, onCha
               </Button>
               {!slot.allDay && (
                 <>
-                  <label className="flex items-center gap-2 text-lg">Dalle
-                    <input type="time" value={slot.start} onChange={(e) => onChange({ ...slot, start: e.target.value })} className="rounded-xl border border-border bg-background px-3 py-1.5 text-lg" />
-                  </label>
-                  <label className="flex items-center gap-2 text-lg">Alle
-                    <input type="time" value={slot.end} onChange={(e) => onChange({ ...slot, end: e.target.value })} className="rounded-xl border border-border bg-background px-3 py-1.5 text-lg" />
-                  </label>
+                  <TimeSelect label="Dalle" value={slot.start} onChange={(start) => onChange({ ...slot, start })} />
+                  <TimeSelect label="Alle" value={slot.end} onChange={(end) => onChange({ ...slot, end })} />
                 </>
               )}
             </div>
